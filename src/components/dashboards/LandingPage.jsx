@@ -1,7 +1,8 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useClinical } from '../../context/ClinicalContext';
 
 const LandingPage = ({ onGetStarted }) => {
+    const { hospitals } = useClinical();
+
     return (
         <div className="landing-page">
             <section className="hero-section fade-in">
@@ -14,8 +15,8 @@ const LandingPage = ({ onGetStarted }) => {
                         <button className="btn-primary btn-large" onClick={onGetStarted}>
                             Explore Discovery Hub
                         </button>
-                        <button className="btn-secondary btn-large" onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}>
-                            Learn More
+                        <button className="btn-secondary btn-large" onClick={() => document.getElementById('discovery-hub').scrollIntoView({ behavior: 'smooth' })}>
+                            View Hospital Network
                         </button>
                     </div>
                 </div>
@@ -34,6 +35,30 @@ const LandingPage = ({ onGetStarted }) => {
                             <span>50+ Centers</span>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <section id="discovery-hub" className="discovery-hub-section">
+                <h2 className="section-title text-gradient">Our Elite Medical Network</h2>
+                <p className="section-subtitle">Discover top-tier facilities participating in our advanced triage system</p>
+
+                <div className="hospitals-preview-grid">
+                    {hospitals.map(h => (
+                        <div key={h.id} className="glass-card hospital-preview-card">
+                            <div className="preview-image" style={{ backgroundImage: `url(${h.image.startsWith('hosp') ? '/' + h.image : h.image})` }}>
+                                <span className={`status-badge ${h.busyStatus}`}>{h.busyStatus.toUpperCase()}</span>
+                            </div>
+                            <div className="preview-info">
+                                <h3>{h.name}</h3>
+                                <p className="loc">📍 {h.location}</p>
+                                <p className="desc">{h.description}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="discovery-cta">
+                    <button className="btn-primary btn-large" onClick={onGetStarted}>Sign In to Book Appointment</button>
                 </div>
             </section>
 
@@ -223,6 +248,63 @@ const LandingPage = ({ onGetStarted }) => {
 
                 .stat-value { font-size: 2.5rem; font-weight: 800; display: block; color: var(--primary); }
                 .stat-label { color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em; font-weight: 700; }
+
+                .discovery-hub-section {
+                    padding: 6rem 2rem;
+                    max-width: 1400px;
+                    margin: 0 auto;
+                }
+
+                .section-subtitle {
+                    color: var(--text-muted);
+                    margin-bottom: 4rem;
+                }
+
+                .hospitals-preview-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                    gap: 2rem;
+                    margin-bottom: 4rem;
+                }
+
+                .hospital-preview-card {
+                    padding: 0;
+                    overflow: hidden;
+                    text-align: left;
+                    transition: transform 0.3s ease;
+                }
+
+                .hospital-preview-card:hover { transform: translateY(-10px); }
+
+                .preview-image {
+                    height: 200px;
+                    background-size: cover;
+                    background-position: center;
+                    position: relative;
+                }
+
+                .status-badge {
+                    position: absolute;
+                    top: 1rem;
+                    right: 1rem;
+                    font-size: 0.65rem;
+                    font-weight: 800;
+                    padding: 0.25rem 0.75rem;
+                    border-radius: 4px;
+                    background: rgba(0,0,0,0.6);
+                    backdrop-filter: blur(4px);
+                }
+
+                .status-badge.maximal { color: #ef4444; border: 1px solid #ef4444; }
+                .status-badge.high { color: #f59e0b; border: 1px solid #f59e0b; }
+                .status-badge.moderate { color: #10b981; border: 1px solid #10b981; }
+
+                .preview-info { padding: 1.5rem; }
+                .preview-info h3 { margin-bottom: 0.5rem; font-size: 1.25rem; }
+                .preview-info .loc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
+                .preview-info .desc { font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); }
+
+                .discovery-cta { text-align: center; }
 
                 @media (max-width: 1024px) {
                     .hero-section { flex-direction: column; text-align: center; }

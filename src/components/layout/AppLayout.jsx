@@ -35,7 +35,7 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
               >
                 Home
               </button>
-              {role === 'user' && (
+              {!isGuest && role === 'user' && (
                 <>
                   <button
                     className={`nav-link-btn ${currentView === 'hospitals' ? 'active' : ''}`}

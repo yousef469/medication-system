@@ -42,6 +42,36 @@ const LoginView = ({ targetRole: initialTargetRole }) => {
 
   return (
     <div className="login-split-view fade-in">
+      <div className="login-visual-container" style={{ backgroundImage: `url('/medical_hero_split_auth_1768086048804.png')` }}>
+        <div className="visual-overlay">
+          <div className="visual-content">
+            <div className="tag">EGYPTIAN LOCALIZATION</div>
+            <h1>Advanced Clinical Network</h1>
+            <p>
+              Join a unified system connecting patients with Egypt's most prestigious medical institutions
+              using state-of-the-art AI triage and real-time coordination.
+            </p>
+
+            <div className="mini-features">
+              <div className="mini-feat">
+                <span>⚡</span>
+                <div>
+                  <strong>Real-time Triage</strong>
+                  <p>AI-powered routing across Cairo & Aswan</p>
+                </div>
+              </div>
+              <div className="mini-feat">
+                <span>💎</span>
+                <div>
+                  <strong>Elite Facilities</strong>
+                  <p>Direct integration with 57357 and Kasr Al-Ainy</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="login-form-container">
         <div className="login-header">
           <h2 className="text-gradient">Welcome to MediDiscovery</h2>
@@ -99,36 +129,6 @@ const LoginView = ({ targetRole: initialTargetRole }) => {
         </form>
       </div>
 
-      <div className="login-visual-container" style={{ backgroundImage: `url('medical_hero_split_auth_1768086048804.png')` }}>
-        <div className="visual-overlay">
-          <div className="visual-content">
-            <div className="tag">EGYPTIAN LOCALIZATION</div>
-            <h1>Advanced Clinical Network</h1>
-            <p>
-              Join a unified system connecting patients with Egypt's most prestigious medical institutions
-              using state-of-the-art AI triage and real-time coordination.
-            </p>
-
-            <div className="mini-features">
-              <div className="mini-feat">
-                <span>⚡</span>
-                <div>
-                  <strong>Real-time Triage</strong>
-                  <p>AI-powered routing across Cairo & Aswan</p>
-                </div>
-              </div>
-              <div className="mini-feat">
-                <span>💎</span>
-                <div>
-                  <strong>Elite Facilities</strong>
-                  <p>Direct integration with 57357 and Kasr Al-Ainy</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <style jsx>{`
                 .login-split-view {
                     display: grid;
@@ -145,7 +145,6 @@ const LoginView = ({ targetRole: initialTargetRole }) => {
                 .login-form-container {
                     padding: 4rem 3rem;
                     background: var(--bg-dark);
-                    border-right: 1px solid var(--glass-border);
                 }
 
                 .login-header { margin-bottom: 2.5rem; }
