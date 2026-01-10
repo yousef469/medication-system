@@ -7,7 +7,7 @@ const DoctorProfile = ({ doctor }) => {
     const { requests } = useClinical();
 
     // Filter cases routed specifically to this doctor
-    const myCases = requests.filter(r => r.status === 'ROUTED_TO_DOCTOR' && r.assignedDoctorId === 'doc-1'); // Mocking doc-1 for Demo
+    const myCases = requests.filter(r => r.status === 'ROUTED_TO_DOCTOR' && r.assigned_doctor_id === user?.id);
     const { name, specialty, bio, followers, rating, surgeryCount, posts } = doctor;
 
     return (
@@ -50,7 +50,7 @@ const DoctorProfile = ({ doctor }) => {
                                 myCases.map(c => (
                                     <div key={c.id} className={`case-item ${c.urgency.toLowerCase().replace(' ', '')}`}>
                                         <div className="case-header">
-                                            <span className="case-patient">{c.patient}</span>
+                                            <span className="case-patient">{c.patient_name}</span>
                                             <span className="case-tier">{c.urgency}</span>
                                         </div>
                                         <p className="case-diagnosis">{c.diagnosis}</p>

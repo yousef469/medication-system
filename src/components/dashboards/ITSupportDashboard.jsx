@@ -90,10 +90,10 @@ const ITSupportDashboard = () => {
           <div className="log-terminal">
             {systemLogs.map(log => (
               <div key={log.id} className={`log-entry ${log.level.toLowerCase()}`}>
-                <span className="log-time">[{log.time}]</span>
+                <span className="log-time">[{new Date(log.created_at).toLocaleTimeString()}]</span>
                 <span className="log-lvl">{log.level}</span>
                 <span className="log-msg">{log.message}</span>
-                {log.analyzedByAI && <span className="ai-tag">AI</span>}
+                {log.analyzed_by_ai && <span className="ai-tag">AI</span>}
               </div>
             ))}
             <div className="log-cursor">_</div>

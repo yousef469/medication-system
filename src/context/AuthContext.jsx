@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
 const AuthContext = createContext();
 
@@ -6,34 +7,73 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isInitialized, setIsInitialized] = useState(false);
 
-    // Initialize auth state - Normal User is persistent, others require login per session
     useEffect(() => {
-        const savedUser = sessionStorage.getItem('medi_auth_user');
-        if (savedUser) {
-            const parsedUser = JSON.parse(savedUser);
-            // Only keep professional roles if they were logged in during this session
-            setUser(parsedUser);
-        } else {
-            // Default to unauthenticated Normal User if no session exists
-            setUser({ role: 'user', name: 'Guest Patient' });
-        }
-        setIsInitialized(true);
+        // 1. Check active sessions
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                fetchProfile(session.user);
+            } else {
+                setUser({ role: 'user', name: 'Guest Patient' });
+                setIsInitialized(true);
+            }
+        });
+
+        // 2. Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session) {
+                fetchProfile(session.user);
+            } else {
+                setUser({ role: 'user', name: 'Guest Patient' });
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const login = (role, name, password) => {
-        // Basic mock authentication
-        if (name && password) {
-            const newUser = { role, name, isAuthenticated: true };
-            setUser(newUser);
-            sessionStorage.setItem('medi_auth_user', JSON.stringify(newUser));
-            return true;
+    const fetchProfile = async (supabaseUser) => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', supabaseUser.id)
+                .single();
+
+            if (data) {
+                setUser({
+                    id: supabaseUser.id,
+                    email: supabaseUser.email,
+                    role: data.role || 'user',
+                    name: data.name || supabaseUser.email.split('@')[0],
+                    isAuthenticated: true
+                });
+            } else {
+                // Fallback if profile doesn't exist yet
+                setUser({
+                    id: supabaseUser.id,
+                    email: supabaseUser.email,
+                    role: 'user',
+                    name: supabaseUser.email.split('@')[0],
+                    isAuthenticated: true
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching profile:', err);
+        } finally {
+            setIsInitialized(true);
         }
-        return false;
     };
 
-    const logout = () => {
-        setUser({ role: 'user', name: 'Guest Patient' });
-        sessionStorage.removeItem('medi_auth_user');
+    const login = async (email, password) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+        if (error) throw error;
+        return data;
+    };
+
+    const logout = async () => {
+        await supabase.auth.signOut();
     };
 
     return (

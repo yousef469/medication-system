@@ -53,7 +53,7 @@ const SecretaryDashboard = () => {
               filteredRequests.map(req => (
                 <div key={req.id} className={`request-card glass-card ${req.urgency.toLowerCase().replace(' ', '')}`}>
                   <div className="req-main">
-                    <span className="req-patient">{req.patient}</span>
+                    <span className="req-patient">{req.patient_name}</span>
                     <span className="req-diagnosis">{req.diagnosis}</span>
                     <div className="req-meta">
                       <span className="hospital-tag">{req.hospital}</span>
