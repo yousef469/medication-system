@@ -2,20 +2,13 @@ import React, { useState, useRef } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 
 const UserDashboard = () => {
-  const { submitRequest } = useClinical();
+  const { hospitals, submitRequest } = useClinical();
   const [requestContent, setRequestContent] = useState('');
-  const [selectedHospital, setSelectedHospital] = useState('City Central Hospital');
+  const [selectedHospital, setSelectedHospital] = useState('57357 Children\'s Cancer Hospital');
   const [urgency, setUrgency] = useState('NEXT HOUR');
   const [isRecording, setIsRecording] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const fileInputRef = useRef(null);
-
-  const hospitals = [
-    { id: 1, name: "City Central Hospital", sections: ["Neurology", "Cardiology", "ER"] },
-    { id: 2, name: "District Medical Center", sections: ["Pediatrics", "Oncology"] },
-    { id: 3, name: "St. Francis Veterinary", sections: ["Pets", "Internal Medicine"] },
-    { id: 4, name: "Global Corona Center", sections: ["Virology", "Quarantine"] },
-  ];
 
   const handleRequest = (e) => {
     e.preventDefault();
@@ -28,8 +21,8 @@ const UserDashboard = () => {
   return (
     <div className="user-dashboard">
       <header className="page-header">
-        <h1 className="text-gradient">Clinical Network Discovery</h1>
-        <p className="subtitle">Find specialized care for humans and pets around the city</p>
+        <h1 className="text-gradient">Egyptian Medical Discovery</h1>
+        <p className="subtitle">Expert clinical care across Egypt - From Cairo to Aswan</p>
       </header>
 
       <div className="main-discovery-layout">
@@ -89,14 +82,20 @@ const UserDashboard = () => {
         </section>
 
         <section className="highlights">
-          <h3>Recent Care Centers</h3>
+          <h3>Top Care Centers in Egypt</h3>
           <div className="hospitals-scroll">
             {hospitals.map(h => (
               <div key={h.id} className="glass-card hospital-mini-card">
+                <div className="hosp-img-placeholder" style={{
+                  backgroundImage: h.image ? `url(${h.image})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  height: '120px',
+                  borderRadius: 'var(--radius-md)',
+                  marginBottom: '1rem'
+                }}></div>
                 <h4>{h.name}</h4>
-                <div className="mini-tags">
-                  {h.sections.slice(0, 2).map(s => <span key={s} className="m-tag">{s}</span>)}
-                </div>
+                <p className="hosp-loc">📍 {h.location}</p>
               </div>
             ))}
           </div>
@@ -162,8 +161,9 @@ const UserDashboard = () => {
         .tier-btn.active.nexthour { background: rgba(245, 158, 11, 0.2); border-color: var(--accent); color: var(--accent); }
         .tier-btn.active.scheduled { background: rgba(16, 185, 129, 0.2); border-color: var(--secondary); color: var(--secondary); }
 
-        .hospitals-scroll { display: flex; flex-direction: column; gap: 1rem; }
-        .hospital-mini-card { padding: 1.25rem; }
+        .hospitals-scroll { display: flex; flex-direction: column; gap: 1.5rem; }
+        .hospital-mini-card { padding: 1rem; }
+        .hosp-loc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
         .mini-tags { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
         .m-tag { font-size: 0.65rem; background: var(--glass-highlight); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); }
 

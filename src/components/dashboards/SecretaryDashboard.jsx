@@ -28,8 +28,8 @@ const SecretaryDashboard = () => {
   return (
     <div className="secretary-dashboard">
       <header className="page-header">
-        <h1 className="text-gradient">Medical Coordination Hub</h1>
-        <p className="subtitle">Route patients to specialized care facilities based on AI triage</p>
+        <h1 className="text-gradient">Egyptian Coordination Hub</h1>
+        <p className="subtitle">Route patients across Egypt's specialized clinics based on AI triage</p>
       </header>
 
       <div className="coordination-grid">

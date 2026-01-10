@@ -91,13 +91,23 @@ export const ClinicalProvider = ({ children }) => {
         }
     };
 
+    const [hospitals] = useState([
+        { id: 'h-1', name: "57357 Children's Cancer Hospital", location: "Sayeda Zeinab, Cairo", image: "hosp57357_egypt_exterior_1768085195254.png" },
+        { id: 'h-2', name: "Kasr Al-Ainy Hospital", location: "Manial, Cairo", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Kasr_Al_Ainy_Hospital.jpg/300px-Kasr_Al_Ainy_Hospital.jpg" },
+        { id: 'h-3', name: "Al-Salam International Hospital", location: "Maadi, Cairo", image: "https://www.alsalaminternationalhospital.com/assets/images/logo.png" },
+        { id: 'h-4', name: "Magdi Yacoub Heart Foundation", location: "Aswan / Cairo", image: "https://www.magdiyacoub.org/assets/img/logo-en.png" },
+    ]);
+
     const analyzeRequest = (content) => {
-        let suggestedSection = "General";
+        let suggestedSection = "General Medicine";
         const lower = content.toLowerCase();
-        if (lower.includes("brain") || lower.includes("head")) suggestedSection = "Neurology";
-        if (lower.includes("heart") || lower.includes("chest")) suggestedSection = "Cardiology";
-        if (lower.includes("cancer") || lower.includes("tumor")) suggestedSection = "Oncology";
-        if (lower.includes("pet") || lower.includes("dog") || lower.includes("cat")) suggestedSection = "Veterinary";
+
+        // Egyptian Context Keywords (English & Arabic)
+        if (lower.includes("brain") || lower.includes("head") || lower.includes("مخ") || lower.includes("رأس")) suggestedSection = "Neurology";
+        if (lower.includes("heart") || lower.includes("chest") || lower.includes("قلب") || lower.includes("صدر")) suggestedSection = "Cardiology";
+        if (lower.includes("cancer") || lower.includes("tumor") || lower.includes("سرطان") || lower.includes("ورم")) suggestedSection = "Oncology";
+        if (lower.includes("pet") || lower.includes("dog") || lower.includes("cat") || lower.includes("كلب") || lower.includes("قطة")) suggestedSection = "Veterinary";
+
         return suggestedSection;
     };
 
@@ -137,6 +147,7 @@ export const ClinicalProvider = ({ children }) => {
         <ClinicalContext.Provider value={{
             requests,
             doctors,
+            hospitals,
             systemLogs,
             submitRequest,
             routeToDoctor,
