@@ -92,10 +92,46 @@ export const ClinicalProvider = ({ children }) => {
     };
 
     const [hospitals] = useState([
-        { id: 'h-1', name: "57357 Children's Cancer Hospital", location: "Sayeda Zeinab, Cairo", image: "hosp57357_egypt_exterior_1768085195254.png" },
-        { id: 'h-2', name: "Kasr Al-Ainy Hospital", location: "Manial, Cairo", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Kasr_Al_Ainy_Hospital.jpg/300px-Kasr_Al_Ainy_Hospital.jpg" },
-        { id: 'h-3', name: "Al-Salam International Hospital", location: "Maadi, Cairo", image: "https://www.alsalaminternationalhospital.com/assets/images/logo.png" },
-        { id: 'h-4', name: "Magdi Yacoub Heart Foundation", location: "Aswan / Cairo", image: "https://www.magdiyacoub.org/assets/img/logo-en.png" },
+        {
+            id: 'h-1',
+            name: "57357 Children's Cancer Hospital",
+            location: "Sayeda Zeinab, Cairo",
+            image: "hosp57357_egypt_exterior_1768085195254.png",
+            description: "World-class pediatric oncology center providing free care to children with cancer across the Middle East.",
+            sections: ["Pediatric Oncology", "Radiotherapy", "Bone Marrow Transplant", "Clinical Research"],
+            busyStatus: "high",
+            capacity: "95%"
+        },
+        {
+            id: 'h-2',
+            name: "Kasr Al-Ainy Hospital",
+            location: "Manial, Cairo",
+            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Kasr_Al_Ainy_Hospital.jpg/300px-Kasr_Al_Ainy_Hospital.jpg",
+            description: "The oldest and largest medical school and hospital in Egypt and the Middle East, affiliated with Cairo University.",
+            sections: ["Emergency Medicine", "General Surgery", "Internal Medicine", "Neurology"],
+            busyStatus: "maximal",
+            capacity: "100%"
+        },
+        {
+            id: 'h-3',
+            name: "Al-Salam International Hospital",
+            location: "Maadi, Cairo",
+            image: "https://www.alsalaminternationalhospital.com/assets/images/logo.png",
+            description: "A leading private international hospital in Egypt offering luxury medical services and advanced diagnostics.",
+            sections: ["Cardiology", "Orthopedics", "Plastic Surgery", "VIP Maternity"],
+            busyStatus: "moderate",
+            capacity: "75%"
+        },
+        {
+            id: 'h-4',
+            name: "Magdi Yacoub Heart Foundation",
+            location: "Aswan / Cairo",
+            image: "https://www.magdiyacoub.org/assets/img/logo-en.png",
+            description: "Pioneering cardiac surgery and research center providing top-tier heart care for all, regardless of ability to pay.",
+            sections: ["Cardiac Surgery", "Pediatric Cardiology", "Heart Failure Clinic"],
+            busyStatus: "high",
+            capacity: "90%"
+        },
     ]);
 
     const analyzeRequest = (content) => {

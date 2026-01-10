@@ -2,53 +2,79 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../supabaseClient';
 
-const LoginView = ({ targetRole }) => {
-  const [name, setName] = useState('');
+const LoginView = ({ targetRole: initialTargetRole }) => {
+  const [targetRole, setTargetRole] = useState(initialTargetRole || 'user');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
-    if (login(targetRole, name, password)) {
-      setError('');
-    } else {
-      setError('Invalid credentials for this clinical section.');
+    setError('');
+    setIsLoading(true);
+    try {
+      await login(email, password);
+    } catch (err) {
+      setError(err.message || 'Authentication failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getSystemName = () => {
-    switch (targetRole) {
-      case 'doctor': return 'Clinical Management System';
-      case 'secretary': return 'Medical Coordination Hub';
-      case 'it': return 'System Engineering Core';
-      case 'admin': return 'City Health Administration';
-      default: return 'Medical System';
-    }
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) setError(error.message);
   };
+
+  const roles = [
+    { id: 'user', name: 'Patient', icon: '👤', color: 'var(--primary)', desc: 'Personal health discovery and diagnostics' },
+    { id: 'doctor', name: 'Clinical Staff', icon: '👨‍⚕️', color: 'var(--secondary)', desc: 'Case management and AI-assisted triage' },
+    { id: 'secretary', name: 'Coordinator', icon: '📋', color: 'var(--accent)', desc: 'Patient routing and facility operations' },
+    { id: 'it', name: 'System Tech', icon: '⚙️', color: 'var(--primary)', desc: 'Node health and local AI infrastructure' },
+  ];
 
   return (
-    <div className="login-overlay">
-      <div className="glass-card login-card fade-in">
+    <div className="login-split-view fade-in">
+      <div className="login-form-container">
         <div className="login-header">
-          <div className="system-icon">🛡️</div>
-          <h2 className="text-gradient">Secure Access</h2>
-          <p className="system-subtitle">{getSystemName()}</p>
+          <h2 className="text-gradient">Welcome to MediDiscovery</h2>
+          <p className="subtitle">Select your portal to continue </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="input-group">
-            <label>Professional Identity</label>
+        <div className="role-grid">
+          {roles.map(r => (
+            <div
+              key={r.id}
+              className={`role-card glass-card ${targetRole === r.id ? 'active' : ''}`}
+              onClick={() => setTargetRole(r.id)}
+              style={{ '--role-color': r.color }}
+            >
+              <span className="role-icon">{r.icon}</span>
+              <div className="role-label">{r.name}</div>
+            </div>
+          ))}
+        </div>
+
+        <form className="auth-form" onSubmit={handleEmailLogin}>
+          <div className="form-group">
+            <label>Email Address</label>
             <input
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-          <div className="input-group">
-            <label>Security Passcode</label>
+          <div className="form-group">
+            <label>Password</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -58,170 +84,172 @@ const LoginView = ({ targetRole }) => {
             />
           </div>
 
-          {error && <p className="login-error">{error}</p>}
+          {error && <div className="error-msg">⚠️ {error}</div>}
 
-          <button type="submit" className="btn-primary w-full mt-1">
-            Authorize Entry
+          <button type="submit" className="btn-primary w-full btn-lg" disabled={isLoading}>
+            {isLoading ? 'Authenticating...' : `Enter ${roles.find(r => r.id === targetRole).name} Portal`}
           </button>
 
-          <div className="login-divider">
-            <span>OR</span>
-          </div>
+          <div className="divider"><span>OR</span></div>
 
-          <button
-            type="button"
-            className="btn-google w-full"
-            onClick={async () => {
-              const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                  redirectTo: window.location.origin
-                }
-              });
-              if (error) setError(error.message);
-            }}
-          >
-            <span className="google-icon">G</span>
+          <button type="button" className="google-btn w-full" onClick={handleGoogleLogin}>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
             Continue with Google
           </button>
         </form>
+      </div>
 
-        <p className="login-footer">
-          Authorized personnel only. All access is logged by {getSystemName()} monitors.
-        </p>
+      <div className="login-visual-container" style={{ backgroundImage: `url('medical_hero_split_auth_1768086048804.png')` }}>
+        <div className="visual-overlay">
+          <div className="visual-content">
+            <div className="tag">EGYPTIAN LOCALIZATION</div>
+            <h1>Advanced Clinical Network</h1>
+            <p>
+              Join a unified system connecting patients with Egypt's most prestigious medical institutions
+              using state-of-the-art AI triage and real-time coordination.
+            </p>
+
+            <div className="mini-features">
+              <div className="mini-feat">
+                <span>⚡</span>
+                <div>
+                  <strong>Real-time Triage</strong>
+                  <p>AI-powered routing across Cairo & Aswan</p>
+                </div>
+              </div>
+              <div className="mini-feat">
+                <span>💎</span>
+                <div>
+                  <strong>Elite Facilities</strong>
+                  <p>Direct integration with 57357 and Kasr Al-Ainy</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
-        .login-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 2, 18, 0.85);
-          backdrop-filter: blur(10px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 2000;
-        }
+                .login-split-view {
+                    display: grid;
+                    grid-template-columns: 1fr 1.2fr;
+                    background: var(--bg-dark);
+                    border: 1px solid var(--glass-border);
+                    border-radius: var(--radius-xl);
+                    overflow: hidden;
+                    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+                    max-width: 1200px;
+                    margin: 2rem auto;
+                }
 
-        .login-card {
-          width: 100%;
-          max-width: 400px;
-          padding: 2.5rem;
-          text-align: center;
-        }
+                .login-form-container {
+                    padding: 4rem 3rem;
+                    background: var(--bg-dark);
+                    border-right: 1px solid var(--glass-border);
+                }
 
-        .login-header {
-          margin-bottom: 2rem;
-        }
+                .login-header { margin-bottom: 2.5rem; }
+                .login-header h2 { font-size: 2rem; margin-bottom: 0.5rem; }
+                .subtitle { color: var(--text-muted); font-size: 0.9rem; }
 
-        .system-icon {
-          font-size: 2.5rem;
-          margin-bottom: 1rem;
-        }
+                .role-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1rem;
+                    margin-bottom: 2.5rem;
+                }
 
-        .system-subtitle {
-          color: var(--primary);
-          font-size: 0.875rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-top: 0.5rem;
-        }
+                .role-card {
+                    padding: 1rem;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    border: 1px solid var(--glass-border);
+                }
 
-        .login-form {
-          text-align: left;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
+                .role-card.active {
+                    background: var(--glass-highlight);
+                    border-color: var(--role-color);
+                    box-shadow: 0 0 15px var(--primary-glow-low);
+                }
 
-        .input-group label {
-          display: block;
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          text-transform: uppercase;
-          font-weight: 700;
-          margin-bottom: 0.5rem;
-        }
+                .role-icon { font-size: 1.5rem; display: block; margin-bottom: 0.5rem; }
+                .role-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 
-        .input-group input {
-          width: 100%;
-          background: var(--glass-highlight);
-          border: 1px solid var(--glass-border);
-          border-radius: var(--radius-md);
-          padding: 0.8rem 1rem;
-          color: white;
-          outline: none;
-          transition: border-color 0.2s;
-        }
+                .auth-form { display: flex; flex-direction: column; gap: 1.5rem; }
+                .form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+                .form-group input {
+                    width: 100%;
+                    background: var(--glass-highlight);
+                    border: 1px solid var(--glass-border);
+                    padding: 0.9rem;
+                    border-radius: var(--radius-md);
+                    color: white;
+                    outline: none;
+                }
 
-        .input-group input:focus {
-          border-color: var(--primary);
-        }
+                .error-msg { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; }
 
-        .login-error {
-          color: #ef4444;
-          font-size: 0.875rem;
-          text-align: center;
-        }
+                .divider { text-align: center; position: relative; margin: 1rem 0; }
+                .divider::before { content: ''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: var(--glass-border); }
+                .divider span { background: var(--bg-dark); padding: 0 1rem; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; position: relative; }
 
-        .login-footer {
-          margin-top: 2rem;
-          font-size: 0.75rem;
-          color: var(--text-muted);
-          line-height: 1.4;
-        }
+                .google-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.75rem;
+                    background: white;
+                    color: #1a1a1a;
+                    border: none;
+                    padding: 0.8rem;
+                    border-radius: var(--radius-md);
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .google-btn:hover { background: #f0f0f0; }
+                .google-btn img { width: 18px; }
 
-        .w-full { width: 100%; }
-        .mt-1 { margin-top: 1rem; }
+                .login-visual-container {
+                    background-size: cover;
+                    background-position: center;
+                    position: relative;
+                }
 
-        .login-divider {
-          display: flex;
-          align-items: center;
-          text-align: center;
-          margin: 1.5rem 0;
-          color: var(--text-muted);
-          font-size: 0.75rem;
-          font-weight: 700;
-        }
+                .visual-overlay {
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(to top, var(--bg-dark) 10%, transparent 90%);
+                    display: flex;
+                    align-items: flex-end;
+                    padding: 4rem;
+                }
 
-        .login-divider::before,
-        .login-divider::after {
-          content: '';
-          flex: 1;
-          border-bottom: 1px solid var(--glass-border);
-        }
+                .visual-content { color: white; }
+                .tag { 
+                    display: inline-block; 
+                    background: var(--primary); 
+                    font-size: 0.65rem; 
+                    font-weight: 800; 
+                    padding: 0.25rem 0.75rem; 
+                    border-radius: var(--radius-full); 
+                    margin-bottom: 1rem;
+                }
+                .visual-content h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 800; line-height: 1.1; }
+                .visual-content p { color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 2.5rem; }
 
-        .login-divider:not(:empty)::before { margin-right: 1rem; }
-        .login-divider:not(:empty)::after { margin-left: 1rem; }
+                .mini-features { display: flex; flex-direction: column; gap: 1.5rem; }
+                .mini-feat { display: flex; gap: 1rem; align-items: flex-start; }
+                .mini-feat span { font-size: 1.25rem; background: var(--glass-highlight); padding: 0.5rem; border-radius: 8px; }
+                .mini-feat strong { display: block; font-size: 0.95rem; margin-bottom: 0.25rem; }
+                .mini-feat p { font-size: 0.8rem; margin: 0; }
 
-        .btn-google {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          background: white;
-          color: #1a1a1b;
-          border: none;
-          padding: 0.8rem;
-          border-radius: var(--radius-md);
-          font-weight: 600;
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: transform 0.2s, background 0.2s;
-        }
-
-        .btn-google:hover {
-          background: #f1f1f1;
-          transform: translateY(-2px);
-        }
-
-        .google-icon {
-          font-weight: 900;
-          color: #4285F4;
-          font-size: 1.1rem;
-        }
-      `}</style>
+                @media (max-width: 1024px) {
+                    .login-split-view { grid-template-columns: 1fr; }
+                    .login-visual-container { display: none; }
+                }
+            `}</style>
     </div>
   );
 };

@@ -21,38 +21,36 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
   return (
     <div className={`app-container system-${role}`}>
       <nav className="glass-card main-nav">
-        <div className="nav-logo" onClick={() => onNavClick?.('discovery')} style={{ cursor: 'pointer' }}>
+        <div className="nav-logo" onClick={() => onNavClick?.('home')} style={{ cursor: 'pointer' }}>
           <span className="system-icon-nav">{config.icon}</span>
           <span className="text-gradient">Medi{config.name}</span>
         </div>
 
         <div className="nav-links">
-          {role === 'user' && (
+          {currentView !== 'landing' && (
             <>
               <button
-                className={`nav-link-btn ${currentView === 'hospitals' ? 'active' : ''}`}
-                onClick={() => onNavClick?.('hospitals')}
+                className={`nav-link-btn ${currentView === 'discovery' ? 'active' : ''}`}
+                onClick={() => onNavClick?.('discovery')}
               >
-                Hospitals
+                Home
               </button>
-              <button
-                className={`nav-link-btn ${currentView === 'doctors' ? 'active' : ''}`}
-                onClick={() => onNavClick?.('doctors')}
-              >
-                Find Doctors
-              </button>
-              <button
-                className={`nav-link-btn ${currentView === 'appointments' ? 'active' : ''}`}
-                onClick={() => onNavClick?.('appointments')}
-              >
-                My Appointments
-              </button>
-            </>
-          )}
-          {role === 'doctor' && (
-            <>
-              <a href="#profile">Clinical Feed</a>
-              <a href="#patients">Patient Cases</a>
+              {role === 'user' && (
+                <>
+                  <button
+                    className={`nav-link-btn ${currentView === 'hospitals' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('hospitals')}
+                  >
+                    Hospitals
+                  </button>
+                  <button
+                    className={`nav-link-btn ${currentView === 'appointments' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('appointments')}
+                  >
+                    My Appointments
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
@@ -225,6 +223,15 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
           margin: 0 auto;
           padding: 2rem;
           animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .entrance-anim {
+          animation: entrance 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes entrance {
+          from { opacity: 0; transform: scale(0.98); }
+          to { opacity: 1; transform: scale(1); }
         }
 
         @keyframes slideUp {
