@@ -15,9 +15,16 @@ import LandingPage from './components/dashboards/LandingPage';
 
 const MainContent = () => {
   const { user, isInitialized } = useAuth();
-  const [isStarted, setIsStarted] = useState(false);
-  const [selectedSystem, setSelectedSystem] = useState('user');
-  const [activeSubView, setActiveSubView] = useState('discovery');
+  const [isStarted, setIsStarted] = React.useState(false);
+  const [selectedSystem, setSelectedSystem] = React.useState('user');
+  const [activeSubView, setActiveSubView] = React.useState('discovery');
+
+  // Automatically start if authenticated (handles OAuth redirect)
+  React.useEffect(() => {
+    if (user?.isAuthenticated) {
+      setIsStarted(true);
+    }
+  }, [user?.isAuthenticated]);
 
   if (!isInitialized) return null;
 
@@ -39,6 +46,9 @@ const MainContent = () => {
       setActiveSubView(view);
     } else if (view === 'home') {
       setIsStarted(false);
+      if (user?.isAuthenticated) {
+        setActiveSubView('discovery');
+      }
     }
   };
 

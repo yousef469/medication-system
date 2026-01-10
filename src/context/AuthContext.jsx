@@ -9,21 +9,25 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // 1. Check active sessions and enforce persistence rules
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        const initAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                fetchProfile(session.user);
+                await fetchProfile(session.user);
             } else {
                 setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
                 setIsInitialized(true);
             }
-        });
+        };
+
+        initAuth();
 
         // 2. Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
-                fetchProfile(session.user);
+                await fetchProfile(session.user);
             } else {
                 setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
+                setIsInitialized(true);
             }
         });
 
