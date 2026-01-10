@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
+import { useAuth } from '../../context/AuthContext';
 
 const UserDashboard = () => {
   const { hospitals, submitRequest } = useClinical();
+  const { user } = useAuth();
   const [requestContent, setRequestContent] = useState('');
   const [selectedHospital, setSelectedHospital] = useState('57357 Children\'s Cancer Hospital');
   const [urgency, setUrgency] = useState('NEXT HOUR');
@@ -10,9 +12,15 @@ const UserDashboard = () => {
   const [submitted, setSubmitted] = useState(false);
   const fileInputRef = useRef(null);
 
+  const isGuest = !user?.isAuthenticated;
+
   const handleRequest = (e) => {
     e.preventDefault();
-    submitRequest("John Doe", selectedHospital, requestContent, urgency, 'text');
+    if (isGuest) {
+      alert("Please sign in to submit a clinical request.");
+      return;
+    }
+    submitRequest(user.name || "Guest Patient", selectedHospital, requestContent, urgency, 'text');
     setSubmitted(true);
     setRequestContent('');
     setTimeout(() => setSubmitted(false), 3000);
@@ -75,8 +83,8 @@ const UserDashboard = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn-primary w-full mt-1">
-              {submitted ? '✓ Request Transmitted' : 'Submit Diagnostic Request'}
+            <button type="submit" className={`btn-primary w-full mt-1 ${isGuest ? 'guest-btn' : ''}`}>
+              {submitted ? '✓ Request Transmitted' : isGuest ? '🔐 Sign In to Submit' : 'Submit Diagnostic Request'}
             </button>
           </form>
         </section>
@@ -166,6 +174,13 @@ const UserDashboard = () => {
         .hosp-loc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
         .mini-tags { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
         .m-tag { font-size: 0.65rem; background: var(--glass-highlight); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); }
+
+        .guest-btn { 
+          background: var(--accent) !important; 
+          border-color: var(--accent) !important;
+          opacity: 0.8;
+        }
+        .guest-btn:hover { opacity: 1; transform: translateY(-2px); }
 
         .w-full { width: 100%; }
         .mt-1 { margin-top: 1rem; }

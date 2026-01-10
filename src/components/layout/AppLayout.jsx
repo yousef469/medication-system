@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 
-const AppLayout = ({ children }) => {
+const AppLayout = ({ children, onNavClick, currentView }) => {
   const { user, logout } = useAuth();
   const role = user?.role || 'user';
+  const isGuest = role === 'user' && !user?.isAuthenticated;
 
   const getSystemConfig = () => {
     switch (role) {
@@ -20,7 +21,7 @@ const AppLayout = ({ children }) => {
   return (
     <div className={`app-container system-${role}`}>
       <nav className="glass-card main-nav">
-        <div className="nav-logo">
+        <div className="nav-logo" onClick={() => onNavClick?.('discovery')} style={{ cursor: 'pointer' }}>
           <span className="system-icon-nav">{config.icon}</span>
           <span className="text-gradient">Medi{config.name}</span>
         </div>
@@ -28,22 +29,30 @@ const AppLayout = ({ children }) => {
         <div className="nav-links">
           {role === 'user' && (
             <>
-              <a href="#hospitals">Hospitals</a>
-              <a href="#doctors">Find Doctors</a>
-              <a href="#appointments">My Appointments</a>
+              <button
+                className={`nav-link-btn ${currentView === 'hospitals' ? 'active' : ''}`}
+                onClick={() => onNavClick?.('hospitals')}
+              >
+                Hospitals
+              </button>
+              <button
+                className={`nav-link-btn ${currentView === 'doctors' ? 'active' : ''}`}
+                onClick={() => onNavClick?.('doctors')}
+              >
+                Find Doctors
+              </button>
+              <button
+                className={`nav-link-btn ${currentView === 'appointments' ? 'active' : ''}`}
+                onClick={() => onNavClick?.('appointments')}
+              >
+                My Appointments
+              </button>
             </>
           )}
           {role === 'doctor' && (
             <>
               <a href="#profile">Clinical Feed</a>
               <a href="#patients">Patient Cases</a>
-              <a href="#diagnostics">Local AI Lab</a>
-            </>
-          )}
-          {role === 'secretary' && (
-            <>
-              <a href="#queue">Patient Queue</a>
-              <a href="#schedules">Doctor Rosters</a>
             </>
           )}
         </div>
@@ -52,11 +61,15 @@ const AppLayout = ({ children }) => {
           <div className="user-info">
             <span className="user-name">{user?.name}</span>
             <span className="role-tag" style={{ color: config.color, borderColor: config.color + '44' }}>
-              {role}
+              {isGuest ? 'GUEST' : role}
             </span>
           </div>
-          {role !== 'user' && (
-            <button className="btn-logout" onClick={logout} title="Secure Logout">
+          {isGuest ? (
+            <button className="btn-login-nav" onClick={() => onNavClick?.('login')}>
+              Sign In
+            </button>
+          ) : (
+            <button className="btn-logout" onClick={logout} title="Logout">
               ✕
             </button>
           )}
@@ -148,6 +161,42 @@ const AppLayout = ({ children }) => {
           text-transform: uppercase;
           letter-spacing: 0.1em;
           border: 1px solid transparent;
+        }
+
+        .nav-link-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          padding: 0.5rem 1rem;
+          border-radius: var(--radius-sm);
+        }
+
+        .nav-link-btn:hover, .nav-link-btn.active {
+          color: white;
+          background: var(--glass-highlight);
+          text-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .btn-login-nav {
+          background: var(--primary);
+          color: white;
+          border: none;
+          padding: 0.5rem 1.25rem;
+          border-radius: var(--radius-full);
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 4px 15px var(--primary-glow-low);
+        }
+
+        .btn-login-nav:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px var(--primary-glow);
         }
 
         .btn-logout {

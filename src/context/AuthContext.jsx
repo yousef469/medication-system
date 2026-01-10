@@ -8,22 +8,22 @@ export const AuthProvider = ({ children }) => {
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
-        // 1. Check active sessions
+        // 1. Check active sessions and enforce persistence rules
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 fetchProfile(session.user);
             } else {
-                setUser({ role: 'user', name: 'Guest Patient' });
+                setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
                 setIsInitialized(true);
             }
         });
 
         // 2. Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
                 fetchProfile(session.user);
             } else {
-                setUser({ role: 'user', name: 'Guest Patient' });
+                setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
             }
         });
 
@@ -39,6 +39,17 @@ export const AuthProvider = ({ children }) => {
                 .single();
 
             if (data) {
+                // Enforce Professional Session Rule
+                const isProfessional = ['doctor', 'secretary', 'it', 'admin'].includes(data.role);
+                const hasSessionFlag = sessionStorage.getItem(`medi_pro_session_${supabaseUser.id}`);
+
+                if (isProfessional && !hasSessionFlag) {
+                    // If professional but no session flag (browser restart), log out
+                    await supabase.auth.signOut();
+                    setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
+                    return;
+                }
+
                 setUser({
                     id: supabaseUser.id,
                     email: supabaseUser.email,
@@ -46,8 +57,12 @@ export const AuthProvider = ({ children }) => {
                     name: data.name || supabaseUser.email.split('@')[0],
                     isAuthenticated: true
                 });
+
+                // Ensure flag is set if they are professional
+                if (isProfessional) {
+                    sessionStorage.setItem(`medi_pro_session_${supabaseUser.id}`, 'true');
+                }
             } else {
-                // Fallback if profile doesn't exist yet
                 setUser({
                     id: supabaseUser.id,
                     email: supabaseUser.email,
@@ -69,10 +84,25 @@ export const AuthProvider = ({ children }) => {
             password,
         });
         if (error) throw error;
+
+        // Fetch profile to set the session flag immediately on login
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
+
+        if (profile && ['doctor', 'secretary', 'it', 'admin'].includes(profile.role)) {
+            sessionStorage.setItem(`medi_pro_session_${data.user.id}`, 'true');
+        }
+
         return data;
     };
 
     const logout = async () => {
+        if (user?.id) {
+            sessionStorage.removeItem(`medi_pro_session_${user.id}`);
+        }
         await supabase.auth.signOut();
     };
 
