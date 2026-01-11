@@ -96,8 +96,8 @@ export const ClinicalProvider = ({ children }) => {
             id: 'h-1',
             name: "57357 Children's Cancer Hospital",
             location: "Sayeda Zeinab, Cairo",
-            image: "hosp57357_egypt_exterior_1768085195254.png",
-            description: "World-class pediatric oncology center providing free care to children with cancer across the Middle East.",
+            image: "/hosp57357_egypt_exterior_1768085195254.png",
+            description: "World-class pediatric oncology center providing free care to children with cancer across the Middle East. Specialized in advanced radiotherapy and bone marrow transplants.",
             sections: ["Pediatric Oncology", "Radiotherapy", "Bone Marrow Transplant", "Clinical Research"],
             busyStatus: "high",
             capacity: "95%"
@@ -106,8 +106,8 @@ export const ClinicalProvider = ({ children }) => {
             id: 'h-2',
             name: "Kasr Al-Ainy Hospital",
             location: "Manial, Cairo",
-            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Kasr_Al_Ainy_Hospital.jpg/300px-Kasr_Al_Ainy_Hospital.jpg",
-            description: "The oldest and largest medical school and hospital in Egypt and the Middle East, affiliated with Cairo University.",
+            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Kasr_Al_Ainy_Hospital.jpg/800px-Kasr_Al_Ainy_Hospital.jpg",
+            description: "The historic cornerstone of Egyptian medicine. Afilliated with Cairo University, it remains the largest comprehensive teaching hospital in the region.",
             sections: ["Emergency Medicine", "General Surgery", "Internal Medicine", "Neurology"],
             busyStatus: "maximal",
             capacity: "100%"
@@ -117,7 +117,7 @@ export const ClinicalProvider = ({ children }) => {
             name: "Al-Salam International Hospital",
             location: "Maadi, Cairo",
             image: "https://www.alsalaminternationalhospital.com/assets/images/logo.png",
-            description: "A leading private international hospital in Egypt offering luxury medical services and advanced diagnostics.",
+            description: "JCI accredited facility offering premium private medical services, advanced diagnostics, and cutting-edge surgical suites.",
             sections: ["Cardiology", "Orthopedics", "Plastic Surgery", "VIP Maternity"],
             busyStatus: "moderate",
             capacity: "75%"
@@ -125,9 +125,9 @@ export const ClinicalProvider = ({ children }) => {
         {
             id: 'h-4',
             name: "Magdi Yacoub Heart Foundation",
-            location: "Aswan / Cairo",
+            location: "Aswan",
             image: "https://www.magdiyacoub.org/assets/img/logo-en.png",
-            description: "Pioneering cardiac surgery and research center providing top-tier heart care for all, regardless of ability to pay.",
+            description: "A beacon of hope in Upper Egypt. This world-renowned center provides free, state-of-the-art cardiovascular care to underprivileged patients.",
             sections: ["Cardiac Surgery", "Pediatric Cardiology", "Heart Failure Clinic"],
             busyStatus: "high",
             capacity: "90%"
@@ -147,15 +147,18 @@ export const ClinicalProvider = ({ children }) => {
         return suggestedSection;
     };
 
-    const submitRequest = async (patientName, hospital, content, urgency, inputType = 'text') => {
-        const suggestedSection = analyzeRequest(content);
+    const submitRequest = async (patientName, hospital, content, urgency, inputType = 'text', fileUrl = null, voiceUrl = null) => {
+        const suggestedSection = analyzeRequest(content || '');
         const { data, error } = await supabase.from('requests').insert([{
             patient_name: patientName,
             hospital: hospital,
             section: suggestedSection,
             diagnosis: content,
             urgency: urgency,
-            status: 'PENDING_SECRETARY'
+            status: 'PENDING_SECRETARY',
+            input_type: inputType,
+            file_url: fileUrl,
+            voice_url: voiceUrl
         }]).select();
 
         if (error) console.error('Error submitting request:', error);

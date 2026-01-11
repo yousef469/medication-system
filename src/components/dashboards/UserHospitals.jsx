@@ -110,7 +110,8 @@ const UserHospitals = () => {
                     .booking-panel h3 { margin-bottom: 2rem; }
                     .form-group { margin-bottom: 1.5rem; }
                     .form-group label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
-                    .form-group select, .form-group textarea { width: 100%; background: var(--glass-highlight); border: 1px solid var(--glass-border); color: white; padding: 0.8rem; border-radius: var(--radius-md); }
+                    .form-group select, .form-group textarea { width: 100%; background: var(--glass-highlight); border: 1px solid var(--glass-border); color: white; padding: 0.8rem; border-radius: var(--radius-md); outline: none; }
+                    .form-group select option { background: #1a1a2e; color: white; }
                     .form-group textarea { height: 100px; resize: none; }
                     .auth-nudge { font-size: 0.75rem; color: var(--accent); text-align: center; margin-top: 1rem; }
                     .success-msg { text-align: center; padding: 2rem 0; }

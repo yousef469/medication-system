@@ -28,6 +28,9 @@ CREATE TABLE IF NOT EXISTS public.requests (
     urgency TEXT,
     status TEXT DEFAULT 'PENDING_SECRETARY',
     assigned_doctor_id UUID REFERENCES public.profiles(id),
+    input_type TEXT DEFAULT 'text',
+    file_url TEXT,
+    voice_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -45,7 +45,7 @@ const LandingPage = ({ onGetStarted }) => {
                 <div className="hospitals-preview-grid">
                     {hospitals.map(h => (
                         <div key={h.id} className="glass-card hospital-preview-card">
-                            <div className="preview-image" style={{ backgroundImage: `url(${h.image.startsWith('hosp') ? '/' + h.image : h.image})` }}>
+                            <div className="preview-image" style={{ backgroundImage: `url(${h.image})` }}>
                                 <span className={`status-badge ${h.busyStatus}`}>{h.busyStatus.toUpperCase()}</span>
                             </div>
                             <div className="preview-info">

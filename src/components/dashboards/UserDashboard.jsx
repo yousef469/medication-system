@@ -8,21 +8,52 @@ const UserDashboard = () => {
   const [requestContent, setRequestContent] = useState('');
   const [selectedHospital, setSelectedHospital] = useState('57357 Children\'s Cancer Hospital');
   const [urgency, setUrgency] = useState('NEXT HOUR');
-  const [isRecording, setIsRecording] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const fileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [voiceUrl, setVoiceUrl] = useState(null);
 
-  const isGuest = !user?.isAuthenticated;
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      // Simulate upload by setting a placeholder URL
+      setRequestContent(prev => prev + `\n[Attached File: ${file.name}]`);
+    }
+  };
 
-  const handleRequest = (e) => {
+  const handleVoiceToggle = () => {
+    if (!isRecording) {
+      setIsRecording(true);
+      // In a real app, use MediaRecorder API
+    } else {
+      setIsRecording(false);
+      setVoiceUrl('v-placeholder-url');
+      setRequestContent(prev => prev + `\n[Voice Note Recorded]`);
+    }
+  };
+
+  const handleRequest = async (e) => {
     e.preventDefault();
     if (isGuest) {
       alert("Please sign in to submit a clinical request.");
       return;
     }
-    submitRequest(user.name || "Guest Patient", selectedHospital, requestContent, urgency, 'text');
+
+    const inputType = voiceUrl ? 'voice' : selectedFile ? 'file' : 'text';
+
+    await submitRequest(
+      user.name || "Guest Patient",
+      selectedHospital,
+      requestContent,
+      urgency,
+      inputType,
+      selectedFile ? 'f-placeholder-url' : null,
+      voiceUrl
+    );
+
     setSubmitted(true);
     setRequestContent('');
+    setSelectedFile(null);
+    setVoiceUrl(null);
     setTimeout(() => setSubmitted(false), 3000);
   };
 
@@ -56,13 +87,13 @@ const UserDashboard = () => {
                   required
                 ></textarea>
                 <div className="form-tools">
-                  <button type="button" className={`tool-btn ${isRecording ? 'recording' : ''}`} onClick={() => setIsRecording(!isRecording)}>
-                    {isRecording ? '⏹ Recording...' : '🎤 Voice'}
+                  <button type="button" className={`tool-btn ${isRecording ? 'recording' : ''}`} onClick={handleVoiceToggle}>
+                    {isRecording ? '⏹ Stop Recording' : '🎤 Voice Note'}
                   </button>
                   <button type="button" className="tool-btn" onClick={() => fileInputRef.current.click()}>
-                    📁 Attach Files
+                    {selectedFile ? `📁 ${selectedFile.name.slice(0, 10)}...` : '📁 Attach Files'}
                   </button>
-                  <input type="file" ref={fileInputRef} hidden />
+                  <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} />
                 </div>
               </div>
             </div>
@@ -128,6 +159,11 @@ const UserDashboard = () => {
           color: white;
           padding: 0.8rem;
           outline: none;
+        }
+
+        .form-group select option {
+          background: #1a1a2e;
+          color: white;
         }
 
         textarea { height: 120px; resize: none; }
