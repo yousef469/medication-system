@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
         const safetyTimeout = setTimeout(() => {
             if (!isInitialized) {
                 console.warn('Auth initialization timed out. Checking connectivity...');
+                setUser(prev => prev || { role: 'user', name: 'Guest Patient', isAuthenticated: false });
                 setIsInitialized(true);
             }
         }, 5000);

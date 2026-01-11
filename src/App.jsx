@@ -31,7 +31,7 @@ const MainContent = () => {
   if (!isInitialized) return null;
 
   // 1. Landing Mode for Guests
-  if (!user.isAuthenticated && !isStarted) {
+  if (!user?.isAuthenticated && !isStarted) {
     return (
       <AppLayout onNavClick={() => setIsStarted(true)} currentView="landing">
         <LandingPage onGetStarted={() => setIsStarted(true)} />
