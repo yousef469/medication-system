@@ -12,6 +12,7 @@ import UserDoctors from './components/dashboards/UserDoctors';
 import UserAppointments from './components/dashboards/UserAppointments';
 
 import LandingPage from './components/dashboards/LandingPage';
+import { ClinicalProvider } from './context/ClinicalContext';
 
 const MainContent = () => {
   const { user, isInitialized } = useAuth();
@@ -107,7 +108,6 @@ const MainContent = () => {
   );
 };
 
-import { ClinicalProvider } from './context/ClinicalContext';
 
 function App() {
   return (

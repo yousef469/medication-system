@@ -10,6 +10,11 @@ const UserDashboard = () => {
   const [urgency, setUrgency] = useState('NEXT HOUR');
   const [selectedFile, setSelectedFile] = useState(null);
   const [voiceUrl, setVoiceUrl] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const isGuest = !user?.isAuthenticated;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];

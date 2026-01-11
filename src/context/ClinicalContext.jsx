@@ -78,7 +78,7 @@ export const ClinicalProvider = ({ children }) => {
 
     const fetchLogs = async () => {
         const { data } = await supabase.from('system_logs').select('*').order('created_at', { ascending: false }).limit(50);
-        if (data) setRequests(data);
+        if (data) setSystemLogs(data);
     };
 
     const handleRequestChange = (payload) => {
