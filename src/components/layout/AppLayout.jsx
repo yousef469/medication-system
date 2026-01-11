@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import EmergencyOverlay from '../common/EmergencyOverlay';
+import AIAssistant from '../dashboards/AIAssistant';
 
 const AppLayout = ({ children, onNavClick, currentView }) => {
   const { user, logout } = useAuth();
+  const [isSOSOpen, setIsSOSOpen] = useState(false);
+
   const role = user?.role || 'user';
   const isGuest = role === 'user' && !user?.isAuthenticated;
 
@@ -20,6 +24,9 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
 
   return (
     <div className={`app-container system-${role}`}>
+      <EmergencyOverlay isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
+      <AIAssistant />
+
       <nav className="glass-card main-nav">
         <div className="nav-logo" onClick={() => onNavClick?.('home')} style={{ cursor: 'pointer' }}>
           <span className="system-icon-nav">{config.icon}</span>
@@ -33,7 +40,13 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
                 className={`nav-link-btn ${currentView === 'discovery' ? 'active' : ''}`}
                 onClick={() => onNavClick?.('discovery')}
               >
-                Home
+                Triage Hub
+              </button>
+              <button
+                className={`nav-link-btn ${currentView === 'medication-hub' ? 'active' : ''}`}
+                onClick={() => onNavClick?.('medication-hub')}
+              >
+                Medication Info
               </button>
               {!isGuest && role === 'user' && (
                 <>
@@ -47,7 +60,7 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
                     className={`nav-link-btn ${currentView === 'appointments' ? 'active' : ''}`}
                     onClick={() => onNavClick?.('appointments')}
                   >
-                    My Appointments
+                    Appointments
                   </button>
                 </>
               )}
@@ -56,6 +69,11 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
         </div>
 
         <div className="nav-profile">
+          {(!isGuest || currentView !== 'landing') && (
+            <button className="sos-pill" onClick={() => setIsSOSOpen(true)}>
+              <span>🆘</span> SOS
+            </button>
+          )}
           <div className="user-info">
             <span className="user-name">{user?.name}</span>
             <span className="role-tag" style={{ color: config.color, borderColor: config.color + '44' }}>
@@ -195,6 +213,28 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
         .btn-login-nav:hover {
           transform: translateY(-1px);
           box-shadow: 0 6px 20px var(--primary-glow);
+        }
+
+        .sos-pill {
+          background: #ef4444;
+          color: white;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: var(--radius-full);
+          font-weight: 800;
+          font-size: 0.75rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          animation: sos-glow 2s infinite;
+          box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes sos-glow {
+          0% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
+          50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+          100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.4); }
         }
 
         .btn-logout {

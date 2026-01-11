@@ -8,12 +8,26 @@ export const AuthProvider = ({ children }) => {
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
+        // Safety timeout to prevent permanent blank screen (e.g. if Supabase hangs)
+        const safetyTimeout = setTimeout(() => {
+            if (!isInitialized) {
+                console.warn('Auth initialization timed out. Checking connectivity...');
+                setIsInitialized(true);
+            }
+        }, 5000);
+
         // 1. Check active sessions and enforce persistence rules
         const initAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                await fetchProfile(session.user);
-            } else {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    await fetchProfile(session.user);
+                } else {
+                    setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
+                    setIsInitialized(true);
+                }
+            } catch (err) {
+                console.error('Auth initialization error:', err);
                 setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
                 setIsInitialized(true);
             }
@@ -31,7 +45,10 @@ export const AuthProvider = ({ children }) => {
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            clearTimeout(safetyTimeout);
+            subscription.unsubscribe();
+        };
     }, []);
 
     const fetchProfile = async (supabaseUser) => {

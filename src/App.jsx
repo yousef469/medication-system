@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './components/layout/AppLayout';
 import DoctorProfile from './components/doctors/DoctorProfile';
@@ -12,16 +12,17 @@ import UserDoctors from './components/dashboards/UserDoctors';
 import UserAppointments from './components/dashboards/UserAppointments';
 
 import LandingPage from './components/dashboards/LandingPage';
+import MedicationHub from './components/dashboards/MedicationHub';
 import { ClinicalProvider } from './context/ClinicalContext';
 
 const MainContent = () => {
   const { user, isInitialized } = useAuth();
-  const [isStarted, setIsStarted] = React.useState(false);
-  const [selectedSystem, setSelectedSystem] = React.useState('user');
-  const [activeSubView, setActiveSubView] = React.useState('discovery');
+  const [isStarted, setIsStarted] = useState(false);
+  const [selectedSystem, setSelectedSystem] = useState('user');
+  const [activeSubView, setActiveSubView] = useState('discovery');
 
   // Automatically start if authenticated (handles OAuth redirect)
-  React.useEffect(() => {
+  useEffect(() => {
     if (user?.isAuthenticated) {
       setIsStarted(true);
     }
@@ -74,6 +75,7 @@ const MainContent = () => {
       switch (activeSubView) {
         case 'hospitals': return <UserHospitals />;
         case 'appointments': return <UserAppointments />;
+        case 'medication-hub': return <MedicationHub />;
         case 'login': return <LoginView />;
         default: return <UserDashboard />;
       }

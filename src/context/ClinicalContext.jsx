@@ -100,7 +100,13 @@ export const ClinicalProvider = ({ children }) => {
             description: "World-class pediatric oncology center providing free care to children with cancer across the Middle East. Specialized in advanced radiotherapy and bone marrow transplants.",
             sections: ["Pediatric Oncology", "Radiotherapy", "Bone Marrow Transplant", "Clinical Research"],
             busyStatus: "high",
-            capacity: "95%"
+            capacity: "95%",
+            contact: "+20 2 25351500",
+            treatments: [
+                { name: "Chemotherapy", cost: "Free/Subsidized" },
+                { name: "Radiotherapy", cost: "Free/Subsidized" },
+                { name: "Bone Marrow Transplant", cost: "Free/Subsidized" }
+            ]
         },
         {
             id: 'h-2',
@@ -110,7 +116,12 @@ export const ClinicalProvider = ({ children }) => {
             description: "The historic cornerstone of Egyptian medicine. Afilliated with Cairo University, it remains the largest comprehensive teaching hospital in the region.",
             sections: ["Emergency Medicine", "General Surgery", "Internal Medicine", "Neurology"],
             busyStatus: "maximal",
-            capacity: "100%"
+            capacity: "100%",
+            contact: "+20 2 23646430",
+            treatments: [
+                { name: "Brain Surgery", cost: "Economy (Public)" },
+                { name: "General Triage", cost: "Minimal" }
+            ]
         },
         {
             id: 'h-3',
@@ -120,7 +131,12 @@ export const ClinicalProvider = ({ children }) => {
             description: "JCI accredited facility offering premium private medical services, advanced diagnostics, and cutting-edge surgical suites.",
             sections: ["Cardiology", "Orthopedics", "Plastic Surgery", "VIP Maternity"],
             busyStatus: "moderate",
-            capacity: "75%"
+            capacity: "75%",
+            contact: "19885",
+            treatments: [
+                { name: "Bypass Surgery", cost: "Premium (Private)" },
+                { name: "Knee Replacement", cost: "Premium (Private)" }
+            ]
         },
         {
             id: 'h-4',
@@ -130,21 +146,55 @@ export const ClinicalProvider = ({ children }) => {
             description: "A beacon of hope in Upper Egypt. This world-renowned center provides free, state-of-the-art cardiovascular care to underprivileged patients.",
             sections: ["Cardiac Surgery", "Pediatric Cardiology", "Heart Failure Clinic"],
             busyStatus: "high",
-            capacity: "90%"
+            capacity: "90%",
+            contact: "19731",
+            treatments: [
+                { name: "Heart Transplant", cost: "Free" },
+                { name: "Pediatric Cardiac Repair", cost: "Free" }
+            ]
         },
     ]);
 
     const analyzeRequest = (content) => {
         let suggestedSection = "General Medicine";
-        const lower = content.toLowerCase();
+        const lower = content?.toLowerCase() || '';
 
-        // Egyptian Context Keywords (English & Arabic)
         if (lower.includes("brain") || lower.includes("head") || lower.includes("مخ") || lower.includes("رأس")) suggestedSection = "Neurology";
         if (lower.includes("heart") || lower.includes("chest") || lower.includes("قلب") || lower.includes("صدر")) suggestedSection = "Cardiology";
         if (lower.includes("cancer") || lower.includes("tumor") || lower.includes("سرطان") || lower.includes("ورم")) suggestedSection = "Oncology";
-        if (lower.includes("pet") || lower.includes("dog") || lower.includes("cat") || lower.includes("كلب") || lower.includes("قطة")) suggestedSection = "Veterinary";
 
         return suggestedSection;
+    };
+
+    // Hybrid AI Logic: Local Rules -> Gemini Fallback
+    const aiConsultation = async (query, inputType = 'text', fileData = null) => {
+        const lower = query.toLowerCase();
+
+        // 1. Local Offline Mode (Instant)
+        if (lower.includes("cost") || lower.includes("how much") || lower.includes("سعر")) {
+            return {
+                type: 'LOCAL',
+                answer: "Most public hospitals like Kasr Al-Ainy are free or low-cost. Private centers like Al-Salam have premium pricing. 57357 and Magdi Yacoub are free for eligible patients. Which specific treatment are you interested in?",
+                suggestion: 'MedicationHub'
+            };
+        }
+
+        if (lower.includes("ambulance") || lower.includes("emergency") || lower.includes("طوارئ")) {
+            return {
+                type: 'LOCAL',
+                answer: "I've detected an emergency. Please use the red SOS button for immediate ambulance routing.",
+                suggestion: 'SOS'
+            };
+        }
+
+        // 2. Gemini fallback (Simulated for Now - Complex Reasoning)
+        return {
+            type: 'GEMINI',
+            answer: "Based on my clinical database and your symptoms, I recommend visiting " +
+                (lower.includes("child") ? "57357 Hospital" : "Kasr Al-Ainy") +
+                " for specialized oncology triage. Would you like me to book a preliminary checkup?",
+            suggestion: 'Hospitals'
+        };
     };
 
     const submitRequest = async (patientName, hospital, content, urgency, inputType = 'text', fileUrl = null, voiceUrl = null) => {
@@ -190,7 +240,8 @@ export const ClinicalProvider = ({ children }) => {
             systemLogs,
             submitRequest,
             routeToDoctor,
-            logEvent
+            logEvent,
+            aiConsultation
         }}>
             {children}
         </ClinicalContext.Provider>

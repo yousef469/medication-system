@@ -28,7 +28,13 @@ const UserDashboard = () => {
   const handleVoiceToggle = () => {
     if (!isRecording) {
       setIsRecording(true);
-      // In a real app, use MediaRecorder API
+      // Simulate high-accuracy Voice-to-Text (Whisper Distil)
+      setTimeout(() => {
+        setIsRecording(false);
+        const voiceText = "I have a severe headache and blurred vision for the last 2 hours. Need neurological triage.";
+        setRequestContent(prev => prev ? prev + " " + voiceText : voiceText);
+        setVoiceUrl("blob:v-123");
+      }, 3000);
     } else {
       setIsRecording(false);
       setVoiceUrl('v-placeholder-url');
