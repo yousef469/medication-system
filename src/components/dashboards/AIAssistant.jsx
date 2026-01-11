@@ -3,7 +3,6 @@ import { useClinical } from '../../context/ClinicalContext';
 
 const AIAssistant = () => {
     const { aiConsultation } = useClinical();
-    const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         { role: 'assistant', text: 'Hello! I am your medical assistant. I can help you find the right hospital, check treatment costs, or analyze your symptoms. How can I help you today?' }
     ]);
@@ -43,7 +42,6 @@ const AIAssistant = () => {
     const toggleVoice = () => {
         setIsRecording(!isRecording);
         if (!isRecording) {
-            // Simulate voice-to-text accuracy (Whisper)
             setTimeout(() => {
                 setIsRecording(false);
                 handleSend("I need to find a hospital for my child with better costs than Al-Salam.");
@@ -52,176 +50,255 @@ const AIAssistant = () => {
     };
 
     return (
-        <>
-            <button className={`ai-trigger ${isOpen ? 'active' : ''}`} onClick={() => setIsOpen(!isOpen)}>
-                {isOpen ? '✕' : '🤖'}
-            </button>
-
-            {isOpen && (
-                <div className="ai-chat-window glass-card fade-in">
-                    <div className="chat-header">
+        <div className="ai-page-container fade-in">
+            <div className="ai-chat-window glass-card">
+                <div className="chat-header">
+                    <div className="avatar__wrapper">
                         <div className="status-dot"></div>
+                        <span className="ai-avatar">🤖</span>
+                    </div>
+                    <div className="header-info">
                         <h3>Clinical AI Assistant</h3>
                         <span className="mode-badge">Hybrid Local/Gemini</span>
                     </div>
+                </div>
 
-                    <div className="chat-messages" ref={scrollRef}>
-                        {messages.map((m, i) => (
-                            <div key={i} className={`message ${m.role}`}>
+                <div className="chat-messages" ref={scrollRef}>
+                    {messages.map((m, i) => (
+                        <div key={i} className={`message ${m.role}`}>
+                            <div className="message-content">
                                 <div className="bubble">
                                     {m.text}
-                                    {m.type === 'LOCAL' && <span className="source-tag">Local Offline</span>}
-                                    {m.type === 'GEMINI' && <span className="source-tag gemini">Gemini Cloud</span>}
+                                </div>
+                                <div className="meta-tags">
+                                    {m.type === 'LOCAL' && <span className="source-tag">Local Offline Rule</span>}
+                                    {m.type === 'GEMINI' && <span className="source-tag gemini">Gemini Cloud Analysis</span>}
                                 </div>
                             </div>
-                        ))}
-                        {isThinking && (
-                            <div className="message assistant">
-                                <div className="bubble thinking">
-                                    <span></span><span></span><span></span>
-                                </div>
+                        </div>
+                    ))}
+                    {isThinking && (
+                        <div className="message assistant">
+                            <div className="bubble thinking">
+                                <span></span><span></span><span></span>
                             </div>
-                        )}
-                    </div>
-
-                    <div className="chat-input-area">
-                        <button className={`voice-btn ${isRecording ? 'recording' : ''}`} onClick={toggleVoice}>
-                            {isRecording ? '⏹' : '🎤'}
-                        </button>
-                        <input
-                            type="text"
-                            placeholder="Ask about costs, hospitals, or symptoms..."
-                            value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        />
-                        <button className="send-btn" onClick={() => handleSend()}>➔</button>
-                    </div>
+                        </div>
+                    )}
                 </div>
-            )}
+
+                <div className="chat-input-area">
+                    <button className={`voice-btn ${isRecording ? 'recording' : ''}`} onClick={toggleVoice}>
+                        {isRecording ? '⏹ Stop' : '🎤 Voice'}
+                    </button>
+                    <input
+                        type="text"
+                        placeholder="Type your symptoms, ask about costs (e.g. 'Price of MRI'), or attach files..."
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                    />
+                    <button className="send-btn" onClick={() => handleSend()}>Send ➔</button>
+                </div>
+            </div>
 
             <style jsx>{`
-                .ai-trigger {
-                    position: fixed;
-                    bottom: 2rem;
-                    right: 2rem;
-                    width: 64px;
-                    height: 64px;
-                    border-radius: 50%;
-                    background: linear-gradient(135deg, var(--primary), #0284c7);
-                    border: none;
-                    color: white;
-                    font-size: 1.5rem;
-                    cursor: pointer;
-                    z-index: 1000;
-                    box-shadow: 0 10px 25px var(--primary-glow);
-                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                .ai-page-container {
+                    padding: 2rem;
+                    display: flex;
+                    justify-content: center;
+                    height: calc(100vh - 120px);
                 }
-                .ai-trigger:hover { transform: scale(1.1) rotate(5deg); }
-                .ai-trigger.active { background: #1a1a2e; }
 
                 .ai-chat-window {
-                    position: fixed;
-                    bottom: 6rem;
-                    right: 2rem;
-                    width: 400px;
-                    height: 550px;
-                    z-index: 1000;
+                    width: 100%;
+                    max-width: 900px;
                     display: flex;
                     flex-direction: column;
                     overflow: hidden;
                     border: 1px solid var(--primary-glow);
+                    background: rgba(15, 23, 42, 0.85);
                 }
 
                 .chat-header {
-                    padding: 1.5rem;
+                    padding: 1.5rem 2rem;
                     background: var(--glass-highlight);
                     display: flex;
                     align-items: center;
-                    gap: 0.75rem;
+                    gap: 1rem;
                     border-bottom: 1px solid var(--glass-border);
                 }
-                .status-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
-                .mode-badge { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; background: var(--glass-highlight); padding: 0.2rem 0.6rem; border-radius: 10px; color: var(--text-muted); margin-left: auto; }
+                
+                .avatar__wrapper {
+                    position: relative;
+                    width: 48px;
+                    height: 48px;
+                    background: var(--primary-glow);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid var(--primary);
+                }
+                
+                .ai-avatar { font-size: 1.5rem; }
+
+                .status-dot { 
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    width: 12px; 
+                    height: 12px; 
+                    background: #10b981; 
+                    border-radius: 50%; 
+                    box-shadow: 0 0 10px #10b981;
+                    border: 2px solid var(--bg-dark);
+                }
+                
+                .header-info h3 { margin: 0; font-size: 1.25rem; }
+                .mode-badge { 
+                    font-size: 0.75rem; 
+                    text-transform: uppercase; 
+                    letter-spacing: 0.05em; 
+                    background: rgba(16, 185, 129, 0.1); 
+                    color: #10b981;
+                    padding: 0.2rem 0.8rem; 
+                    border-radius: 12px; 
+                    display: inline-block;
+                    margin-top: 0.25rem;
+                }
 
                 .chat-messages {
                     flex: 1;
-                    padding: 1.5rem;
+                    padding: 2rem;
                     overflow-y: auto;
                     display: flex;
                     flex-direction: column;
-                    gap: 1rem;
+                    gap: 1.5rem;
                 }
 
-                .message { display: flex; }
+                .message { display: flex; width: 100%; }
                 .message.user { justify-content: flex-end; }
-                .bubble {
-                    max-width: 80%;
-                    padding: 0.8rem 1.2rem;
-                    border-radius: 18px;
-                    font-size: 0.95rem;
-                    line-height: 1.5;
-                    position: relative;
+                .message.assistant { justify-content: flex-start; }
+
+                .message-content {
+                    max-width: 70%;
+                    display: flex;
+                    flex-direction: column;
                 }
-                .message.assistant .bubble { background: var(--glass-highlight); border: 1px solid var(--glass-border); border-bottom-left-radius: 4px; }
-                .message.user .bubble { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+                .message.user .message-content { align-items: flex-end; }
+
+                .bubble {
+                    padding: 1rem 1.5rem;
+                    border-radius: 18px;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                    position: relative;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+                }
+                
+                .message.assistant .bubble { 
+                    background: var(--glass-highlight); 
+                    border: 1px solid var(--glass-border); 
+                    border-top-left-radius: 4px;
+                    color: var(--text-primary);
+                }
+                
+                .message.user .bubble { 
+                    background: linear-gradient(135deg, var(--primary), #0284c7); 
+                    color: white; 
+                    border-bottom-right-radius: 4px; 
+                    box-shadow: 0 4px 15px var(--primary-glow);
+                }
+
+                .meta-tags {
+                    margin-top: 0.5rem;
+                    display: flex;
+                    justify-content: flex-start;
+                }
+                .message.user .meta-tags { justify-content: flex-end; }
 
                 .source-tag {
-                    display: block;
-                    font-size: 0.6rem;
-                    margin-top: 0.5rem;
+                    font-size: 0.65rem;
                     color: var(--text-muted);
                     font-weight: 700;
                     text-transform: uppercase;
+                    background: rgba(0,0,0,0.2);
+                    padding: 2px 8px;
+                    border-radius: 4px;
                 }
-                .source-tag.gemini { color: var(--primary); }
+                .source-tag.gemini { color: var(--accent); }
 
                 .chat-input-area {
-                    padding: 1.5rem;
+                    padding: 2rem;
                     background: var(--glass-highlight);
                     display: flex;
                     gap: 1rem;
                     align-items: center;
+                    border-top: 1px solid var(--glass-border);
                 }
+                
                 .chat-input-area input {
                     flex: 1;
                     background: var(--bg-dark);
                     border: 1px solid var(--glass-border);
                     border-radius: var(--radius-full);
-                    padding: 0.8rem 1.2rem;
+                    padding: 1rem 1.5rem;
                     color: white;
                     outline: none;
+                    font-size: 1rem;
+                    transition: border-color 0.2s;
                 }
+                .chat-input-area input:focus { border-color: var(--primary); }
+                
                 .voice-btn, .send-btn {
-                    background: var(--glass-highlight);
-                    border: 1px solid var(--glass-border);
-                    color: white;
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
+                    padding: 0 1.5rem;
+                    height: 50px;
+                    border-radius: var(--radius-full);
                     cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.2s;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    gap: 0.5rem;
                 }
-                .voice-btn.recording { background: #ef4444; border-color: #ef4444; animation: pulse 1.5s infinite; }
                 
+                .voice-btn {
+                    background: var(--glass-highlight);
+                    border: 1px solid var(--glass-border);
+                    color: var(--text-primary);
+                }
+                .voice-btn:hover { background: rgba(255,255,255,0.1); }
+                .voice-btn.recording { 
+                    background: #ef4444; 
+                    border-color: #ef4444; 
+                    color: white;
+                    animation: pulse 1.5s infinite; 
+                }
+                
+                .send-btn {
+                    background: var(--primary);
+                    border: none;
+                    color: white;
+                }
+                .send-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--primary-glow); }
+
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
                 .thinking span {
                     display: inline-block;
-                    width: 6px;
-                    height: 6px;
+                    width: 8px;
+                    height: 8px;
                     background: var(--text-muted);
                     border-radius: 50%;
-                    margin-right: 4px;
+                    margin-right: 6px;
                     animation: dash 1s infinite;
                 }
                 .thinking span:nth-child(2) { animation-delay: 0.2s; }
                 .thinking span:nth-child(3) { animation-delay: 0.4s; }
                 @keyframes dash { 0% { transform: translateY(0); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
             `}</style>
-        </>
+        </div>
     );
 };
 

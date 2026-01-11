@@ -48,6 +48,12 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
               >
                 Medication Info
               </button>
+              <button
+                className={`nav-link-btn ${currentView === 'ai-assistant' ? 'active' : ''}`}
+                onClick={() => onNavClick?.('ai-assistant')}
+              >
+                AI Assistant
+              </button>
               {!isGuest && role === 'user' && (
                 <>
                   <button

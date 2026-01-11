@@ -43,7 +43,7 @@ const MainContent = () => {
     if (view === 'login') {
       setSelectedSystem('user');
       setActiveSubView('login');
-    } else if (['hospitals', 'doctors', 'appointments', 'discovery'].includes(view)) {
+    } else if (['hospitals', 'doctors', 'appointments', 'discovery', 'medication-hub', 'ai-assistant'].includes(view)) {
       setSelectedSystem('user');
       setActiveSubView(view);
     } else if (view === 'home') {
@@ -76,6 +76,7 @@ const MainContent = () => {
         case 'hospitals': return <UserHospitals />;
         case 'appointments': return <UserAppointments />;
         case 'medication-hub': return <MedicationHub />;
+        case 'ai-assistant': return <AIAssistant />;
         case 'login': return <LoginView />;
         default: return <UserDashboard />;
       }
