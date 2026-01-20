@@ -19,6 +19,9 @@ const LandingPage = ({ onGetStarted }) => {
                             View Hospital Network
                         </button>
                     </div>
+                    <div style={{ marginTop: '1rem', opacity: 0.5, fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                        System v2.0 • Mobile Config: {window.location.hostname}
+                    </div>
                 </div>
                 <div className="hero-visual">
                     <div className="floating-card discovery-node">
@@ -503,6 +506,8 @@ const LandingPage = ({ onGetStarted }) => {
                     .features-grid { grid-template-columns: 1fr; }
                     .impact-section { flex-direction: column; padding: 2rem; }
                     .hero-title { font-size: 3rem; }
+                    /* Hide Professional Registration on Mobile */
+                    .discovery-cta { display: none; }
                 }
             `}</style>
         </div>

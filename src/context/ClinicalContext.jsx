@@ -18,7 +18,8 @@ export const ClinicalProvider = ({ children }) => {
     const { user } = useAuth();
 
     // Dynamic API URL for Mobile/Localhost flexibility
-    const API_URL = `http://${window.location.hostname}:8001`;
+    // Empty string = use current origin (handled by Vite Proxy)
+    const API_URL = "";
 
     useEffect(() => {
         const loadOfflineData = () => {

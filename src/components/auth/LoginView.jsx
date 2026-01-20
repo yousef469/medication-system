@@ -402,6 +402,9 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
             <button type="button" className="btn-link" onClick={() => setIsSignUp(!isSignUp)}>
               {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
             </button>
+            <p style={{ marginTop: '10px', fontSize: '0.6rem', color: '#666', fontFamily: 'monospace' }}>
+              Debug Redirect: {window.location.origin}
+            </p>
           </div>
         </form>
       </div>
