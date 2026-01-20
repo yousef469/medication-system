@@ -1,7 +1,39 @@
+import { useState, useEffect } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 
 const LandingPage = ({ onGetStarted }) => {
     const { hospitals } = useClinical();
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [isInstallable, setIsInstallable] = useState(false);
+
+    useEffect(() => {
+        const handler = (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            setDeferredPrompt(e);
+            setIsInstallable(true);
+        };
+
+        window.addEventListener('beforeinstallprompt', handler);
+
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+
+        // Show the prompt
+        deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+
+        // We've used the prompt, and can't use it again, throw it away
+        setDeferredPrompt(null);
+        setIsInstallable(false);
+    };
 
     return (
         <div className="landing-page">
@@ -112,8 +144,28 @@ const LandingPage = ({ onGetStarted }) => {
                         <li><span>✓</span> Automatic Cloud Updates</li>
                     </ul>
 
+                    {/* Premium Install Button */}
+                    <div className="download-actions" style={{ marginBottom: '2rem' }}>
+                        <button
+                            className={`btn-primary btn-large download-btn ${!isInstallable ? 'disabled' : ''}`}
+                            onClick={handleInstallClick}
+                            style={{ width: '100%', justifyContent: 'center', cursor: isInstallable ? 'pointer' : 'default' }}
+                        >
+                            <span className="icon">📲</span>
+                            <div className="btn-text">
+                                <label>{isInstallable ? 'Install Now' : 'PWA Supported'}</label>
+                                <span>Install Clinical Hub App</span>
+                            </div>
+                        </button>
+                        {!isInstallable && (
+                            <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem', textAlign: 'center' }}>
+                                Use the browser menu to "Add to Home Screen" if the button is inactive.
+                            </p>
+                        )}
+                    </div>
+
                     <div className="installation-guide glass-card">
-                        <h4>📲 How to Install</h4>
+                        <h4>📲 Fallback Guide</h4>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
                             <div>
                                 <h5 style={{ color: 'white', marginBottom: '0.5rem' }}>🤖 Android (Chrome)</h5>
@@ -349,6 +401,15 @@ const LandingPage = ({ onGetStarted }) => {
                 .download-btn .icon { font-size: 1.8rem; }
                 .download-btn label { display: block; font-size: 0.7rem; opacity: 0.7; text-transform: uppercase; font-weight: 800; }
                 .download-btn span { font-size: 1.1rem; font-weight: 700; }
+
+                .download-btn.disabled {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    color: var(--text-muted);
+                    box-shadow: none;
+                    filter: grayscale(1);
+                    opacity: 0.5;
+                }
 
                 .install-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; font-weight: 500; }
 
