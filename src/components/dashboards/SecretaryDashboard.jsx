@@ -29,13 +29,13 @@ const SecretaryDashboard = () => {
     <div className="secretary-dashboard">
       <header className="page-header">
         <h1 className="text-gradient">Egyptian Coordination Hub</h1>
-        <p className="subtitle">Route patients across Egypt's specialized clinics based on AI triage</p>
+        <p className="subtitle">Route patients across Egypt's specialized clinics based on expert triage</p>
       </header>
 
       <div className="coordination-grid">
         <section className="requests-column glass-card">
           <div className="section-header-row">
-            <h3>Diagnostic Queue</h3>
+            <h3>Clinical Queue</h3>
             <div className="filters">
               <select value={filterHospital} onChange={(e) => setFilterHospital(e.target.value)}>
                 {hospitals.map(h => <option key={h} value={h}>{h}</option>)}
@@ -53,8 +53,15 @@ const SecretaryDashboard = () => {
               filteredRequests.map(req => (
                 <div key={req.id} className={`request-card glass-card ${req.urgency.toLowerCase().replace(' ', '')}`}>
                   <div className="req-main">
-                    <span className="req-patient">{req.patient_name}</span>
-                    <span className="req-diagnosis">{req.diagnosis}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="req-patient">{req.patient_name}</span>
+                      {req.is_referral && (
+                        <span style={{ fontSize: '0.6rem', background: 'rgba(124, 68, 237, 0.2)', color: '#a78bfa', padding: '2px 6px', borderRadius: '4px', fontWeight: '900', border: '1px solid rgba(124, 68, 237, 0.3)' }}>
+                          🧬 3D REFERRAL
+                        </span>
+                      )}
+                    </div>
+                    <span className="req-diagnosis">{req.diagnosis || req.service_requested?.slice(0, 50)}...</span>
                     <div className="req-meta">
                       <span className="hospital-tag">{req.hospital}</span>
                       <span className="section-tag">{req.section}</span>
@@ -110,7 +117,7 @@ const SecretaryDashboard = () => {
         </section>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .secretary-dashboard { display: flex; flex-direction: column; gap: 2rem; }
         .coordination-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
         

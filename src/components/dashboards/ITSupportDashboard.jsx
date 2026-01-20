@@ -4,7 +4,7 @@ import { useClinical } from '../../context/ClinicalContext';
 const ITSupportDashboard = () => {
   const { systemLogs, logEvent } = useClinical();
   const [metrics, setMetrics] = useState({ cpu: 42, memory: 64, latency: 12 });
-  const [aiAlerts, setAiAlerts] = useState([]);
+  const [coreAlerts, setCoreAlerts] = useState([]);
 
   // Simulate real-time system monitoring
   useEffect(() => {
@@ -15,7 +15,7 @@ const ITSupportDashboard = () => {
         latency: Math.max(5, Math.min(200, prev.latency + (Math.random() * 20 - 10))),
       }));
 
-      // Simulate occasional system anomalies detected by AI
+      // Simulate occasional system anomalies detected by heuristics
       if (Math.random() > 0.95) {
         const errorMsg = "Anomalous API pattern detected in " + (Math.random() > 0.5 ? "Clinical Discovery" : "Secretary Hub");
         logEvent(errorMsg, 'ERROR');
@@ -28,7 +28,7 @@ const ITSupportDashboard = () => {
   // Listen for instant IT alerts from ClinicalContext
   useEffect(() => {
     const handleAlert = (e) => {
-      setAiAlerts(prev => [e.detail, ...prev].slice(0, 5));
+      setCoreAlerts(prev => [e.detail, ...prev].slice(0, 5));
     };
     window.addEventListener('IT_ALERT', handleAlert);
     return () => window.removeEventListener('IT_ALERT', handleAlert);
@@ -38,7 +38,7 @@ const ITSupportDashboard = () => {
     <div className="it-dashboard">
       <header className="page-header">
         <h1 className="text-gradient">System Engineering Core</h1>
-        <p className="subtitle">Real-time AI diagnostic monitoring of clinical clinical infrastructure</p>
+        <p className="subtitle">Real-time core monitoring of clinical clinical infrastructure</p>
       </header>
 
       <div className="it-grid">
@@ -65,16 +65,16 @@ const ITSupportDashboard = () => {
           </div>
 
           <div className="glass-card alert-card mt-2">
-            <h3>Instant AI Alerts</h3>
+            <h3>Instant Logic Alerts</h3>
             <div className="alert-list">
-              {aiAlerts.length === 0 ? (
+              {coreAlerts.length === 0 ? (
                 <p className="empty-alert">System stable. No anomalies detected.</p>
               ) : (
-                aiAlerts.map(alert => (
+                coreAlerts.map(alert => (
                   <div key={alert.id} className="alert-item pulse-error">
                     <span className="alert-time">[{alert.time}]</span>
                     <span className="alert-msg">{alert.message}</span>
-                    <span className="alert-source">AI_ENGINE_01</span>
+                    <span className="alert-source">CORE_LOGIC_01</span>
                   </div>
                 ))
               )}
@@ -93,7 +93,7 @@ const ITSupportDashboard = () => {
                 <span className="log-time">[{new Date(log.created_at).toLocaleTimeString()}]</span>
                 <span className="log-lvl">{log.level}</span>
                 <span className="log-msg">{log.message}</span>
-                {log.analyzed_by_ai && <span className="ai-tag">AI</span>}
+                {log.analyzed_by_ai && <span className="ai-tag">AUTO</span>}
               </div>
             ))}
             <div className="log-cursor">_</div>
@@ -101,7 +101,7 @@ const ITSupportDashboard = () => {
         </section>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .it-dashboard { display: flex; flex-direction: column; gap: 2rem; }
         .it-grid { display: grid; grid-template-columns: 380px 1fr; gap: 2rem; }
         

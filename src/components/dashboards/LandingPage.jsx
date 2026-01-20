@@ -9,7 +9,7 @@ const LandingPage = ({ onGetStarted }) => {
                 <div className="hero-content">
                     <h1 className="hero-title text-gradient">The Future of Egyptian Healthcare</h1>
                     <p className="hero-subtitle">
-                        Advanced AI Diagnostics. Global Clinical Standards. Unified for Egypt.
+                        Advanced Clinical Solutions. Global Medical Standards. Unified for Egypt.
                     </p>
                     <div className="hero-actions">
                         <button className="btn-primary btn-large" onClick={onGetStarted}>
@@ -24,7 +24,7 @@ const LandingPage = ({ onGetStarted }) => {
                     <div className="floating-card discovery-node">
                         <span className="node-icon">🧬</span>
                         <div className="node-info">
-                            <label>AI Analysis</label>
+                            <label>Expert Analysis</label>
                             <span>99.2% Accuracy</span>
                         </div>
                     </div>
@@ -40,25 +40,37 @@ const LandingPage = ({ onGetStarted }) => {
 
             <section id="discovery-hub" className="discovery-hub-section">
                 <h2 className="section-title text-gradient">Our Elite Medical Network</h2>
-                <p className="section-subtitle">Discover top-tier facilities participating in our advanced triage system</p>
+                <p className="section-subtitle">Discover top-tier facilities participating in our secure healthcare ecosystem.</p>
 
                 <div className="hospitals-preview-grid">
                     {hospitals.map(h => (
                         <div key={h.id} className="glass-card hospital-preview-card">
-                            <div className="preview-image" style={{ backgroundImage: `url(${h.image})` }}>
-                                <span className={`status-badge ${h.busyStatus}`}>{h.busyStatus.toUpperCase()}</span>
+                            <div className="preview-image" style={{ backgroundImage: `url(${h.cover_image_url})` }}>
+                                <div className="overlay-grad"></div>
+                                <span className="status-badge moderate">ACTIVE NODE</span>
+                                <div className="hospital-brand-float">
+                                    <span className="brand-logo">{h.logo_url}</span>
+                                </div>
                             </div>
                             <div className="preview-info">
                                 <h3>{h.name}</h3>
-                                <p className="loc">📍 {h.location}</p>
+                                <p className="loc">📍 {h.address}</p>
                                 <p className="desc">{h.description}</p>
+                                <div className="specialty-tags">
+                                    {h.specialty_tags?.map(tag => (
+                                        <span key={tag} className="s-tag">{tag}</span>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     ))}
+                    {hospitals.length === 0 && <p style={{ opacity: 0.5, gridColumn: '1/-1', textAlign: 'center', padding: '4rem' }}>Initializing Medical Network Nodes...</p>}
                 </div>
 
                 <div className="discovery-cta">
-                    <button className="btn-primary btn-large" onClick={onGetStarted}>Sign In to Book Appointment</button>
+                    <button className="btn-primary btn-large" style={{ boxShadow: '0 0 30px var(--primary-glow)' }} onClick={onGetStarted}>
+                        Begin Professional Onboarding
+                    </button>
                 </div>
             </section>
 
@@ -68,7 +80,7 @@ const LandingPage = ({ onGetStarted }) => {
                     <div className="glass-card feature-card">
                         <div className="feat-icon">⚡</div>
                         <h3>Instant Triage</h3>
-                        <p>Submit your symptoms or files for immediate AI-powered clinical routing across Egypt's top hospitals.</p>
+                        <p>Submit your symptoms or files for immediate clinical routing across Egypt's top hospitals.</p>
                     </div>
                     <div className="glass-card feature-card">
                         <div className="feat-icon">🏛️</div>
@@ -83,13 +95,50 @@ const LandingPage = ({ onGetStarted }) => {
                 </div>
             </section>
 
+            <section className="mobile-app-section glass-card fade-in">
+                <div className="mobile-content">
+                    <span className="platform-badge">NOW ON ANDROID</span>
+                    <h2 className="text-gradient">Clinical Care in Your Pocket</h2>
+                    <p>
+                        Experience our high-fidelity 3D Bio-Anatomy Lab and AI diagnostics directly on your mobile device.
+                        Synchronize your medical history and clinical referrals with a single touch.
+                    </p>
+                    <ul className="mobile-features">
+                        <li><span>✓</span> Native 3D Humanoid Engine</li>
+                        <li><span>✓</span> Real-time AI Health Consultation</li>
+                        <li><span>✓</span> Instant Hospital Referral System</li>
+                    </ul>
+                    <div className="download-actions">
+                        <a href="/downloads/clinical-hub-v1.apk" download className="btn-primary btn-large download-btn">
+                            <span className="icon">⬇️</span>
+                            <div className="btn-text">
+                                <label>Direct Download</label>
+                                <span>Clinical APK v1.0.4</span>
+                            </div>
+                        </a>
+                        <p className="install-note">Requires Android 11.0 or higher</p>
+                    </div>
+                </div>
+                <div className="mobile-preview">
+                    <div className="phone-mockup">
+                        <div className="phone-screen">
+                            <div className="screen-content">
+                                <div className="pulse-circle"></div>
+                                <span className="anatomy-symbol">🧬</span>
+                                <div className="scan-line"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <section className="impact-section glass-card">
                 <div className="impact-info">
                     <h2>Our Mission in Egypt</h2>
                     <p>
-                        We are bridging the gap between advanced clinical AI and everyday patient care.
-                        By localizing the world's most sophisticated medical models for the Egyptian context,
-                        we ensure every citizen has access to elite diagnostics.
+                        We are bridging the gap between advanced clinical solutions and everyday patient care.
+                        By localizing the world's most sophisticated medical standards for the Egyptian context,
+                        we ensure every citizen has access to elite healthcare.
                     </p>
                 </div>
                 <div className="impact-stats">
@@ -104,7 +153,7 @@ const LandingPage = ({ onGetStarted }) => {
                 </div>
             </section>
 
-            <style jsx>{`
+            <style>{`
                 .landing-page {
                     padding-top: 4rem;
                 }
@@ -249,6 +298,97 @@ const LandingPage = ({ onGetStarted }) => {
                 .stat-value { font-size: 2.5rem; font-weight: 800; display: block; color: var(--primary); }
                 .stat-label { color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.1em; font-weight: 700; }
 
+                .mobile-app-section {
+                    margin-bottom: 8rem;
+                    padding: 5rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 5rem;
+                    background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(0, 0, 0, 0.2));
+                    border: 1px solid rgba(124, 58, 237, 0.2);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .mobile-content { flex: 1.5; }
+                .platform-badge { 
+                    font-size: 0.7rem; font-weight: 900; background: var(--primary); color: white; 
+                    padding: 4px 12px; borderRadius: 4px; display: inline-block; margin-bottom: 1.5rem;
+                    letter-spacing: 0.1em;
+                }
+                .mobile-content h2 { font-size: 3rem; margin-bottom: 1.5rem; line-height: 1.1; }
+                .mobile-content p { color: var(--text-secondary); font-size: 1.1rem; line-height: 1.7; margin-bottom: 2rem; }
+                
+                .mobile-features { list-style: none; padding: 0; margin-bottom: 3rem; }
+                .mobile-features li { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; font-weight: 600; color: #f8fafc; }
+                .mobile-features li span { color: var(--primary); font-weight: 900; }
+
+                .download-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 1.5rem;
+                    text-decoration: none;
+                    text-align: left;
+                    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+                }
+                .download-btn .icon { font-size: 1.8rem; }
+                .download-btn label { display: block; font-size: 0.7rem; opacity: 0.7; text-transform: uppercase; font-weight: 800; }
+                .download-btn span { font-size: 1.1rem; font-weight: 700; }
+
+                .install-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; font-weight: 500; }
+
+                .mobile-preview { flex: 1; display: flex; justify-content: center; position: relative; }
+                .phone-mockup {
+                    width: 280px;
+                    height: 560px;
+                    background: #1e293b;
+                    border: 8px solid #334155;
+                    border-radius: 40px;
+                    padding: 12px;
+                    box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+                    position: relative;
+                }
+                .phone-screen {
+                    width: 100%;
+                    height: 100%;
+                    background: #020617;
+                    border-radius: 28px;
+                    overflow: hidden;
+                    position: relative;
+                }
+                .screen-content {
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                }
+                .pulse-circle {
+                    width: 150px; height: 150px;
+                    border: 2px solid var(--primary);
+                    border-radius: 50%;
+                    position: absolute;
+                    animation: circlePulse 2s infinite;
+                }
+                .anatomy-symbol { font-size: 4rem; z-index: 2; position: relative; }
+                .scan-line {
+                    position: absolute;
+                    top: 0; left: 0; right: 0; height: 2px;
+                    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+                    box-shadow: 0 0 15px var(--primary);
+                    animation: scanMove 4s infinite linear;
+                }
+
+                @keyframes circlePulse {
+                    0% { transform: scale(1); opacity: 0.5; }
+                    100% { transform: scale(1.5); opacity: 0; }
+                }
+                @keyframes scanMove {
+                    0% { top: 0; }
+                    100% { top: 100%; }
+                }
+
                 .discovery-hub-section {
                     padding: 6rem 2rem;
                     max-width: 1400px;
@@ -302,7 +442,28 @@ const LandingPage = ({ onGetStarted }) => {
                 .preview-info { padding: 1.5rem; }
                 .preview-info h3 { margin-bottom: 0.5rem; font-size: 1.25rem; }
                 .preview-info .loc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; }
-                .preview-info .desc { font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); }
+                .preview-info .desc { font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 1.5rem; }
+
+                .overlay-grad { 
+                    position: absolute; inset: 0; 
+                    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); 
+                }
+
+                .hospital-brand-float {
+                    position: absolute; bottom: -1rem; left: 1.5rem;
+                    width: 48px; height: 48px; background: var(--bg-dark);
+                    border: 1px solid var(--glass-border); border-radius: 12px;
+                    display: flex; align-items: center; justify-content: center;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 2;
+                }
+                .brand-logo { font-size: 1.5rem; }
+
+                .specialty-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+                .s-tag { 
+                    font-size: 0.65rem; padding: 2px 8px; border-radius: 4px;
+                    background: rgba(124, 58, 237, 0.1); color: var(--primary);
+                    border: 1px solid rgba(124, 58, 237, 0.2); font-weight: 700;
+                }
 
                 .discovery-cta { text-align: center; }
 

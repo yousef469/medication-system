@@ -1,159 +1,168 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { useAuth } from './useAuth';
 
 const ClinicalContext = createContext();
+
+export function useClinical() {
+    const context = useContext(ClinicalContext);
+    if (!context) throw new Error('useClinical must be used within ClinicalProvider');
+    return context;
+}
 
 export const ClinicalProvider = ({ children }) => {
     const [requests, setRequests] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [systemLogs, setSystemLogs] = useState([]);
+    const [hospitals, setHospitals] = useState([]);
+    const { user } = useAuth();
 
-    // 1. Initial Data Fetch & Real-time Subscriptions
+    const API_URL = 'http://localhost:8001';
+
     useEffect(() => {
-        fetchInitialData();
+        const loadOfflineData = () => {
+            const cachedHospitals = localStorage.getItem('medi_offline_hospitals');
+            const cachedRequests = localStorage.getItem('medi_offline_requests');
+            if (cachedRequests) setRequests(JSON.parse(cachedRequests));
+            if (cachedHospitals) setHospitals(JSON.parse(cachedHospitals));
+        };
+        loadOfflineData();
 
-        // Subscribe to changes in requests
+        fetchHospitals();
+
+        // 2. Real-time Subscriptions (Global)
         const requestsChannel = supabase
-            .channel('public:requests')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, payload => {
-                handleRequestChange(payload);
+            .channel('public:appointment_requests')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointment_requests' }, payload => {
+                // If we are a coordinator, we might want to refresh. 
+                // However, detailed filtering happens in components or via local state refresh.
+                // We'll keep a general listener for now but refresh specifically.
+                refreshGlobalData();
             })
             .subscribe();
 
-        // Subscribe to changes in doctor status
-        const doctorsChannel = supabase
-            .channel('public:doctors_meta')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'doctors_meta' }, payload => {
-                fetchDoctors(); // Refresh all to get joined data
-            })
-            .subscribe();
-
-        // Subscribe to system logs
-        const logsChannel = supabase
-            .channel('public:system_logs')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_logs' }, payload => {
-                setSystemLogs(prev => [payload.new, ...prev].slice(0, 50));
-                if (payload.new.level === 'ERROR') {
-                    window.dispatchEvent(new CustomEvent('IT_ALERT', { detail: payload.new }));
-                }
+        const profilesChannel = supabase
+            .channel('public:profiles')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
+                fetchDoctors();
             })
             .subscribe();
 
         return () => {
             supabase.removeChannel(requestsChannel);
-            supabase.removeChannel(doctorsChannel);
-            supabase.removeChannel(logsChannel);
+            supabase.removeChannel(profilesChannel);
         };
     }, []);
 
-    const fetchInitialData = async () => {
-        await Promise.all([fetchRequests(), fetchDoctors(), fetchLogs()]);
+    const refreshGlobalData = async () => {
+        await Promise.all([fetchRequests(), fetchDoctors()]);
     };
 
-    const fetchRequests = async () => {
-        const { data } = await supabase.from('requests').select('*').order('created_at', { ascending: false });
-        if (data) setRequests(data);
+    const fetchHospitals = async () => {
+        const { data, error } = await supabase.from('hospitals').select('*').in('status', ['APPROVED', 'PENDING']);
+        if (error) console.error('Error fetching hospitals:', error);
+        else {
+            setHospitals(data || []);
+            localStorage.setItem('medi_offline_hospitals', JSON.stringify(data || []));
+        }
     };
 
-    const fetchDoctors = async () => {
-        // Join profiles and doctors_meta
-        const { data } = await supabase
-            .from('doctors_meta')
-            .select(`
-        *,
-        profiles (name)
-      `);
+    const fetchRequests = async (hospitalId = null) => {
+        let query = supabase.from('appointment_requests').select('*');
+        if (hospitalId) {
+            query = query.eq('hospital_id', hospitalId);
+        }
+
+        const { data } = await query.order('created_at', { ascending: false });
         if (data) {
-            const formattedDoctors = data.map(d => ({
-                id: d.id,
-                name: d.profiles?.name || 'Unknown Doctor',
-                specialty: d.specialty,
-                status: d.status,
-                hospital: d.hospital_name,
-                bio: d.bio
-            }));
-            setDoctors(formattedDoctors);
+            setRequests(data);
+            localStorage.setItem('medi_offline_requests', JSON.stringify(data));
         }
     };
 
-    const fetchLogs = async () => {
-        const { data } = await supabase.from('system_logs').select('*').order('created_at', { ascending: false }).limit(50);
-        if (data) setSystemLogs(data);
+    const fetchPatientHistory = async (patientId) => {
+        const { data, error } = await supabase
+            .from('appointment_requests')
+            .select('*')
+            .eq('patient_id', patientId)
+            .eq('status', 'COMPLETED')
+            .order('created_at', { ascending: false });
+
+        if (error) console.error('Error fetching patient history:', error);
+        return data || [];
     };
 
-    const handleRequestChange = (payload) => {
-        if (payload.eventType === 'INSERT') {
-            setRequests(prev => [payload.new, ...prev]);
-        } else if (payload.eventType === 'UPDATE') {
-            setRequests(prev => prev.map(req => req.id === payload.new.id ? payload.new : req));
-        } else if (payload.eventType === 'DELETE') {
-            setRequests(prev => prev.filter(req => req.id !== payload.old.id));
+    const fetchHospitalArchives = async (hospitalId) => {
+        const { data, error } = await supabase
+            .from('appointment_requests')
+            .select('*')
+            .eq('hospital_id', hospitalId)
+            .eq('status', 'COMPLETED')
+            .order('created_at', { ascending: false });
+
+        if (error) console.error('Error fetching hospital archives:', error);
+        return data || [];
+    };
+
+    const fetchDiagnoses = async (patientId) => {
+        const { data, error } = await supabase
+            .from('patient_diagnoses')
+            .select('*')
+            .eq('patient_id', patientId)
+            .order('created_at', { ascending: false });
+
+        if (error) console.error('Error fetching personal diagnoses:', error);
+        return data || [];
+    };
+
+    const uploadDiagnosis = async (file, title) => {
+        try {
+            // 1. AI Analysis
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const aiRes = await fetch(`${API_URL}/api/analyze_report`, {
+                method: 'POST',
+                body: formData
+            });
+            if (!aiRes.ok) throw new Error("AI Analysis Failed");
+            const aiResult = await aiRes.json();
+
+            // 2. Upload to Supabase Storage (Simplified URL for demo)
+            // In real app, use supabase.storage.from('diagnoses').upload()
+            const fileUrl = URL.createObjectURL(file);
+
+            // 3. Save to DB
+            const { data, error } = await supabase.from('patient_diagnoses').insert([{
+                patient_id: user?.id,
+                file_url: fileUrl,
+                title: title || aiResult.title,
+                ai_conclusion: aiResult.conclusion,
+                ai_markers: aiResult.markers,
+                suggested_layer: aiResult.suggested_layer || 'SYSTEMIC',
+                ai_raw_analysis: aiResult
+            }]).select();
+
+            if (error) throw error;
+            return data?.[0];
+        } catch (err) {
+            console.error("Upload Diagnosis Error:", err);
+            throw err;
         }
     };
 
-    const [hospitals] = useState([
-        {
-            id: 'h-1',
-            name: "57357 Children's Cancer Hospital",
-            location: "Sayeda Zeinab, Cairo",
-            image: "/hosp57357_egypt_exterior_1768085195254.png",
-            description: "World-class pediatric oncology center providing free care to children with cancer across the Middle East. Specialized in advanced radiotherapy and bone marrow transplants.",
-            sections: ["Pediatric Oncology", "Radiotherapy", "Bone Marrow Transplant", "Clinical Research"],
-            busyStatus: "high",
-            capacity: "95%",
-            contact: "+20 2 25351500",
-            treatments: [
-                { name: "Chemotherapy", cost: "Free/Subsidized" },
-                { name: "Radiotherapy", cost: "Free/Subsidized" },
-                { name: "Bone Marrow Transplant", cost: "Free/Subsidized" }
-            ]
-        },
-        {
-            id: 'h-2',
-            name: "Kasr Al-Ainy Hospital",
-            location: "Manial, Cairo",
-            image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Kasr_Al_Ainy_Hospital.jpg/800px-Kasr_Al_Ainy_Hospital.jpg",
-            description: "The historic cornerstone of Egyptian medicine. Afilliated with Cairo University, it remains the largest comprehensive teaching hospital in the region.",
-            sections: ["Emergency Medicine", "General Surgery", "Internal Medicine", "Neurology"],
-            busyStatus: "maximal",
-            capacity: "100%",
-            contact: "+20 2 23646430",
-            treatments: [
-                { name: "Brain Surgery", cost: "Economy (Public)" },
-                { name: "General Triage", cost: "Minimal" }
-            ]
-        },
-        {
-            id: 'h-3',
-            name: "Al-Salam International Hospital",
-            location: "Maadi, Cairo",
-            image: "https://www.alsalaminternationalhospital.com/assets/images/logo.png",
-            description: "JCI accredited facility offering premium private medical services, advanced diagnostics, and cutting-edge surgical suites.",
-            sections: ["Cardiology", "Orthopedics", "Plastic Surgery", "VIP Maternity"],
-            busyStatus: "moderate",
-            capacity: "75%",
-            contact: "19885",
-            treatments: [
-                { name: "Bypass Surgery", cost: "Premium (Private)" },
-                { name: "Knee Replacement", cost: "Premium (Private)" }
-            ]
-        },
-        {
-            id: 'h-4',
-            name: "Magdi Yacoub Heart Foundation",
-            location: "Aswan",
-            image: "https://www.magdiyacoub.org/assets/img/logo-en.png",
-            description: "A beacon of hope in Upper Egypt. This world-renowned center provides free, state-of-the-art cardiovascular care to underprivileged patients.",
-            sections: ["Cardiac Surgery", "Pediatric Cardiology", "Heart Failure Clinic"],
-            busyStatus: "high",
-            capacity: "90%",
-            contact: "19731",
-            treatments: [
-                { name: "Heart Transplant", cost: "Free" },
-                { name: "Pediatric Cardiac Repair", cost: "Free" }
-            ]
-        },
-    ]);
+    const fetchDoctors = async (hospitalId = null) => {
+        let query = supabase.from('profiles').select('*').in('role', ['doctor', 'nurse']);
+        if (hospitalId) {
+            query = query.eq('hospital_id', hospitalId);
+        }
+
+        const { data } = await query;
+        if (data) {
+            setDoctors(data);
+            localStorage.setItem('medi_offline_doctors', JSON.stringify(data));
+        }
+    };
 
     const analyzeRequest = (content) => {
         let suggestedSection = "General Medicine";
@@ -166,49 +175,119 @@ export const ClinicalProvider = ({ children }) => {
         return suggestedSection;
     };
 
-    // Hybrid AI Logic: Local Rules -> Gemini Fallback
+    // Hybrid AI Logic: Local Backend (FastAPI) -> Fallback to JS Rules
     const aiConsultation = async (query, inputType = 'text', fileData = null) => {
-        const lower = query.toLowerCase();
+        try {
+            // Always use the server as a Gemini proxy
+            let response;
+            if (inputType === 'image' && fileData) {
+                const formData = new FormData();
+                formData.append('file', fileData);
+                formData.append('prompt', query || "Analyze this image.");
+                formData.append('use_online', true); // Force Gemini
 
-        // 1. Local Offline Mode (Instant)
-        if (lower.includes("cost") || lower.includes("how much") || lower.includes("سعر")) {
+                const res = await fetch(`${API_URL}/api/analyze_image`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!res.ok) throw new Error("Backend Error");
+                const json = await res.json();
+                response = {
+                    type: 'GEMINI_CLOUD',
+                    answer: json.response,
+                    suggestion: 'MedicalHub'
+                };
+            } else {
+                // Fetch user history for context
+                const { data: history } = await supabase
+                    .from('appointment_requests')
+                    .select('*')
+                    .eq('patient_id', user?.id)
+                    .eq('status', 'COMPLETED')
+                    .limit(5);
+
+                const res = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: query,
+                        history: history || [],
+                        use_online: true // Force Gemini
+                    })
+                });
+
+                if (!res.ok) throw new Error("Backend Error");
+                const json = await res.json();
+
+                response = {
+                    type: 'GEMINI_CLOUD',
+                    answer: json.response,
+                    suggestion: json.action === 'search_hospital' ? 'Hospitals' : 'General'
+                };
+            }
+            return response;
+        } catch (err) {
+            console.error("AI Error:", err);
             return {
-                type: 'LOCAL',
-                answer: "Most public hospitals like Kasr Al-Ainy are free or low-cost. Private centers like Al-Salam have premium pricing. 57357 and Magdi Yacoub are free for eligible patients. Which specific treatment are you interested in?",
-                suggestion: 'MedicationHub'
+                type: 'ERROR',
+                answer: "I am unable to connect to the medical brain. Please ensure the server is running.",
+                suggestion: 'General'
             };
         }
-
-        if (lower.includes("ambulance") || lower.includes("emergency") || lower.includes("طوارئ")) {
-            return {
-                type: 'LOCAL',
-                answer: "I've detected an emergency. Please use the red SOS button for immediate ambulance routing.",
-                suggestion: 'SOS'
-            };
-        }
-
-        // 2. Gemini fallback (Simulated for Now - Complex Reasoning)
-        return {
-            type: 'GEMINI',
-            answer: "Based on my clinical database and your symptoms, I recommend visiting " +
-                (lower.includes("child") ? "57357 Hospital" : "Kasr Al-Ainy") +
-                " for specialized oncology triage. Would you like me to book a preliminary checkup?",
-            suggestion: 'Hospitals'
-        };
     };
 
-    const submitRequest = async (patientName, hospital, content, urgency, inputType = 'text', fileUrl = null, voiceUrl = null) => {
-        const suggestedSection = analyzeRequest(content || '');
-        const { data, error } = await supabase.from('requests').insert([{
+    const analyzeClinicalRequest = async (requestText, history, file = null) => {
+        try {
+            const formData = new FormData();
+            formData.append('request_text', requestText);
+            formData.append('history_json', JSON.stringify(history));
+            if (file) formData.append('file', file);
+
+            const res = await fetch(`${API_URL}/api/analyze_clinical_request`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("AI Synthesis Failed");
+            return await res.json();
+        } catch (err) {
+            console.error("Clinical AI Error:", err);
+            return {
+                conclusion: "AI synthesis offline. Clinical logs available for manual triage.",
+                markers: []
+            };
+        }
+    };
+
+    const submitRequest = async (patientName, hospitalId, content, urgency = 'SCHEDULED', type = 'text', file = null, voiceUrl = null, preferredDoctorId = null, manualHighlights = []) => {
+        // 1. Fetch Patient History for Gemini Analysis
+        const { data: pastHistory } = await supabase
+            .from('appointment_requests')
+            .select('*')
+            .eq('patient_id', user?.id)
+            .eq('status', 'COMPLETED');
+
+        // 2. Perform AI Anatomical Analysis
+        const aiResult = await analyzeClinicalRequest(content, pastHistory || [], file instanceof File ? file : null);
+
+        // 3. Insert Request with AI Insights
+        const { data, error } = await supabase.from('appointment_requests').insert([{
             patient_name: patientName,
-            hospital: hospital,
-            section: suggestedSection,
-            diagnosis: content,
+            patient_id: user?.id,
+            hospital_id: hospitalId,
+            service_requested: content,
             urgency: urgency,
             status: 'PENDING_SECRETARY',
-            input_type: inputType,
-            file_url: fileUrl,
-            voice_url: voiceUrl
+            preferred_doctor_id: preferredDoctorId,
+            file_url: typeof file === 'string' ? file : null,
+            voice_url: voiceUrl,
+            ai_analysis: aiResult,
+            ai_conclusion: aiResult.conclusion,
+            ai_humanoid_markers: aiResult.markers,
+            // Referral Hub fields
+            is_referral: !!(aiResult.markers?.length || content.includes('[REFERRAL]')),
+            manual_highlights: manualHighlights,
+            clinical_snapshot: aiResult
         }]).select();
 
         if (error) console.error('Error submitting request:', error);
@@ -217,8 +296,12 @@ export const ClinicalProvider = ({ children }) => {
 
     const routeToDoctor = async (requestId, doctorId) => {
         const { error } = await supabase
-            .from('requests')
-            .update({ status: 'ROUTED_TO_DOCTOR', assigned_doctor_id: doctorId })
+            .from('appointment_requests')
+            .update({
+                status: 'ROUTED_TO_DOCTOR',
+                assigned_doctor_id: doctorId,
+                handled_by_coordinator_id: user?.id
+            })
             .eq('id', requestId);
 
         if (error) {
@@ -228,8 +311,103 @@ export const ClinicalProvider = ({ children }) => {
         }
     };
 
+    const assignNurse = async (requestId, nurseId) => {
+        console.log("DEBUG assignNurse:", { requestId, nurseId });
+        const { error } = await supabase
+            .from('appointment_requests')
+            .update({ assigned_nurse_id: nurseId, status: 'EXECUTING_CARE' })
+            .eq('id', requestId);
+        if (error) console.error('Error assigning nurse:', JSON.stringify(error, null, 2));
+        else logEvent(`SECRETARY: Assigned nurse to request ${requestId.slice(0, 8)}`, 'INFO');
+    };
+
+    const updateVitals = async (requestId, vitals) => {
+        const { error } = await supabase
+            .from('appointment_requests')
+            .update({ vitals_data: vitals })
+            .eq('id', requestId);
+        if (error) console.error('Error updating vitals:', error);
+    };
+
+    const prescribeMedication = async (requestId, meds, diagnosis, instructions) => {
+        const { error } = await supabase
+            .from('appointment_requests')
+            .update({
+                medication_schedule: meds,
+                diagnosis: diagnosis,
+                nurse_instructions: instructions,
+                status: 'EXECUTING_CARE'
+            })
+            .eq('id', requestId);
+        if (error) console.error('Error prescribing:', error);
+    };
+
+    const confirmAdministration = async (requestId, meds) => {
+        const { error } = await supabase
+            .from('appointment_requests')
+            .update({ medication_schedule: meds })
+            .eq('id', requestId);
+        if (error) console.error('Error confirming med:', error);
+    };
+
+    const requestNurseHelp = async (requestId, note) => {
+        const { error } = await supabase
+            .from('appointment_requests')
+            .update({ nurse_requested: true, nurse_request_note: note })
+            .eq('id', requestId);
+        if (error) console.error('Error requesting nurse help:', error);
+        else logEvent(`DOCTOR: Requested nurse assistance for case ${requestId.slice(0, 8)}`, 'WARNING');
+    };
+
+    const generateInvite = async (hospitalId, role) => {
+        const { data, error } = await supabase
+            .from('hospital_invites')
+            .insert([{ hospital_id: hospitalId, role: role }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error generating invite:', error);
+            throw error;
+        }
+        return data;
+    };
+
+    const completeCase = async (requestId, doctorId, nurseId) => {
+        // 1. Mark Request as Completed
+        const { error } = await supabase
+            .from('appointment_requests')
+            .update({ status: 'COMPLETED', nurse_requested: false })
+            .eq('id', requestId);
+
+        if (error) {
+            console.error('Error completing case:', error);
+            return;
+        }
+
+        // 2. Release Staff Availability (Set to 'Available')
+        if (doctorId) {
+            await supabase.from('doctors_meta').update({ status: 'Available' }).eq('id', doctorId);
+        }
+        // If nurses have meta status, update it too (assuming they reuse doctors_meta or profiles extension)
+        // Currently nurses are in 'doctors_meta' technically? or just 'profiles'.
+        // Let's check where 'status' is stored. doctors_meta has 'status'. Nurses might not have an entry there yet unless we created it.
+        // For safety, we'll try updating doctors_meta if the nurse exists there.
+        if (nurseId) {
+            await supabase.from('doctors_meta').update({ status: 'Available' }).eq('id', nurseId);
+        }
+
+        logEvent(`CLINICAL: Completed case ${requestId.slice(0, 8)}`, 'INFO');
+        await refreshGlobalData();
+    };
+
     const logEvent = async (message, level = 'INFO') => {
         await supabase.from('system_logs').insert([{ message, level, analyzed_by_ai: true }]);
+    };
+
+    const deleteDiagnosis = async (diagnosisId) => {
+        const { error } = await supabase.from('patient_diagnoses').delete().eq('id', diagnosisId);
+        if (error) console.error('Error deleting diagnosis:', error);
     };
 
     return (
@@ -241,15 +419,23 @@ export const ClinicalProvider = ({ children }) => {
             submitRequest,
             routeToDoctor,
             logEvent,
-            aiConsultation
+            aiConsultation,
+            fetchRequests,
+            fetchDoctors,
+            fetchPatientHistory,
+            fetchHospitalArchives,
+            fetchDiagnoses,
+            uploadDiagnosis,
+            deleteDiagnosis,
+            assignNurse,
+            updateVitals,
+            prescribeMedication,
+            confirmAdministration,
+            requestNurseHelp,
+            completeCase,
+            generateInvite
         }}>
             {children}
         </ClinicalContext.Provider>
     );
-};
-
-export const useClinical = () => {
-    const context = useContext(ClinicalContext);
-    if (!context) throw new Error('useClinical must be used within ClinicalProvider');
-    return context;
 };

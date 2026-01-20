@@ -1,6 +1,6 @@
 import React from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 const UserAppointments = () => {
     const { requests } = useClinical();
@@ -43,7 +43,7 @@ const UserAppointments = () => {
                 )}
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .info-alert { border-left: 4px solid var(--accent); padding: 1rem; color: var(--accent); }
                 .requests-list { display: flex; flex-direction: column; gap: 1.5rem; }
                 .request-item { padding: 1.5rem; position: relative; }

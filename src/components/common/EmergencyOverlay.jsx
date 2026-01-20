@@ -2,56 +2,56 @@ import React, { useState } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 
 const EmergencyOverlay = ({ isOpen, onClose }) => {
-    const { logEvent } = useClinical();
-    const [step, setStep] = useState('confirm'); // confirm | alerting | success
+  const { logEvent } = useClinical();
+  const [step, setStep] = useState('confirm'); // confirm | alerting | success
 
-    const handleSOS = async () => {
-        setStep('alerting');
+  const handleSOS = async () => {
+    setStep('alerting');
 
-        // Simulate location fetch & alert routing
-        setTimeout(async () => {
-            await logEvent("EMERGENCY: SOS Triggered. Location: Maadi, Cairo (Simulated). Nearest Facility: Al-Salam International.", "CRITICAL");
-            setStep('success');
-        }, 2000);
-    };
+    // Simulate location fetch & alert routing
+    setTimeout(async () => {
+      await logEvent("EMERGENCY: SOS Triggered. Location: Maadi, Cairo (Simulated). Nearest Facility: Al-Salam International.", "CRITICAL");
+      setStep('success');
+    }, 2000);
+  };
 
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
-    return (
-        <div className="emergency-overlay">
-            <div className="overlay-blur" onClick={onClose}></div>
-            <div className="emergency-modal glass-card">
-                {step === 'confirm' && (
-                    <div className="content fade-in">
-                        <div className="sos-icon-large">🆘</div>
-                        <h2>Immediate Assistance?</h2>
-                        <p>One tap will alert the nearest medical facility and route an ambulance to your current location.</p>
-                        <div className="actions">
-                            <button className="btn-sos" onClick={handleSOS}>CALL AMBULANCE NOW</button>
-                            <button className="btn-secondary" onClick={onClose}>Cancel</button>
-                        </div>
-                    </div>
-                )}
-
-                {step === 'alerting' && (
-                    <div className="content fade-in">
-                        <div className="loading-spinner"></div>
-                        <h2>Establishing Connection...</h2>
-                        <p>Locating nearest facility and sharing your medical profile.</p>
-                    </div>
-                )}
-
-                {step === 'success' && (
-                    <div className="content fade-in">
-                        <div className="success-icon">🚑</div>
-                        <h2>Help is on the way!</h2>
-                        <p>An ambulance from <strong>Al-Salam International</strong> has been dispatched. ETA: 8 minutes.</p>
-                        <button className="btn-primary" onClick={onClose}>Done</button>
-                    </div>
-                )}
+  return (
+    <div className="emergency-overlay">
+      <div className="overlay-blur" onClick={onClose}></div>
+      <div className="emergency-modal glass-card">
+        {step === 'confirm' && (
+          <div className="content fade-in">
+            <div className="sos-icon-large">🆘</div>
+            <h2>Immediate Assistance?</h2>
+            <p>One tap will alert the nearest medical facility and route an ambulance to your current location.</p>
+            <div className="actions">
+              <button className="btn-sos" onClick={handleSOS}>CALL AMBULANCE NOW</button>
+              <button className="btn-secondary" onClick={onClose}>Cancel</button>
             </div>
+          </div>
+        )}
 
-            <style jsx>{`
+        {step === 'alerting' && (
+          <div className="content fade-in">
+            <div className="loading-spinner"></div>
+            <h2>Establishing Connection...</h2>
+            <p>Locating nearest facility and sharing your medical profile.</p>
+          </div>
+        )}
+
+        {step === 'success' && (
+          <div className="content fade-in">
+            <div className="success-icon">🚑</div>
+            <h2>Help is on the way!</h2>
+            <p>An ambulance from <strong>Al-Salam International</strong> has been dispatched. ETA: 8 minutes.</p>
+            <button className="btn-primary" onClick={onClose}>Done</button>
+          </div>
+        )}
+      </div>
+
+      <style>{`
         .emergency-overlay {
           position: fixed;
           inset: 0;
@@ -116,8 +116,8 @@ const EmergencyOverlay = ({ isOpen, onClose }) => {
         }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default EmergencyOverlay;

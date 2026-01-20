@@ -41,7 +41,7 @@ const UserDoctors = () => {
                 ))}
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .search-box input {
                     width: 100%;
                     background: transparent;

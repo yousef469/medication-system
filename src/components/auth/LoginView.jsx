@@ -1,254 +1,410 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/useAuth';
 import { supabase } from '../../supabaseClient';
 
-const LoginView = ({ targetRole: initialTargetRole }) => {
-  const [targetRole, setTargetRole] = useState(initialTargetRole || 'user');
+const LoginView = ({ portalMode = 'patient', onBack }) => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [regSuccess, setRegSuccess] = useState(false);
+  const [isInstant, setIsInstant] = useState(false);
+  const [targetRole, setTargetRole] = useState(portalMode === 'professional' ? 'doctor' : 'user');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [license, setLicense] = useState(null);
+  const [selectedHospital, setSelectedHospital] = useState('');
+  const [hospitals, setHospitals] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleEmailLogin = async (e) => {
+  const [lockedHospital, setLockedHospital] = useState(null);
+  const [lockedRole, setLockedRole] = useState(null);
+  const [inviteToken, setInviteToken] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const inviteId = params.get('invite');
+
+    const initializePortal = async () => {
+      if (portalMode === 'professional') {
+        const { data: hospitalData } = await supabase.from('hospitals').select('id, name').eq('status', 'APPROVED');
+        if (hospitalData) setHospitals(hospitalData);
+      }
+
+      if (token) {
+        setInviteToken(token);
+        try {
+          const { data, error } = await supabase.rpc('validate_invite_token', { lookup_token: token });
+          const result = Array.isArray(data) ? data[0] : data;
+
+          if (result && result.valid) {
+            setLockedHospital({ id: result.target_hospital_id, name: result.hospital_name });
+            setLockedRole(result.target_role);
+            setSelectedHospital(result.target_hospital_id);
+            setTargetRole(result.target_role);
+            setIsSignUp(true);
+          } else {
+            setError("This invitation link is invalid or has expired.");
+          }
+        } catch (err) {
+          console.error("Token lookup failed:", err);
+          setError("Failed to verify invitation link.");
+        }
+      } else if (inviteId) {
+        setSelectedHospital(inviteId);
+        setIsSignUp(true);
+      }
+    };
+
+    initializePortal();
+  }, [portalMode]);
+
+  const handleAuth = async (e) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
+    setError('');
+
+    console.log("[Auth] Environment Check:", {
+      url: (import.meta.env.VITE_SUPABASE_URL || '').substring(0, 10),
+      keyPrefix: (import.meta.env.VITE_SUPABASE_ANON_KEY || '').substring(0, 10)
+    });
+
     try {
-      await login(email, password);
+      if (isSignUp) {
+        const { data: authData, error: authErr } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name,
+              role: targetRole,
+              phone: phone,
+              hospital_id: selectedHospital || null,
+              is_new_registrant: true
+            }
+          }
+        });
+
+        if (authErr) {
+          console.error("[Auth] SignUp Error Object:", JSON.stringify(authErr, null, 2));
+          throw authErr;
+        }
+
+        // Claim Secure Token if present
+        if (inviteToken) {
+          await supabase.rpc('claim_invite_token', { claim_token: inviteToken });
+        }
+
+        console.log("[Auth] SignUp Result:", {
+          userId: authData?.user?.id,
+          sessionExists: !!authData?.session,
+          userMetadata: authData?.user?.user_metadata
+        });
+
+        setIsInstant(!!authData.session);
+        setRegSuccess(true);
+      } else {
+        const { data, error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
+        if (loginErr) {
+          console.error("[Auth] Login Error Object:", JSON.stringify(loginErr, null, 2));
+          throw loginErr;
+        }
+      }
     } catch (err) {
-      setError(err.message || 'Authentication failed');
+      console.error("[Auth] Caught Error:", err);
+      setError(err.message || 'Authentication failed. Technical details in console.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin
-      }
-    });
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
     if (error) setError(error.message);
   };
 
-  const roles = [
-    { id: 'user', name: 'Patient', icon: '👤', color: 'var(--primary)', desc: 'Personal health discovery and diagnostics' },
-    { id: 'doctor', name: 'Clinical Staff', icon: '👨‍⚕️', color: 'var(--secondary)', desc: 'Case management and AI-assisted triage' },
-    { id: 'secretary', name: 'Coordinator', icon: '📋', color: 'var(--accent)', desc: 'Patient routing and facility operations' },
-    { id: 'it', name: 'System Tech', icon: '⚙️', color: 'var(--primary)', desc: 'Node health and local AI infrastructure' },
-  ];
+  const isProfessional = portalMode === 'professional';
+
+  if (regSuccess) {
+    const isAdmin = targetRole === 'hospital_admin';
+    return (
+      <div className="login-card success-screen fade-in">
+        <style>{`
+          .success-screen { text-align: center; padding: 4rem 2rem; max-width: 500px; margin: 0 auto; }
+          .success-icon { font-size: 4rem; margin-bottom: 2rem; display: block; }
+          .email-highlight { color: var(--primary); font-weight: 700; border-bottom: 2px solid var(--primary); }
+          .diagnostic-link { font-size: 0.75rem; color: var(--text-muted); opacity: 0.6; cursor: pointer; margin-top: 3rem; display: block; text-decoration: underline; }
+          .admin-note { background: rgba(124, 58, 237, 0.1); border: 1px solid rgba(124, 58, 237, 0.2); padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.85rem; }
+        `}</style>
+        <span className="success-icon">{isInstant ? '✅' : '📧'}</span>
+        <h2 className="text-gradient">{isInstant ? 'Welcome Aboard!' : 'Identity Pending'}</h2>
+
+        {isInstant ? (
+          <div>
+            <p>Your {isAdmin ? 'Hospital Facility' : 'Professional'} registration is complete.</p>
+            {isAdmin && <div className="admin-note">🏥 **Facility Setup Running**: We are initializing your hospital dashboard and clinical workflows.</div>}
+            <p style={{ marginTop: '1rem' }}>Redirecting you to the medical hub...</p>
+          </div>
+        ) : (
+          <>
+            <p>Verification is required for <br /><span className="email-highlight">{email}</span></p>
+            <div className="alert-box info mt-1" style={{ fontSize: '0.85rem' }}>
+              <strong>Not getting the email?</strong><br />
+              Supabase often limits email volume. To skip verification:
+              <ol style={{ textAlign: 'left', marginTop: '0.5rem' }}>
+                <li>Go to Supabase Dashboard.</li>
+                <li>Go to Authentication, then Providers, then Email.</li>
+                <li>Turn OFF the "Confirm Email" toggle.</li>
+                <li>Delete this user and Try Again!</li>
+              </ol>
+            </div>
+          </>
+        )}
+
+        <button className="btn-primary w-full mt-1" onClick={async () => {
+          const { data } = await supabase.auth.getSession();
+          console.log("[Diag] Reload Check Session:", !!data.session);
+          if (data.session || isInstant) window.location.reload();
+          else setRegSuccess(false);
+        }}>
+          {isInstant ? 'Enter Clinical Dashboard' : 'Back to Login'}
+        </button>
+
+        <span className="diagnostic-link" onClick={() => {
+          console.log("[Diag] Connection Details:", {
+            url: supabase.supabaseUrl,
+            keySet: !!supabase.supabaseKey,
+            sessionActive: !!isInstant
+          });
+          alert(`Supabase Connected: ${supabase.supabaseUrl ? 'YES' : 'NO'}\nInstant Session: ${isInstant ? 'YES' : 'NO'}`);
+        }}>
+          DEBUG: Test Connection & Key
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <div className="login-split-view fade-in">
-      <div className="login-visual-container" style={{ backgroundImage: `url('/medical_hero_split_auth_1768086048804.png')` }}>
-        <div className="visual-overlay">
-          <div className="visual-content">
-            <div className="tag">EGYPTIAN LOCALIZATION</div>
-            <h1>Advanced Clinical Network</h1>
-            <p>
-              Join a unified system connecting patients with Egypt's most prestigious medical institutions
-              using state-of-the-art AI triage and real-time coordination.
-            </p>
+    <div className="login-portal-view fade-in">
+      <style>{`
+        .login-portal-view {
+          display: grid;
+          grid-template-columns: 1fr 1.2fr;
+          min-height: 100vh;
+          background: var(--bg-primary);
+        }
 
-            <div className="mini-features">
-              <div className="mini-feat">
-                <span>⚡</span>
-                <div>
-                  <strong>Real-time Triage</strong>
-                  <p>AI-powered routing across Cairo & Aswan</p>
-                </div>
-              </div>
-              <div className="mini-feat">
-                <span>💎</span>
-                <div>
-                  <strong>Elite Facilities</strong>
-                  <p>Direct integration with 57357 and Kasr Al-Ainy</p>
-                </div>
-              </div>
-            </div>
+        .login-visual {
+          background-size: cover;
+          background-position: center;
+          position: relative;
+        }
+
+        .login-visual-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, var(--bg-dark) 20%, transparent 80%);
+          display: flex;
+          align-items: flex-end;
+          padding: 4rem;
+          color: white;
+        }
+
+        .login-form-side {
+          padding: 4rem 6rem;
+          background: var(--bg-dark);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .back-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-weight: 700;
+        }
+
+        .login-header { margin-bottom: 3rem; }
+        .login-header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .login-header p { color: var(--text-muted); }
+
+        .form-stack { display: flex; flex-direction: column; gap: 1.5rem; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
+        .input-group input, .input-group select {
+          width: 100%;
+          background: var(--glass-highlight);
+          border: 1px solid var(--glass-border);
+          padding: 1rem;
+          border-radius: var(--radius-md);
+          color: white;
+          outline: none;
+        }
+
+        .pro-mode { border-top: 5px solid #7c3aed; }
+        .pro-badge-top { background: #7c3aed; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; display: inline-block; margin-bottom: 1rem; text-transform: uppercase; }
+        .patient-badge-top { background: var(--primary); color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; display: inline-block; margin-bottom: 1rem; text-transform: uppercase; }
+        .portal-header { text-align: center; margin-bottom: 2rem; }
+        .error-banner { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 1rem; border-radius: var(--radius-md); font-size: 0.85rem; }
+
+        .role-switch {
+          display: flex;
+          background: var(--glass-highlight);
+          padding: 0.3rem;
+          border-radius: var(--radius-full);
+          margin-bottom: 2rem;
+        }
+        .role-switch button {
+          flex: 1;
+          padding: 0.7rem;
+          border: none;
+          background: transparent;
+          color: var(--text-muted);
+          font-size: 0.8rem;
+          font-weight: 700;
+          border-radius: var(--radius-full);
+          cursor: pointer;
+        }
+        .role-switch button.active { background: var(--primary); color: white; }
+
+        @media (max-width: 1024px) {
+          .login-portal-view { grid-template-columns: 1fr; }
+          .login-visual { display: none; }
+          .login-form-side { padding: 3rem 2rem; }
+        }
+      `}</style>
+
+      <div className="login-visual" style={{ backgroundImage: `url(${isProfessional ? '/professional_portal_hero.png' : '/patient_portal_hero.png'})` }}>
+        <div className="login-visual-overlay">
+          <div>
+            <h1 style={{ fontSize: '3rem', fontWeight: 900 }}>{isProfessional ? 'Healthcare Force' : 'Your Health, Simplified'}</h1>
+            <p>{isProfessional ? 'Advanced clinical tools and patient management.' : 'Connect with doctors and manage your care from anywhere.'}</p>
           </div>
         </div>
       </div>
 
-      <div className="login-form-container">
-        <div className="login-header">
-          <h2 className="text-gradient">Welcome to MediDiscovery</h2>
-          <p className="subtitle">Select your portal to continue </p>
+      <div className="login-form-side">
+        <button className="back-btn" onClick={onBack}>← Back to Portals</button>
+
+        <div className={`login-card bounce-in ${isProfessional ? 'pro-mode' : ''}`}>
+          <div className="portal-header">
+            {isProfessional ? (
+              <div className="pro-badge-top">Healthcare Provider Track</div>
+            ) : (
+              <div className="patient-badge-top">Patient Access</div>
+            )}
+            <h1>{isSignUp ? (isProfessional ? 'Professional Onboarding' : 'Create Account') : 'Welcome Back'}</h1>
+            <p>{isSignUp ? (isProfessional ? 'Register as part of Egypt\'s verified clinical network.' : 'Join the medical hub for easy appointment booking.') : 'Please sign in to your dashboard.'}</p>
+          </div>
         </div>
 
-        <div className="role-grid">
-          {roles.map(r => (
-            <div
-              key={r.id}
-              className={`role-card glass-card ${targetRole === r.id ? 'active' : ''}`}
-              onClick={() => setTargetRole(r.id)}
-              style={{ '--role-color': r.color }}
-            >
-              <span className="role-icon">{r.icon}</span>
-              <div className="role-label">{r.name}</div>
+        {isProfessional && isSignUp && (
+          <div className="role-switch">
+            {lockedRole ? (
+              <div className="pro-badge-top" style={{ width: '100%', textAlign: 'center', padding: '0.8rem' }}>
+                Joining as: {lockedRole.toUpperCase()}
+              </div>
+            ) : (
+              <>
+                <button className={targetRole !== 'hospital_admin' ? 'active' : ''} onClick={() => setTargetRole('doctor')}>Medical Staff</button>
+                <button className={targetRole === 'hospital_admin' ? 'active' : ''} onClick={() => setTargetRole('hospital_admin')}>Hospital Admin</button>
+              </>
+            )}
+          </div>
+        )}
+
+        <form className="form-stack" onSubmit={handleAuth}>
+          {isSignUp && (
+            <div className="input-group">
+              <label>{targetRole === 'hospital_admin' ? 'Facility Registration Name' : 'Full Legal Name'}</label>
+              <input type="text" placeholder={targetRole === 'hospital_admin' ? 'Cairo General' : 'John Doe'} value={name} onChange={e => setName(e.target.value)} required />
             </div>
-          ))}
-        </div>
+          )}
 
-        <form className="auth-form" onSubmit={handleEmailLogin}>
-          <div className="form-group">
+          {isSignUp && isProfessional && (
+            <div className="input-group">
+              <label>WhatsApp / Contact Number</label>
+              <input type="tel" placeholder="+20 123 456 7890" value={phone} onChange={e => setPhone(e.target.value)} required />
+            </div>
+          )}
+
+          <div className="input-group">
             <label>Email Address</label>
-            <input
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <input type="email" placeholder="name@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
-          <div className="form-group">
+
+          <div className="input-group">
             <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
 
-          {error && <div className="error-msg">⚠️ {error}</div>}
+          {isProfessional && isSignUp && (
+            <>
+              {targetRole !== 'hospital_admin' && !lockedRole && (
+                <div className="input-group">
+                  <label>Service Area / Role</label>
+                  <select value={targetRole} onChange={e => setTargetRole(e.target.value)}>
+                    <option value="doctor">Medical Doctor</option>
+                    <option value="nurse">Professional Nurse</option>
+                    <option value="secretary">Clinic Secretary</option>
+                  </select>
+                </div>
+              )}
+              {targetRole !== 'hospital_admin' && (
+                <div className="input-group">
+                  <label>Assign to Medical Center</label>
+                  {/* If invited, show locked input. Else show dropdown */}
+                  {(lockedHospital || new URLSearchParams(window.location.search).get('invite')) ? (
+                    <div style={{ padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: '8px', color: '#4ade80', fontSize: '0.9rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      🏥 Joining: {lockedHospital?.name || hospitals.find(h => h.id === selectedHospital)?.name || 'Loading Facility...'}
+                      <input type="hidden" value={selectedHospital} />
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedHospital}
+                      onChange={e => setSelectedHospital(e.target.value)}
+                      required={hospitals.length > 0}
+                    >
+                      <option value="">{hospitals.length > 0 ? 'Select Hospital...' : 'No approved centers found'}</option>
+                      {hospitals.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                    </select>
+                  )}
+                  {hospitals.length === 0 && !lockedHospital && !new URLSearchParams(window.location.search).get('invite') && <p style={{ fontSize: '0.7rem', color: '#eab308', marginTop: '4px' }}>Note: You can proceed; facility assignment can be completed later.</p>}
+                </div>
+              )}
+              <div className="input-group">
+                <label>Professional ID / License</label>
+                <input type="file" onChange={e => setLicense(e.target.files[0])} required />
+              </div>
+            </>
+          )}
 
-          <button type="submit" className="btn-primary w-full btn-lg" disabled={isLoading}>
-            {isLoading ? 'Authenticating...' : `Enter ${roles.find(r => r.id === targetRole).name} Portal`}
+          {error && <div className="error-banner">⚠️ {error}</div>}
+
+          <button type="submit" className="btn-primary btn-lg" disabled={isLoading}>
+            {isLoading ? 'Processing...' : (isSignUp ? 'Apply for Access' : 'Secure Login')}
           </button>
 
-          <div className="divider"><span>OR</span></div>
+          {!isSignUp && !isProfessional && (
+            <button type="button" className="btn-secondary" onClick={handleGoogleLogin}>
+              Continue with Google
+            </button>
+          )}
 
-          <button type="button" className="google-btn w-full" onClick={handleGoogleLogin}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
-            Continue with Google
-          </button>
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <button type="button" className="btn-link" onClick={() => setIsSignUp(!isSignUp)}>
+              {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
+            </button>
+          </div>
         </form>
       </div>
-
-      <style jsx>{`
-                .login-split-view {
-                    display: grid;
-                    grid-template-columns: 1fr 1.2fr;
-                    background: var(--bg-dark);
-                    border: 1px solid var(--glass-border);
-                    border-radius: var(--radius-xl);
-                    overflow: hidden;
-                    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-                    max-width: 1200px;
-                    margin: 2rem auto;
-                }
-
-                .login-form-container {
-                    padding: 4rem 3rem;
-                    background: var(--bg-dark);
-                }
-
-                .login-header { margin-bottom: 2.5rem; }
-                .login-header h2 { font-size: 2rem; margin-bottom: 0.5rem; }
-                .subtitle { color: var(--text-muted); font-size: 0.9rem; }
-
-                .role-grid {
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 1rem;
-                    margin-bottom: 2.5rem;
-                }
-
-                .role-card {
-                    padding: 1rem;
-                    text-align: center;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                    border: 1px solid var(--glass-border);
-                }
-
-                .role-card.active {
-                    background: var(--glass-highlight);
-                    border-color: var(--role-color);
-                    box-shadow: 0 0 15px var(--primary-glow-low);
-                }
-
-                .role-icon { font-size: 1.5rem; display: block; margin-bottom: 0.5rem; }
-                .role-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-
-                .auth-form { display: flex; flex-direction: column; gap: 1.5rem; }
-                .form-group label { display: block; font-size: 0.75rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
-                .form-group input {
-                    width: 100%;
-                    background: var(--glass-highlight);
-                    border: 1px solid var(--glass-border);
-                    padding: 0.9rem;
-                    border-radius: var(--radius-md);
-                    color: white;
-                    outline: none;
-                }
-
-                .error-msg { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; }
-
-                .divider { text-align: center; position: relative; margin: 1rem 0; }
-                .divider::before { content: ''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: var(--glass-border); }
-                .divider span { background: var(--bg-dark); padding: 0 1rem; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; position: relative; }
-
-                .google-btn {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.75rem;
-                    background: white;
-                    color: #1a1a1a;
-                    border: none;
-                    padding: 0.8rem;
-                    border-radius: var(--radius-md);
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .google-btn:hover { background: #f0f0f0; }
-                .google-btn img { width: 18px; }
-
-                .login-visual-container {
-                    background-size: cover;
-                    background-position: center;
-                    position: relative;
-                }
-
-                .visual-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(to top, var(--bg-dark) 10%, transparent 90%);
-                    display: flex;
-                    align-items: flex-end;
-                    padding: 4rem;
-                }
-
-                .visual-content { color: white; }
-                .tag { 
-                    display: inline-block; 
-                    background: var(--primary); 
-                    font-size: 0.65rem; 
-                    font-weight: 800; 
-                    padding: 0.25rem 0.75rem; 
-                    border-radius: var(--radius-full); 
-                    margin-bottom: 1rem;
-                }
-                .visual-content h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 800; line-height: 1.1; }
-                .visual-content p { color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 2.5rem; }
-
-                .mini-features { display: flex; flex-direction: column; gap: 1.5rem; }
-                .mini-feat { display: flex; gap: 1rem; align-items: flex-start; }
-                .mini-feat span { font-size: 1.25rem; background: var(--glass-highlight); padding: 0.5rem; border-radius: 8px; }
-                .mini-feat strong { display: block; font-size: 0.95rem; margin-bottom: 0.25rem; }
-                .mini-feat p { font-size: 0.8rem; margin: 0; }
-
-                @media (max-width: 1024px) {
-                    .login-split-view { grid-template-columns: 1fr; }
-                    .login-visual-container { display: none; }
-                }
-            `}</style>
     </div>
   );
 };

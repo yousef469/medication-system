@@ -6,7 +6,7 @@ const MedicationHub = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const allTreatments = hospitals.flatMap(h =>
-        h.treatments.map(t => ({ ...t, hospitalName: h.name, hospitalId: h.id, contact: h.contact }))
+        (h.treatments || []).map(t => ({ ...t, hospitalName: h.name, hospitalId: h.id, contact: h.contact || 'N/A' }))
     );
 
     const filtered = allTreatments.filter(t =>
@@ -52,7 +52,7 @@ const MedicationHub = () => {
                 )}
             </div>
 
-            <style jsx>{`
+            <style>{`
         .medication-hub { padding: 2rem; max-width: 1200px; margin: 0 auto; }
         .hub-header { text-align: center; margin-bottom: 4rem; }
         .search-box { 

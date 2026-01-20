@@ -1,11 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const AIAssistant = () => {
     const { aiConsultation } = useClinical();
-    const [messages, setMessages] = useState([
-        { role: 'assistant', text: 'Hello! I am your medical assistant. I can help you find the right hospital, check treatment costs, or analyze your symptoms. How can I help you today?' }
-    ]);
+    const { t, isRTL } = useLanguage();
+
+    // Initial message based on current language
+    const [messages, setMessages] = useState([]);
+
+    useEffect(() => {
+        setMessages([
+            { role: 'assistant', text: t('ai_welcome') }
+        ]);
+    }, [t]);
+
     const [inputValue, setInputValue] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -25,15 +34,22 @@ const AIAssistant = () => {
 
         try {
             const response = await aiConsultation(text);
+
+            // Enforce Safety Disclaimer if it's a medical query and not just costs
+            let safeAnswer = response.answer;
+            if (response.type !== 'COST_QUERY') {
+                safeAnswer = `${t('ai_safety_disclaimer')}\n\n${response.answer}`;
+            }
+
             const assistantMsg = {
                 role: 'assistant',
-                text: response.answer,
+                text: safeAnswer,
                 type: response.type,
                 suggestion: response.suggestion
             };
             setMessages(prev => [...prev, assistantMsg]);
         } catch (err) {
-            setMessages(prev => [...prev, { role: 'assistant', text: "I'm having trouble connecting right now. Please try again." }]);
+            setMessages(prev => [...prev, { role: 'assistant', text: "Connection error. Trying offline mode..." }]);
         } finally {
             setIsThinking(false);
         }
@@ -44,13 +60,13 @@ const AIAssistant = () => {
         if (!isRecording) {
             setTimeout(() => {
                 setIsRecording(false);
-                handleSend("I need to find a hospital for my child with better costs than Al-Salam.");
+                handleSend(t('voice_start'));
             }, 3000);
         }
     };
 
     return (
-        <div className="ai-page-container fade-in">
+        <div className={`ai-page-container fade-in ${isRTL ? 'rtl' : 'ltr'}`}>
             <div className="ai-chat-window glass-card">
                 <div className="chat-header">
                     <div className="avatar__wrapper">
@@ -58,8 +74,8 @@ const AIAssistant = () => {
                         <span className="ai-avatar">🤖</span>
                     </div>
                     <div className="header-info">
-                        <h3>Clinical AI Assistant</h3>
-                        <span className="mode-badge">Hybrid Local/Gemini</span>
+                        <h3>{t('ai_assistant')}</h3>
+                        <span className="mode-badge">{t('gemini_cloud_tag')}</span>
                     </div>
                 </div>
 
@@ -71,8 +87,7 @@ const AIAssistant = () => {
                                     {m.text}
                                 </div>
                                 <div className="meta-tags">
-                                    {m.type === 'LOCAL' && <span className="source-tag">Local Offline Rule</span>}
-                                    {m.type === 'GEMINI' && <span className="source-tag gemini">Gemini Cloud Analysis</span>}
+                                    <span className="source-tag gemini">{t('gemini_cloud_tag')}</span>
                                 </div>
                             </div>
                         </div>
@@ -88,20 +103,23 @@ const AIAssistant = () => {
 
                 <div className="chat-input-area">
                     <button className={`voice-btn ${isRecording ? 'recording' : ''}`} onClick={toggleVoice}>
-                        {isRecording ? '⏹ Stop' : '🎤 Voice'}
+                        {isRecording ? t('voice_stop') : t('voice_start')}
                     </button>
                     <input
                         type="text"
-                        placeholder="Type your symptoms, ask about costs (e.g. 'Price of MRI'), or attach files..."
+                        placeholder={t('search_placeholder')}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                     />
-                    <button className="send-btn" onClick={() => handleSend()}>Send ➔</button>
+                    <button className="send-btn" onClick={() => handleSend()}>{t('send')} ➔</button>
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
+                .rtl { direction: rtl; }
+                .ltr { direction: ltr; }
+                
                 .ai-page-container {
                     padding: 2rem;
                     display: flex;
@@ -128,6 +146,14 @@ const AIAssistant = () => {
                     border-bottom: 1px solid var(--glass-border);
                 }
                 
+                .message.assistant .bubble { 
+                    white-space: pre-wrap; 
+                }
+
+                /* RTL Specifics */
+                .rtl .chat-input-area { gap: 1rem; }
+                .rtl .send-btn { transform: scaleX(-1); }
+                
                 .avatar__wrapper {
                     position: relative;
                     width: 48px;
@@ -139,9 +165,7 @@ const AIAssistant = () => {
                     justify-content: center;
                     border: 1px solid var(--primary);
                 }
-                
                 .ai-avatar { font-size: 1.5rem; }
-
                 .status-dot { 
                     position: absolute;
                     bottom: 0;
@@ -153,7 +177,6 @@ const AIAssistant = () => {
                     box-shadow: 0 0 10px #10b981;
                     border: 2px solid var(--bg-dark);
                 }
-                
                 .header-info h3 { margin: 0; font-size: 1.25rem; }
                 .mode-badge { 
                     font-size: 0.75rem; 
@@ -166,7 +189,6 @@ const AIAssistant = () => {
                     display: inline-block;
                     margin-top: 0.25rem;
                 }
-
                 .chat-messages {
                     flex: 1;
                     padding: 2rem;
@@ -175,18 +197,15 @@ const AIAssistant = () => {
                     flex-direction: column;
                     gap: 1.5rem;
                 }
-
                 .message { display: flex; width: 100%; }
                 .message.user { justify-content: flex-end; }
                 .message.assistant { justify-content: flex-start; }
-
                 .message-content {
                     max-width: 70%;
                     display: flex;
                     flex-direction: column;
                 }
                 .message.user .message-content { align-items: flex-end; }
-
                 .bubble {
                     padding: 1rem 1.5rem;
                     border-radius: 18px;
@@ -195,28 +214,24 @@ const AIAssistant = () => {
                     position: relative;
                     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                 }
-                
                 .message.assistant .bubble { 
                     background: var(--glass-highlight); 
                     border: 1px solid var(--glass-border); 
                     border-top-left-radius: 4px;
                     color: var(--text-primary);
                 }
-                
                 .message.user .bubble { 
                     background: linear-gradient(135deg, var(--primary), #0284c7); 
                     color: white; 
                     border-bottom-right-radius: 4px; 
                     box-shadow: 0 4px 15px var(--primary-glow);
                 }
-
                 .meta-tags {
                     margin-top: 0.5rem;
                     display: flex;
                     justify-content: flex-start;
                 }
                 .message.user .meta-tags { justify-content: flex-end; }
-
                 .source-tag {
                     font-size: 0.65rem;
                     color: var(--text-muted);
@@ -227,7 +242,6 @@ const AIAssistant = () => {
                     border-radius: 4px;
                 }
                 .source-tag.gemini { color: var(--accent); }
-
                 .chat-input-area {
                     padding: 2rem;
                     background: var(--glass-highlight);
@@ -236,7 +250,6 @@ const AIAssistant = () => {
                     align-items: center;
                     border-top: 1px solid var(--glass-border);
                 }
-                
                 .chat-input-area input {
                     flex: 1;
                     background: var(--bg-dark);
@@ -249,7 +262,6 @@ const AIAssistant = () => {
                     transition: border-color 0.2s;
                 }
                 .chat-input-area input:focus { border-color: var(--primary); }
-                
                 .voice-btn, .send-btn {
                     padding: 0 1.5rem;
                     height: 50px;
@@ -262,7 +274,6 @@ const AIAssistant = () => {
                     justify-content: center;
                     gap: 0.5rem;
                 }
-                
                 .voice-btn {
                     background: var(--glass-highlight);
                     border: 1px solid var(--glass-border);
@@ -275,16 +286,13 @@ const AIAssistant = () => {
                     color: white;
                     animation: pulse 1.5s infinite; 
                 }
-                
                 .send-btn {
                     background: var(--primary);
                     border: none;
                     color: white;
                 }
                 .send-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--primary-glow); }
-
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
                 .thinking span {
                     display: inline-block;
                     width: 8px;

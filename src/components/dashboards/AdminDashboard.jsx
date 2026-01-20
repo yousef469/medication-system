@@ -1,70 +1,70 @@
 import React from 'react';
 
 const AdminDashboard = () => {
-    const stats = [
-        { label: "Total Hospitals", value: "12", trend: "+1 this month" },
-        { label: "Active Doctors", value: "148", trend: "+12 new" },
-        { label: "Total Patients", value: "45.2K", trend: "City-wide" },
-        { label: "Monthly Appointments", value: "8.4K", trend: "98% success" },
-    ];
+  const stats = [
+    { label: "Total Hospitals", value: "12", trend: "+1 this month" },
+    { label: "Active Doctors", value: "148", trend: "+12 new" },
+    { label: "Total Patients", value: "45.2K", trend: "City-wide" },
+    { label: "Monthly Appointments", value: "8.4K", trend: "98% success" },
+  ];
 
-    return (
-        <div className="admin-container">
-            <header className="page-header">
-                <h1 className="text-gradient">City Health Administration</h1>
-                <p className="subtitle">Global control and analytics for the municipal medical network</p>
-            </header>
+  return (
+    <div className="admin-container">
+      <header className="page-header">
+        <h1 className="text-gradient">City Health Administration</h1>
+        <p className="subtitle">Global control and analytics for the municipal medical network</p>
+      </header>
 
-            <div className="admin-stats-grid">
-                {stats.map((stat, idx) => (
-                    <div key={idx} className="glass-card stat-card">
-                        <span className="stat-label">{stat.label}</span>
-                        <span className="stat-value">{stat.value}</span>
-                        <span className="stat-trend">{stat.trend}</span>
-                    </div>
-                ))}
+      <div className="admin-stats-grid">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="glass-card stat-card">
+            <span className="stat-label">{stat.label}</span>
+            <span className="stat-value">{stat.value}</span>
+            <span className="stat-trend">{stat.trend}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-management-grid">
+        <section className="management-section">
+          <div className="glass-card section-card">
+            <h3>Registered Hospitals</h3>
+            <div className="hospital-list">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="hospital-item glass-card">
+                  <div className="hospital-info">
+                    <span className="hospital-name">Central City General {i}</span>
+                    <span className="hospital-meta">Primary Care • Emergency Center</span>
+                  </div>
+                  <button className="btn-secondary btn-sm">Manage</button>
+                </div>
+              ))}
             </div>
+            <button className="btn-primary w-full mt-1">Register New Hospital</button>
+          </div>
+        </section>
 
-            <div className="admin-management-grid">
-                <section className="management-section">
-                    <div className="glass-card section-card">
-                        <h3>Registered Hospitals</h3>
-                        <div className="hospital-list">
-                            {[1, 2, 3].map(i => (
-                                <div key={i} className="hospital-item glass-card">
-                                    <div className="hospital-info">
-                                        <span className="hospital-name">Central City General {i}</span>
-                                        <span className="hospital-meta">Primary Care • Emergency Center</span>
-                                    </div>
-                                    <button className="btn-secondary btn-sm">Manage</button>
-                                </div>
-                            ))}
-                        </div>
-                        <button className="btn-primary w-full mt-1">Register New Hospital</button>
-                    </div>
-                </section>
-
-                <section className="analytics-section">
-                    <div className="glass-card section-card">
-                        <h3>System Revenue & Usage</h3>
-                        <div className="chart-placeholder">
-                            <div className="bar-chart">
-                                <div className="bar" style={{ height: '60%' }}></div>
-                                <div className="bar" style={{ height: '85%' }}></div>
-                                <div className="bar" style={{ height: '45%' }}></div>
-                                <div className="bar" style={{ height: '95%' }}></div>
-                                <div className="bar" style={{ height: '70%' }}></div>
-                            </div>
-                        </div>
-                        <div className="analytics-meta">
-                            <p>Top Performing: District 4 Medical Center</p>
-                            <p>Critical Alert: Resource shortage in Sector 2</p>
-                        </div>
-                    </div>
-                </section>
+        <section className="analytics-section">
+          <div className="glass-card section-card">
+            <h3>System Revenue & Usage</h3>
+            <div className="chart-placeholder">
+              <div className="bar-chart">
+                <div className="bar" style={{ height: '60%' }}></div>
+                <div className="bar" style={{ height: '85%' }}></div>
+                <div className="bar" style={{ height: '45%' }}></div>
+                <div className="bar" style={{ height: '95%' }}></div>
+                <div className="bar" style={{ height: '70%' }}></div>
+              </div>
             </div>
+            <div className="analytics-meta">
+              <p>Top Performing: District 4 Medical Center</p>
+              <p>Critical Alert: Resource shortage in Sector 2</p>
+            </div>
+          </div>
+        </section>
+      </div>
 
-            <style jsx>{`
+      <style>{`
         .admin-container {
           display: flex;
           flex-direction: column;
@@ -156,8 +156,8 @@ const AdminDashboard = () => {
           .admin-management-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 export default AdminDashboard;

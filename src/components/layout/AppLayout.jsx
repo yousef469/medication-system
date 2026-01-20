@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 import EmergencyOverlay from '../common/EmergencyOverlay';
-import AIAssistant from '../dashboards/AIAssistant';
 
 const AppLayout = ({ children, onNavClick, currentView }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, lockSession } = useAuth();
+  const { t, language, setLanguage, isRTL } = useLanguage();
   const [isSOSOpen, setIsSOSOpen] = useState(false);
 
   const role = user?.role || 'user';
@@ -16,6 +17,7 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
       case 'secretary': return { name: 'Linker Hub', color: 'var(--accent)', icon: '📋' };
       case 'it': return { name: 'Engineering', color: 'var(--primary)', icon: '⚙️' };
       case 'admin': return { name: 'Executive', color: '#f43f5e', icon: '💎' };
+      case 'hospital_admin': return { name: 'Management', color: 'var(--accent)', icon: '🏢' };
       default: return { name: 'Health Discovery', color: 'var(--primary)', icon: '🌐' };
     }
   };
@@ -23,9 +25,8 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
   const config = getSystemConfig();
 
   return (
-    <div className={`app-container system-${role}`}>
+    <div className={`app-container system-${role} ${isRTL ? 'rtl' : 'ltr'}`}>
       <EmergencyOverlay isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
-      <AIAssistant />
 
       <nav className="glass-card main-nav">
         <div className="nav-logo" onClick={() => onNavClick?.('home')} style={{ cursor: 'pointer' }}>
@@ -36,37 +37,119 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
         <div className="nav-links">
           {currentView !== 'landing' && (
             <>
-              <button
-                className={`nav-link-btn ${currentView === 'discovery' ? 'active' : ''}`}
-                onClick={() => onNavClick?.('discovery')}
-              >
-                Triage Hub
-              </button>
-              <button
-                className={`nav-link-btn ${currentView === 'medication-hub' ? 'active' : ''}`}
-                onClick={() => onNavClick?.('medication-hub')}
-              >
-                Medication Info
-              </button>
-              <button
-                className={`nav-link-btn ${currentView === 'ai-assistant' ? 'active' : ''}`}
-                onClick={() => onNavClick?.('ai-assistant')}
-              >
-                AI Assistant
-              </button>
-              {!isGuest && role === 'user' && (
+              {role === 'user' && (
                 <>
                   <button
-                    className={`nav-link-btn ${currentView === 'hospitals' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('hospitals')}
+                    className={`nav-link-btn ${currentView === 'discovery' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('discovery')}
                   >
-                    Hospitals
+                    {t('triage_hub')}
                   </button>
                   <button
-                    className={`nav-link-btn ${currentView === 'appointments' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('appointments')}
+                    className={`nav-link-btn ${currentView === 'medication-hub' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('medication-hub')}
                   >
-                    Appointments
+                    {t('medication_hub')}
+                  </button>
+                  <button
+                    className={`nav-link-btn ${currentView === 'anatomy-lab' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('anatomy-lab')}
+                  >
+                    🧬 Anatomy Lab
+                  </button>
+                  <button
+                    className={`nav-link-btn ${currentView === 'ai-assistant' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('ai-assistant')}
+                  >
+                    {t('ai_assistant')}
+                  </button>
+                  {!isGuest && (
+                    <>
+                      <button
+                        className={`nav-link-btn ${currentView === 'hospitals' ? 'active' : ''}`}
+                        onClick={() => onNavClick?.('hospitals')}
+                      >
+                        {t('hospitals')}
+                      </button>
+                      <button
+                        className={`nav-link-btn ${currentView === 'appointments' ? 'active' : ''}`}
+                        onClick={() => onNavClick?.('appointments')}
+                      >
+                        {t('appointments')}
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+              {role !== 'user' && (
+                <button
+                  className={`nav-link-btn ${currentView === 'network' ? 'active' : ''}`}
+                  onClick={() => onNavClick?.('network')}
+                >
+                  {t('hospital_network')}
+                </button>
+              )}
+              {role === 'hospital_admin' && (
+                <>
+                  <button
+                    className={`nav-link-btn ${currentView === 'management' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('management')}
+                  >
+                    Facility Management
+                  </button>
+                  <button
+                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('hospital-chat')}
+                  >
+                    💬 Team Hub
+                  </button>
+                </>
+              )}
+              {role === 'secretary' && (
+                <>
+                  <button
+                    className={`nav-link-btn ${currentView === 'dashboard' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('dashboard')}
+                  >
+                    📋 Coordinator Hub
+                  </button>
+                  <button
+                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('hospital-chat')}
+                  >
+                    💬 Team Hub
+                  </button>
+                </>
+              )}
+              {role === 'nurse' && (
+                <>
+                  <button
+                    className={`nav-link-btn ${currentView === 'dashboard' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('dashboard')}
+                  >
+                    💊 Nurse Station
+                  </button>
+                  <button
+                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('hospital-chat')}
+                  >
+                    💬 Team Hub
+                  </button>
+                </>
+              )}
+              {role === 'doctor' && (
+                <>
+                  <button
+                    className={`nav-link-btn ${currentView === 'dashboard' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('dashboard')}
+                  >
+                    🩺 Practitioner Desk
+                  </button>
+                  <button
+                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
+                    onClick={() => onNavClick?.('hospital-chat')}
+                  >
+                    💬 Team Hub
                   </button>
                 </>
               )}
@@ -75,25 +158,42 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
         </div>
 
         <div className="nav-profile">
-          {(!isGuest || currentView !== 'landing') && (
+          <select
+            className="lang-switcher"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+          >
+            <option value="ar">🇦🇪 AR</option>
+            <option value="en">🇺🇸 EN</option>
+            <option value="fr">🇫🇷 FR</option>
+            <option value="de">🇩🇪 DE</option>
+            <option value="es">🇪🇸 ES</option>
+          </select>
+
+          {(!isGuest || currentView !== 'landing') && !['doctor', 'nurse', 'hospital_admin', 'secretary', 'it'].includes(role) && (
             <button className="sos-pill" onClick={() => setIsSOSOpen(true)}>
-              <span>🆘</span> SOS
+              <span>🆘</span> {t('sos')}
             </button>
           )}
           <div className="user-info">
             <span className="user-name">{user?.name}</span>
             <span className="role-tag" style={{ color: config.color, borderColor: config.color + '44' }}>
-              {isGuest ? 'GUEST' : role}
+              {isGuest ? t('guest') : role}
             </span>
           </div>
           {isGuest ? (
             <button className="btn-login-nav" onClick={() => onNavClick?.('login')}>
-              Sign In
+              {t('sign_in')}
             </button>
           ) : (
-            <button className="btn-logout" onClick={logout} title="Logout">
-              ✕
-            </button>
+            <>
+              <button className="btn-logout" onClick={lockSession} title="Lock Session" style={{ marginRight: '0.5rem', background: 'rgba(255,255,255,0.1)' }}>
+                🔒
+              </button>
+              <button className="btn-logout" onClick={logout} title="Logout">
+                ✕
+              </button>
+            </>
           )}
         </div>
       </nav>
@@ -102,14 +202,24 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
         {children}
       </main>
 
-      <style jsx>{`
+      <style>{`
         .app-container {
           padding-top: 80px;
           min-height: 100vh;
           transition: background 0.5s ease;
         }
+        .rtl { direction: rtl; }
+        .ltr { direction: ltr; }
 
-        /* Unique atmosphere for each system */
+        .lang-switcher {
+          background: rgba(0,0,0,0.2);
+          border: 1px solid var(--glass-border);
+          color: white;
+          padding: 0.2rem;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
         .system-doctor { background: radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.05), transparent 50%); }
         .system-it { background: radial-gradient(circle at 100% 0%, rgba(14, 165, 233, 0.05), transparent 50%); }
         .system-admin { background: radial-gradient(circle at 100% 0%, rgba(244, 63, 94, 0.05), transparent 50%); }
@@ -271,9 +381,20 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
           animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .entrance-anim {
-          animation: entrance 1s cubic-bezier(0.16, 1, 0.3, 1);
+        .pending-verification-overlay {
+          max-width: 600px;
+          margin: 4rem auto;
+          padding: 4rem;
+          text-align: center;
+          border-top: 4px solid var(--accent);
         }
+        .verification-content .anim-icon { font-size: 4rem; display: block; margin-bottom: 1.5rem; animation: pulse 2s infinite; }
+        .status-steps { display: flex; justify-content: center; gap: 1rem; margin: 2rem 0; }
+        .step { font-size: 0.7rem; background: var(--glass-highlight); padding: 0.5rem 1rem; border-radius: 20px; color: var(--text-muted); }
+        .step.completed { background: var(--secondary); color: white; }
+        .step.pulse { border: 1px solid var(--accent); color: var(--accent); animation: border-pulse 2s infinite; }
+        
+        @keyframes border-pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 
         @keyframes entrance {
           from { opacity: 0; transform: scale(0.98); }

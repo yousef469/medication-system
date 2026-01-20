@@ -1,26 +1,81 @@
 import React, { useState, useRef } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
+import ProfessionalProfileModal from '../shared/ProfessionalProfileModal';
+import ThemeToggle from '../shared/ThemeToggle';
 
 const UserDashboard = () => {
-  const { hospitals, submitRequest } = useClinical();
+  const { hospitals, doctors, fetchDoctors, submitRequest, fetchPatientHistory, fetchDiagnoses, uploadDiagnosis } = useClinical();
   const { user } = useAuth();
   const [requestContent, setRequestContent] = useState('');
-  const [selectedHospital, setSelectedHospital] = useState('57357 Children\'s Cancer Hospital');
+  const [medicalHistory, setMedicalHistory] = useState([]);
+  const [diagnosesVault, setDiagnosesVault] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState(null);
+  const [selectedHospitalId, setSelectedHospitalId] = useState('');
   const [urgency, setUrgency] = useState('NEXT HOUR');
   const [selectedFile, setSelectedFile] = useState(null);
   const [voiceUrl, setVoiceUrl] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
+  const [preferredDoctorId, setPreferredDoctorId] = useState(null);
   const fileInputRef = useRef(null);
-
   const isGuest = !user?.isAuthenticated;
+
+  // Auto-select first hospital
+  React.useEffect(() => {
+    if (hospitals.length > 0 && !selectedHospitalId) {
+      setSelectedHospitalId(hospitals[0].id);
+    }
+  }, [hospitals]);
+
+  // Fetch doctors for the selected hospital
+  React.useEffect(() => {
+    if (selectedHospitalId) {
+      fetchDoctors(selectedHospitalId);
+    }
+  }, [selectedHospitalId]);
+
+  // Fetch Patient History
+  React.useEffect(() => {
+    if (user?.id) {
+      loadHistory();
+    }
+  }, [user?.id]);
+
+  const loadHistory = async () => {
+    setIsLoadingHistory(true);
+    const [history, vault] = await Promise.all([
+      fetchPatientHistory(user.id),
+      fetchDiagnoses(user.id)
+    ]);
+    setMedicalHistory(history);
+    setDiagnosesVault(vault);
+    setIsLoadingHistory(false);
+  };
+
+  const handleVaultUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      await uploadDiagnosis(file, file.name);
+      await loadHistory(); // Refresh
+      alert("Report analyzed and added to your Medical Vault.");
+    } catch (err) {
+      alert("AI analysis failed: " + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
-      // Simulate upload by setting a placeholder URL
       setRequestContent(prev => prev + `\n[Attached File: ${file.name}]`);
     }
   };
@@ -28,13 +83,12 @@ const UserDashboard = () => {
   const handleVoiceToggle = () => {
     if (!isRecording) {
       setIsRecording(true);
-      // Simulate high-accuracy Voice-to-Text (Whisper Distil)
       setTimeout(() => {
         setIsRecording(false);
-        const voiceText = "I have a severe headache and blurred vision for the last 2 hours. Need neurological triage.";
+        const voiceText = "Critical inquiry for clinical triage.";
         setRequestContent(prev => prev ? prev + " " + voiceText : voiceText);
         setVoiceUrl("blob:v-123");
-      }, 3000);
+      }, 2000);
     } else {
       setIsRecording(false);
       setVoiceUrl('v-placeholder-url');
@@ -53,12 +107,13 @@ const UserDashboard = () => {
 
     await submitRequest(
       user.name || "Guest Patient",
-      selectedHospital,
+      selectedHospitalId,
       requestContent,
       urgency,
       inputType,
-      selectedFile ? 'f-placeholder-url' : null,
-      voiceUrl
+      selectedFile,
+      voiceUrl,
+      preferredDoctorId
     );
 
     setSubmitted(true);
@@ -70,26 +125,87 @@ const UserDashboard = () => {
 
   return (
     <div className="user-dashboard">
-      <header className="page-header">
-        <h1 className="text-gradient">Egyptian Medical Discovery</h1>
-        <p className="subtitle">Expert clinical care across Egypt - From Cairo to Aswan</p>
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 className="text-gradient">Egyptian Medical Discovery</h1>
+          <p className="subtitle">Expert clinical care across Egypt - From Cairo to Aswan</p>
+        </div>
+        <ThemeToggle />
       </header>
 
       <div className="main-discovery-layout">
         <section className="request-portal glass-card">
-          <h3>Emergency & Diagnostic Portal</h3>
-          <p className="section-desc">Submit text, files, or voice for immediate AI triage & routing.</p>
+          {/* Bio-Anatomy Lab Launchpad */}
+          {!isGuest && (
+            <div className="lab-entry-hero" style={{
+              marginBottom: '2.5rem',
+              padding: '2.5rem',
+              background: 'linear-gradient(135deg, rgba(124, 68, 237, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
+              borderRadius: '28px',
+              border: '1px solid rgba(124, 68, 237, 0.4)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, var(--primary), transparent)' }}></div>
+
+              <div style={{ maxWidth: '65%', zIndex: 1 }}>
+                <h2 style={{ margin: 0, color: 'var(--primary)', fontSize: '2rem', textShadow: '0 0 20px var(--primary-glow-low)' }}>3D Bio-Anatomy Laboratory</h2>
+                <p style={{ margin: '1rem 0 2rem', opacity: 0.8, fontSize: '0.95rem', lineHeight: 1.6 }}>
+                  Access your interactive pharmacological profile. Upload reports for neural AI processing and visualize clinical findings on a true 3D rotating biostructure.
+                </p>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button
+                    className="btn-primary"
+                    type="button"
+                    style={{ padding: '0.8rem 2.5rem', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.05em' }}
+                    onClick={() => {
+                      // Using a more robust way to navigate if onNavClick isn't passed
+                      if (window.location.hash === '#anatomy-lab') return;
+                      // If it's a SPA with route state, we rely on the parent's handler
+                      document.querySelector('[data-nav="anatomy-lab"]')?.click();
+                    }}
+                  >
+                    🚀 LAUNCH STANDALONE LAB
+                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700 }}>
+                    <span className="pulse-dot"></span> NEURAL LINK ACTIVE
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                height: '180px',
+                width: '180px',
+                background: 'radial-gradient(circle, rgba(124, 68, 237, 0.3) 0%, transparent 70%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px solid rgba(124, 68, 237, 0.2)',
+                animation: 'float 6s ease-in-out infinite'
+              }}>
+                <span style={{ fontSize: '5rem', filter: 'drop-shadow(0 0 15px var(--primary))' }}>🧬</span>
+              </div>
+            </div>
+          )}
+
+          <h3>Emergency & Clinical Portal</h3>
+          <p className="section-desc">Submit text, files, or voice for clinical routing.</p>
 
           <form onSubmit={handleRequest} className="request-form">
             <div className="form-group">
               <label>Target Facility</label>
-              <select value={selectedHospital} onChange={(e) => setSelectedHospital(e.target.value)}>
-                {hospitals.map(h => <option key={h.id} value={h.name}>{h.name}</option>)}
+              <select value={selectedHospitalId} onChange={(e) => setSelectedHospitalId(e.target.value)}>
+                {hospitals.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
               </select>
             </div>
 
             <div className="form-group">
-              <label>Diagnosis Request / Symptoms</label>
+              <label>Request Details / Symptoms</label>
               <div className="input-with-tools">
                 <textarea
                   placeholder="Describe your situation in words, or use tools below..."
@@ -126,18 +242,107 @@ const UserDashboard = () => {
             </div>
 
             <button type="submit" className={`btn-primary w-full mt-1 ${isGuest ? 'guest-btn' : ''}`}>
-              {submitted ? '✓ Request Transmitted' : isGuest ? '🔐 Sign In to Submit' : 'Submit Diagnostic Request'}
+              {submitted ? '✓ Request Transmitted' : isGuest ? '🔐 Sign In to Submit' : 'Submit Clinical Request'}
             </button>
           </form>
+
+          {/* Patient History Section */}
+          {!isGuest && (
+            <div className="medical-history-section" style={{ marginTop: '3rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <h3 style={{ borderBottom: '2px solid var(--primary)', width: 'fit-content' }}>My Medical History</h3>
+                <span style={{ fontSize: '0.7rem', opacity: 0.5 }}>{medicalHistory.length} Sessions Resolved</span>
+              </div>
+
+              <div className="history-list" style={{ marginTop: '1.5rem' }}>
+                {isLoadingHistory ? (
+                  <p style={{ opacity: 0.5 }}>Synchronizing health records...</p>
+                ) : medicalHistory.length === 0 ? (
+                  <div className="empty-history" style={{ padding: '2rem', textAlign: 'center', background: 'rgba(0,0,0,0.1)', borderRadius: '12px', border: '1px dashed var(--glass-border)' }}>
+                    <p style={{ opacity: 0.4 }}>No historical clinical records found.</p>
+                  </div>
+                ) : (
+                  medicalHistory.map(record => (
+                    <div key={record.id} className="history-card" style={{ background: 'var(--glass-highlight)', padding: '1.2rem', borderRadius: '14px', marginBottom: '1rem', borderLeft: '3px solid var(--secondary)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>
+                          {new Date(record.created_at).toLocaleDateString()} at {hospitals.find(h => h.id === record.hospital_id)?.name || 'Medical Center'}
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          {record.status === 'COMPLETED' && (
+                            <span style={{ fontSize: '0.6rem', color: '#4ade80', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ width: '6px', height: '6px', background: '#4ade80', borderRadius: '50%' }}></span>
+                              DOCTOR VERIFIED
+                            </span>
+                          )}
+                          <span style={{ fontSize: '0.65rem', background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: '4px' }}>FINISHED</span>
+                          <button
+                            className="btn-secondary btn-xs"
+                            style={{ padding: '2px 8px', fontSize: '0.6rem' }}
+                            onClick={() => setExpandedHistoryId(expandedHistoryId === record.id ? null : record.id)}
+                          >
+                            {expandedHistoryId === record.id ? 'CLOSE' : 'VIEW AI MAP'}
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: '0.8rem' }}>
+                        <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Clinical Diagnosis</label>
+                        <div style={{ fontWeight: 600, fontSize: '1rem' }}>{record.diagnosis || 'Standard Consultation'}</div>
+                      </div>
+
+                      {expandedHistoryId === record.id ? (
+                        <div className="fade-in" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)', display: 'grid', gridTemplateColumns: '1fr 180px', gap: '1.5rem', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>GEMINI CLINICAL SYNTHESIS</div>
+                            <p style={{ fontSize: '0.85rem', fontStyle: 'italic', lineHeight: 1.5, opacity: 0.9 }}>{record.ai_conclusion || "Standard historical record analysis."}</p>
+
+                            <div style={{ marginTop: '1rem', display: 'flex', gap: '2rem' }}>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Medication</label>
+                                <div style={{ fontSize: '0.8rem' }}>{record.medication_schedule || 'None listed'}</div>
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Physician</label>
+                                <div style={{ fontSize: '0.8rem' }}>Dr. {doctors.find(d => d.id === record.assigned_doctor_id)?.name || 'Specialist'}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '15px', padding: '0.5rem' }}>
+                            <HumanoidVisualizer markers={record.ai_humanoid_markers || []} />
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '2rem' }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Medication Prescribed</label>
+                            <div style={{ fontSize: '0.8rem' }}>{record.medication_schedule || 'No medicine required'}</div>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Clinical Physician</label>
+                            <div style={{ fontSize: '0.8rem' }}>Dr. {doctors.find(d => d.id === record.assigned_doctor_id)?.name || 'Specialist'}</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="highlights">
           <h3>Top Care Centers in Egypt</h3>
           <div className="hospitals-scroll">
             {hospitals.map(h => (
-              <div key={h.id} className="glass-card hospital-mini-card">
+              <div
+                key={h.id}
+                className={`glass-card hospital-mini-card ${selectedHospitalId === h.id ? 'active-hosp' : ''}`}
+                onClick={() => setSelectedHospitalId(h.id)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="hosp-img-placeholder" style={{
-                  backgroundImage: h.image ? `url(${h.image})` : 'none',
+                  backgroundImage: h.cover_image_url ? `url(${h.cover_image_url})` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   height: '120px',
@@ -145,16 +350,64 @@ const UserDashboard = () => {
                   marginBottom: '1rem'
                 }}></div>
                 <h4>{h.name}</h4>
-                <p className="hosp-loc">📍 {h.location}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.4rem 0' }}>
+                  <span style={{ fontSize: '0.6rem', background: 'rgba(34,197,94,0.1)', color: '#4ade80', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(34,197,94,0.3)', fontWeight: 800 }}>VERIFIED FACILITY</span>
+                </div>
+                <p className="hosp-loc">📍 {h.address}</p>
               </div>
             ))}
+          </div>
+
+          <h3 style={{ marginTop: '2.5rem' }}>Hospital Staff</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Available Specialists at {hospitals.find(h => h.id === selectedHospitalId)?.name}</p>
+          <div className="doctors-list">
+            {doctors.length === 0 ? (
+              <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>No staff profiles listed for this facility contact yet.</p>
+            ) : (
+              doctors.map(dr => (
+                <div
+                  key={dr.id}
+                  className={`glass-card dr-item ${preferredDoctorId === dr.id ? 'preferred' : ''}`}
+                  onClick={() => setSelectedProfileId(dr.id)}
+                  style={{ cursor: 'pointer', position: 'relative' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div className="dr-avatar-small">
+                      {dr.avatar_url ? <img src={dr.avatar_url} alt={dr.name} className="avatar-img-round-mini" /> : dr.name?.charAt(0)}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>Dr. {dr.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--accent)' }}>{dr.specialty || dr.role}</div>
+                    </div>
+                  </div>
+                  <button
+                    className="btn-secondary btn-xs"
+                    style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.6rem' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreferredDoctorId(dr.id);
+                      setRequestContent(prev => `Attention: Dr. ${dr.name}\n\n` + prev);
+                    }}
+                  >
+                    {preferredDoctorId === dr.id ? '★ REQUESTED' : 'Request this Specialist'}
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .user-dashboard { display: flex; flex-direction: column; gap: 2rem; }
         .main-discovery-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; }
+        
+        .active-hosp { border-color: var(--primary) !important; background: var(--glass-highlight) !important; }
+        .dr-item { padding: 1rem; margin-bottom: 0.75rem; transition: transform 0.2s; border: 1px solid transparent; }
+        .dr-item:hover { transform: translateX(5px); }
+        .dr-item.preferred { border-color: var(--primary); background: rgba(124, 58, 237, 0.05); }
+        .dr-avatar-small { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; overflow: hidden; }
+        .avatar-img-round-mini { width: 100%; height: 100%; object-fit: cover; }
         
         .request-portal { padding: 2rem; border: 1px solid var(--primary-glow); }
         .section-desc { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 2rem; }
@@ -164,17 +417,17 @@ const UserDashboard = () => {
         
         .form-group select, textarea {
           width: 100%;
-          background: var(--glass-highlight);
+          background: var(--bg-app);
           border: 1px solid var(--glass-border);
           border-radius: var(--radius-md);
-          color: white;
+          color: var(--text-primary);
           padding: 0.8rem;
           outline: none;
         }
 
         .form-group select option {
-          background: #1a1a2e;
-          color: white;
+          background: var(--bg-surface);
+          color: var(--text-primary);
         }
 
         textarea { height: 120px; resize: none; }
@@ -185,7 +438,7 @@ const UserDashboard = () => {
           font-size: 0.75rem; 
           background: var(--glass-highlight); 
           border: 1px solid var(--glass-border); 
-          color: white; 
+          color: var(--text-primary); 
           padding: 0.4rem 0.8rem; 
           border-radius: var(--radius-full);
           cursor: pointer;
@@ -232,6 +485,12 @@ const UserDashboard = () => {
         .w-full { width: 100%; }
         .mt-1 { margin-top: 1rem; }
       `}</style>
+      {selectedProfileId && (
+        <ProfessionalProfileModal
+          userId={selectedProfileId}
+          onClose={() => setSelectedProfileId(null)}
+        />
+      )}
     </div>
   );
 };

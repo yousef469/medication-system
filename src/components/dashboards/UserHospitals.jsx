@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 const UserHospitals = () => {
     const { hospitals, submitRequest } = useClinical();
@@ -20,7 +20,7 @@ const UserHospitals = () => {
         }
         await submitRequest(
             user.name,
-            selectedHospital.name,
+            selectedHospitalId,
             `Appointment Booking: ${selectedSection}. Note: ${bookingNote}`,
             'SCHEDULED'
         );
@@ -92,8 +92,8 @@ const UserHospitals = () => {
                     </div>
                 </div>
 
-                <style jsx>{`
-                    .btn-back { background: transparent; border: 1px solid var(--glass-border); color: white; padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer; }
+                <style>{`
+                    .btn-back { background: transparent; border: 1px solid var(--glass-border); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: var(--radius-sm); cursor: pointer; }
                     .detail-layout { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
                     .detail-banner { height: 300px; background-size: cover; background-position: center; border-radius: var(--radius-md) var(--radius-md) 0 0; }
                     .detail-content { padding: 2rem; }
@@ -110,8 +110,8 @@ const UserHospitals = () => {
                     .booking-panel h3 { margin-bottom: 2rem; }
                     .form-group { margin-bottom: 1.5rem; }
                     .form-group label { display: block; font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; }
-                    .form-group select, .form-group textarea { width: 100%; background: var(--glass-highlight); border: 1px solid var(--glass-border); color: white; padding: 0.8rem; border-radius: var(--radius-md); outline: none; }
-                    .form-group select option { background: #1a1a2e; color: white; }
+                    .form-group select, .form-group textarea { width: 100%; background: var(--bg-app); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 0.8rem; border-radius: var(--radius-md); outline: none; }
+                    .form-group select option { background: var(--bg-surface); color: var(--text-primary); }
                     .form-group textarea { height: 100px; resize: none; }
                     .auth-nudge { font-size: 0.75rem; color: var(--accent); text-align: center; margin-top: 1rem; }
                     .success-msg { text-align: center; padding: 2rem 0; }
@@ -138,20 +138,20 @@ const UserHospitals = () => {
                         <div className="hosp-content">
                             <div className="hosp-header">
                                 <h3>{h.name}</h3>
-                                <span className={`mini-status ${h.busyStatus}`}>●</span>
+                                <span className={`mini-status ${h.busyStatus || 'moderate'}`}>●</span>
                             </div>
-                            <p className="location-tag">📍 {h.location}</p>
-                            <p className="description">{h.description}</p>
+                            <p className="location-tag">📍 {h.location || 'Location Pending'}</p>
+                            <p className="description">{h.description || 'Welcome to our newly registered medical facility.'}</p>
                             <div className="stats">
-                                <span>⭐ 4.9</span>
-                                <span>{h.sections.length} Depts</span>
+                                <span>⭐ 5.0</span>
+                                <span>{h.sections?.length || 0} Depts</span>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .hospitals-grid {
                     display: grid;
                     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
