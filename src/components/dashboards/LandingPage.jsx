@@ -136,78 +136,76 @@ const LandingPage = ({ onGetStarted }) => {
                 </div>
             </section>
 
-            {/* Hide install section if already in standalone mode */}
-            {!isStandalone && (
-                <section className="mobile-app-section glass-card fade-in">
+            {/* Always show install section (User Request) */}
+            <section className="mobile-app-section glass-card fade-in">
 
-                    <div className="mobile-content">
-                        <span className="platform-badge">NOW AVAILABLE AS PWA</span>
-                        <h2 className="text-gradient">Clinical Care on Any Device</h2>
-                        <p>
-                            Experience our high-fidelity 3D Bio-Anatomy Lab and AI diagnostics directly in your pocket.
-                            No downloads required—simply add the app to your home screen for a native experience.
-                        </p>
-                        <ul className="mobile-features">
-                            <li><span>✓</span> Instant Installation (No APK)</li>
-                            <li><span>✓</span> Native 3D Humanoid Engine</li>
-                            <li><span>✓</span> Automatic Cloud Updates</li>
-                        </ul>
+                <div className="mobile-content">
+                    <span className="platform-badge">NOW AVAILABLE AS PWA</span>
+                    <h2 className="text-gradient">Clinical Care on Any Device</h2>
+                    <p>
+                        Experience our high-fidelity 3D Bio-Anatomy Lab and AI diagnostics directly in your pocket.
+                        No downloads required—simply add the app to your home screen for a native experience.
+                    </p>
+                    <ul className="mobile-features">
+                        <li><span>✓</span> Instant Installation (No APK)</li>
+                        <li><span>✓</span> Native 3D Humanoid Engine</li>
+                        <li><span>✓</span> Automatic Cloud Updates</li>
+                    </ul>
 
-                        {/* Premium Install Button */}
-                        <div className="download-actions" style={{ marginBottom: '2rem' }}>
-                            <button
-                                className={`btn-primary btn-large download-btn ${!isInstallable ? 'disabled' : ''}`}
-                                onClick={handleInstallClick}
-                                style={{ width: '100%', justifyContent: 'center', cursor: isInstallable ? 'pointer' : 'default' }}
-                            >
-                                <span className="icon">📲</span>
-                                <div className="btn-text">
-                                    <label>{isInstallable ? 'Install Now' : 'PWA Supported'}</label>
-                                    <span>Install Clinical Hub App</span>
-                                </div>
-                            </button>
-                            {!isInstallable && (
-                                <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem', textAlign: 'center' }}>
-                                    Use the browser menu to "Add to Home Screen" if the button is inactive.
-                                </p>
-                            )}
-                        </div>
+                    {/* Premium Install Button */}
+                    <div className="download-actions" style={{ marginBottom: '2rem' }}>
+                        <button
+                            className={`btn-primary btn-large download-btn ${!isInstallable ? 'disabled' : ''}`}
+                            onClick={handleInstallClick}
+                            style={{ width: '100%', justifyContent: 'center', cursor: isInstallable ? 'pointer' : 'default' }}
+                        >
+                            <span className="icon">📲</span>
+                            <div className="btn-text">
+                                <label>{isInstallable ? 'Install Now' : 'PWA Supported'}</label>
+                                <span>Install Clinical Hub App</span>
+                            </div>
+                        </button>
+                        {!isInstallable && (
+                            <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem', textAlign: 'center' }}>
+                                Use the browser menu to "Add to Home Screen" if the button is inactive.
+                            </p>
+                        )}
+                    </div>
 
-                        <div className="installation-guide glass-card">
-                            <h4>📲 Fallback Guide</h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
-                                <div>
-                                    <h5 style={{ color: 'white', marginBottom: '0.5rem' }}>🤖 Android (Chrome)</h5>
-                                    <ol style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '1.2rem' }}>
-                                        <li>Open this page in Chrome</li>
-                                        <li>Tap the <strong>three dots (⋮)</strong></li>
-                                        <li>Select <strong>"Install App"</strong></li>
-                                    </ol>
-                                </div>
-                                <div>
-                                    <h5 style={{ color: 'white', marginBottom: '0.5rem' }}>🍎 iPhone (Safari)</h5>
-                                    <ol style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '1.2rem' }}>
-                                        <li>Open this page in Safari</li>
-                                        <li>Tap the <strong>Share</strong> button</li>
-                                        <li>Select <strong>"Add to Home Screen"</strong></li>
-                                    </ol>
-                                </div>
+                    <div className="installation-guide glass-card">
+                        <h4>📲 Fallback Guide</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
+                            <div>
+                                <h5 style={{ color: 'white', marginBottom: '0.5rem' }}>🤖 Android (Chrome)</h5>
+                                <ol style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '1.2rem' }}>
+                                    <li>Open this page in Chrome</li>
+                                    <li>Tap the <strong>three dots (⋮)</strong></li>
+                                    <li>Select <strong>"Install App"</strong></li>
+                                </ol>
+                            </div>
+                            <div>
+                                <h5 style={{ color: 'white', marginBottom: '0.5rem' }}>🍎 iPhone (Safari)</h5>
+                                <ol style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '1.2rem' }}>
+                                    <li>Open this page in Safari</li>
+                                    <li>Tap the <strong>Share</strong> button</li>
+                                    <li>Select <strong>"Add to Home Screen"</strong></li>
+                                </ol>
                             </div>
                         </div>
                     </div>
-                    <div className="mobile-preview">
-                        <div className="phone-mockup">
-                            <div className="phone-screen">
-                                <div className="screen-content">
-                                    <div className="pulse-circle"></div>
-                                    <span className="anatomy-symbol">🧬</span>
-                                    <div className="scan-line"></div>
-                                </div>
+                </div>
+                <div className="mobile-preview">
+                    <div className="phone-mockup">
+                        <div className="phone-screen">
+                            <div className="screen-content">
+                                <div className="pulse-circle"></div>
+                                <span className="anatomy-symbol">🧬</span>
+                                <div className="scan-line"></div>
                             </div>
                         </div>
                     </div>
-                </section>
-            )}
+                </div>
+            </section>
 
 
             <section className="impact-section glass-card">
