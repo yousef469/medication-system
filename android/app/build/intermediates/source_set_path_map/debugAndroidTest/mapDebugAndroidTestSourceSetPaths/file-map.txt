@@ -1,5 +1,5 @@
-com.medication.system.test.app-annotation-experimental-1.3.0-0 C:\Users\Yousef\.gradle\caches\transforms-3\0f2ef76aab2f98a33ba01cbccdb77a25\transformed\annotation-experimental-1.3.0\res
-com.medication.system.test.app-core-1.5.0-1 C:\Users\Yousef\.gradle\caches\transforms-3\ea900bdabb9635cebd602d91f3e6aa82\transformed\core-1.5.0\res
+com.medication.system.test.app-jetified-annotation-experimental-1.3.0-0 C:\Users\Yousef\.gradle\caches\transforms-3\36551160eb42519a905d85d9988a21dd\transformed\jetified-annotation-experimental-1.3.0\res
+com.medication.system.test.app-jetified-core-1.5.0-1 C:\Users\Yousef\.gradle\caches\transforms-3\fefc51ef86d8c9f3083de7f6853855ee\transformed\jetified-core-1.5.0\res
 com.medication.system.test.app-androidTest-2 C:\Users\Yousef\MedicationSystem\android\app\build\generated\res\resValues\androidTest\debug
 com.medication.system.test.app-mergeDebugAndroidTestResources-3 C:\Users\Yousef\MedicationSystem\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
 com.medication.system.test.app-mergeDebugAndroidTestResources-4 C:\Users\Yousef\MedicationSystem\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
