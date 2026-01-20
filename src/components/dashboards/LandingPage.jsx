@@ -116,7 +116,19 @@ const LandingPage = ({ onGetStarted }) => {
                                 <span>Native Kotlin Scaffolding</span>
                             </div>
                         </a>
-                        <p className="install-note">Requires Android Studio for Build</p>
+
+                        <div className="installation-guide glass-card">
+                            <h4>🚀 Installation Guide</h4>
+                            <ol>
+                                <li><strong>Build App</strong>: Generate APK in Android Studio</li>
+                                <li><strong>Enable Sources</strong>: Toggle "Install Unknown Apps" in phone settings</li>
+                                <li><strong>Download</strong>: Get APK from this secure portal</li>
+                                <li><strong>Verify</strong>: Grant permissions and tap "Install"</li>
+                            </ol>
+                            <p className="security-note">
+                                <strong>⚠️ Security Note:</strong> This clinical tool uses a direct peer-to-peer distribution to maintain medical diagnostic sovereignty. Always ensure you are on the official <code>clinical.hub</code> domain.
+                            </p>
+                        </div>
                     </div>
                 </div>
                 <div className="mobile-preview">
@@ -336,6 +348,25 @@ const LandingPage = ({ onGetStarted }) => {
                 .download-btn span { font-size: 1.1rem; font-weight: 700; }
 
                 .install-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem; font-weight: 500; }
+
+                .installation-guide {
+                    margin-top: 2rem;
+                    padding: 1.5rem;
+                    text-align: left;
+                    border: 1px solid rgba(124, 58, 237, 0.1);
+                    background: rgba(15, 23, 42, 0.5);
+                }
+                .installation-guide h4 { font-size: 0.9rem; color: var(--primary); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+                .installation-guide ol { padding-left: 1.2rem; margin-bottom: 1.5rem; }
+                .installation-guide li { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+                .installation-guide li strong { color: white; }
+                
+                .security-note { 
+                    font-size: 0.75rem; line-height: 1.5; color: var(--text-muted); 
+                    border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;
+                }
+                .security-note strong { color: #f59e0b; }
+                .security-note code { background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; color: var(--primary); }
 
                 .mobile-preview { flex: 1; display: flex; justify-content: center; position: relative; }
                 .phone-mockup {
