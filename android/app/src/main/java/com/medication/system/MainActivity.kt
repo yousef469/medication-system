@@ -55,8 +55,8 @@ class MainActivity : AppCompatActivity() {
             }
         }, "AndroidApp")
 
-        // Point to your hosted web application with the ?mobile=true flag
-        webView.loadUrl("$BASE_URL/?mobile=true")
+        // Point to your hosted web application (Load full Patient Portal)
+        webView.loadUrl("$BASE_URL/")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {

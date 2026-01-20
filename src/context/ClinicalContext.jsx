@@ -17,7 +17,8 @@ export const ClinicalProvider = ({ children }) => {
     const [hospitals, setHospitals] = useState([]);
     const { user } = useAuth();
 
-    const API_URL = 'http://localhost:8001';
+    // Dynamic API URL for Mobile/Localhost flexibility
+    const API_URL = `http://${window.location.hostname}:8001`;
 
     useEffect(() => {
         const loadOfflineData = () => {
