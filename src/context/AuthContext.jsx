@@ -72,11 +72,15 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const initAuth = async () => {
+            console.log('[Auth] Initializing authentication...');
+
             const safetyTimer = setTimeout(() => {
-                console.warn('[Auth] Initialization safety timeout triggered');
-                setUser(prev => prev || { role: 'user', name: 'Guest Patient', isAuthenticated: false });
-                setIsInitialized(true);
-            }, 5000);
+                if (!isInitialized) {
+                    console.warn('[Auth] Initialization safety timeout triggered');
+                    setUser(prev => prev || { role: 'user', name: 'Guest Patient', isAuthenticated: false });
+                    setIsInitialized(true);
+                }
+            }, 8000); // Increased for slow mobile networks
 
             try {
                 // Step 1: Handle stale URL fragments from old sessions
@@ -87,19 +91,14 @@ export function AuthProvider({ children }) {
                 const { data: { session }, error } = await supabase.auth.getSession();
 
                 if (error) {
-                    console.warn('[Auth] Stale or invalid session detected, clearing:', error.message);
-                    await supabase.auth.signOut();
-                    // Clear URL hash to prevent infinite loop of stale initialization
-                    window.history.replaceState(null, null, window.location.pathname + window.location.search);
+                    console.error('[Auth] Session fetch error:', error.message);
                 }
 
                 if (session) {
+                    console.log('[Auth] Session found on init, fetching profile...');
                     await fetchProfile(session.user);
-                    // Clear hash after successful login to prevent "stale URL" on next refresh
-                    if (window.location.hash.includes('access_token=')) {
-                        window.history.replaceState(null, null, window.location.pathname + window.location.search);
-                    }
                 } else {
+                    console.log('[Auth] No session found on init.');
                     setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
                     setIsInitialized(true);
                 }

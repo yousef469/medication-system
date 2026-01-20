@@ -137,61 +137,37 @@ const UserDashboard = () => {
         <section className="request-portal glass-card">
           {/* Bio-Anatomy Lab Launchpad */}
           {!isGuest && (
-            <div className="lab-entry-hero" style={{
-              marginBottom: '2.5rem',
-              padding: '2.5rem',
-              background: 'linear-gradient(135deg, rgba(124, 68, 237, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
-              borderRadius: '28px',
-              border: '1px solid rgba(124, 68, 237, 0.4)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
+            <div className="lab-entry-hero">
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, var(--primary), transparent)' }}></div>
 
-              <div style={{ maxWidth: '65%', zIndex: 1 }}>
-                <h2 style={{ margin: 0, color: 'var(--primary)', fontSize: '2rem', textShadow: '0 0 20px var(--primary-glow-low)' }}>3D Bio-Anatomy Laboratory</h2>
-                <p style={{ margin: '1rem 0 2rem', opacity: 0.8, fontSize: '0.95rem', lineHeight: 1.6 }}>
+              <div className="lab-entry-content">
+                <h2 className="lab-title">3D Bio-Anatomy Laboratory</h2>
+                <p className="lab-desc">
                   Access your interactive pharmacological profile. Upload reports for neural AI processing and visualize clinical findings on a true 3D rotating biostructure.
                 </p>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="lab-actions">
                   <button
-                    className="btn-primary"
+                    className="btn-primary lab-launch-btn"
                     type="button"
-                    style={{ padding: '0.8rem 2.5rem', fontSize: '0.9rem', fontWeight: 800, letterSpacing: '0.05em' }}
                     onClick={() => {
-                      // Using a more robust way to navigate if onNavClick isn't passed
                       if (window.location.hash === '#anatomy-lab') return;
-                      // If it's a SPA with route state, we rely on the parent's handler
                       document.querySelector('[data-nav="anatomy-lab"]')?.click();
                     }}
                   >
                     🚀 LAUNCH STANDALONE LAB
                   </button>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700 }}>
+                  <div className="lab-status">
                     <span className="pulse-dot"></span> NEURAL LINK ACTIVE
                   </div>
                 </div>
               </div>
 
-              <div style={{
-                height: '180px',
-                width: '180px',
-                background: 'radial-gradient(circle, rgba(124, 68, 237, 0.3) 0%, transparent 70%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid rgba(124, 68, 237, 0.2)',
-                animation: 'float 6s ease-in-out infinite'
-              }}>
-                <span style={{ fontSize: '5rem', filter: 'drop-shadow(0 0 15px var(--primary))' }}>🧬</span>
+              <div className="lab-visual-icon">
+                <span>🧬</span>
               </div>
             </div>
           )}
+
 
           <h3>Emergency & Clinical Portal</h3>
           <p className="section-desc">Submit text, files, or voice for clinical routing.</p>
@@ -399,9 +375,47 @@ const UserDashboard = () => {
       </div>
 
       <style>{`
-        .user-dashboard { display: flex; flex-direction: column; gap: 2rem; }
+        .user-dashboard { display: flex; flex-direction: column; gap: 2rem; max-width: 100vw; overflow-x: hidden; }
         .main-discovery-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; }
         
+        .lab-entry-hero {
+          margin-bottom: 2.5rem;
+          padding: 2.5rem;
+          background: linear-gradient(135deg, rgba(124, 68, 237, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%);
+          border-radius: 28px;
+          border: 1px solid rgba(124, 68, 237, 0.4);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+          position: relative;
+          overflow: hidden;
+        }
+        .lab-entry-content { max-width: 65%; z-index: 1; }
+        .lab-title { margin: 0; color: var(--primary); fontSize: 2rem; text-shadow: 0 0 20px var(--primary-glow-low); }
+        .lab-desc { margin: 1rem 0 2rem; opacity: 0.8; fontSize: 0.95rem; line-height: 1.6; }
+        .lab-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .lab-launch-btn { padding: 0.8rem 2.5rem; fontSize: 0.9rem; fontWeight: 800; letter-spacing: 0.05em; }
+        .lab-status { display: flex; alignItems: center; gap: 0.5rem; color: var(--primary); fontSize: 0.75rem; fontWeight: 700; }
+        .lab-visual-icon {
+          height: 180px; width: 180px;
+          background: radial-gradient(circle, rgba(124, 68, 237, 0.3) 0%, transparent 70%);
+          borderRadius: 50%; display: flex; alignItems: center; justifyContent: center;
+          border: 1px solid rgba(124, 68, 237, 0.2); animation: float 6s ease-in-out infinite;
+        }
+        .lab-visual-icon span { fontSize: 5rem; filter: drop-shadow(0 0 15px var(--primary)); }
+
+        @media (max-width: 1024px) {
+          .main-discovery-layout { grid-template-columns: 1fr; }
+          .lab-entry-hero { flex-direction: column; text-align: center; padding: 1.5rem; }
+          .lab-entry-content { max-width: 100%; order: 2; }
+          .lab-visual-icon { order: 1; height: 120px; width: 120px; margin-bottom: 1.5rem; }
+          .lab-visual-icon span { fontSize: 3rem; }
+          .lab-title { font-size: 1.5rem; }
+          .lab-actions { justify-content: center; }
+          .request-portal { padding: 1.5rem; }
+        }
+
         .active-hosp { border-color: var(--primary) !important; background: var(--glass-highlight) !important; }
         .dr-item { padding: 1rem; margin-bottom: 0.75rem; transition: transform 0.2s; border: 1px solid transparent; }
         .dr-item:hover { transform: translateX(5px); }

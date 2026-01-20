@@ -7,6 +7,7 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
   const { user, logout, lockSession } = useAuth();
   const { t, language, setLanguage, isRTL } = useLanguage();
   const [isSOSOpen, setIsSOSOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const role = user?.role || 'user';
   const isGuest = role === 'user' && !user?.isAuthenticated;
@@ -28,8 +29,27 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
     <div className={`app-container system-${role} ${isRTL ? 'rtl' : 'ltr'}`}>
       <EmergencyOverlay isOpen={isSOSOpen} onClose={() => setIsSOSOpen(false)} />
 
-      <nav className="glass-card main-nav">
-        <div className="nav-logo" onClick={() => onNavClick?.('home')} style={{ cursor: 'pointer' }}>
+      <button
+        className="nav-mobile-toggle"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: isRTL ? 'auto' : '20px',
+          right: isRTL ? '20px' : 'auto',
+          zIndex: 1100,
+          background: 'var(--primary)',
+          border: 'none',
+          padding: '8px',
+          borderRadius: '8px',
+          display: 'none'
+        }}
+      >
+        {isMenuOpen ? '✕' : '☰'}
+      </button>
+
+      <nav className={`glass-card main-nav ${isMenuOpen ? 'menu-open' : ''}`}>
+        <div className="nav-logo" onClick={() => { onNavClick?.('home'); setIsMenuOpen(false); }} style={{ cursor: 'pointer' }}>
           <span className="system-icon-nav">{config.icon}</span>
           <span className="text-gradient">Medi{config.name}</span>
         </div>
@@ -41,25 +61,25 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
                 <>
                   <button
                     className={`nav-link-btn ${currentView === 'discovery' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('discovery')}
+                    onClick={() => { onNavClick?.('discovery'); setIsMenuOpen(false); }}
                   >
                     {t('triage_hub')}
                   </button>
                   <button
                     className={`nav-link-btn ${currentView === 'medication-hub' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('medication-hub')}
+                    onClick={() => { onNavClick?.('medication-hub'); setIsMenuOpen(false); }}
                   >
                     {t('medication_hub')}
                   </button>
                   <button
                     className={`nav-link-btn ${currentView === 'anatomy-lab' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('anatomy-lab')}
+                    onClick={() => { onNavClick?.('anatomy-lab'); setIsMenuOpen(false); }}
                   >
                     🧬 Anatomy Lab
                   </button>
                   <button
                     className={`nav-link-btn ${currentView === 'ai-assistant' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('ai-assistant')}
+                    onClick={() => { onNavClick?.('ai-assistant'); setIsMenuOpen(false); }}
                   >
                     {t('ai_assistant')}
                   </button>
@@ -67,13 +87,13 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
                     <>
                       <button
                         className={`nav-link-btn ${currentView === 'hospitals' ? 'active' : ''}`}
-                        onClick={() => onNavClick?.('hospitals')}
+                        onClick={() => { onNavClick?.('hospitals'); setIsMenuOpen(false); }}
                       >
                         {t('hospitals')}
                       </button>
                       <button
                         className={`nav-link-btn ${currentView === 'appointments' ? 'active' : ''}`}
-                        onClick={() => onNavClick?.('appointments')}
+                        onClick={() => { onNavClick?.('appointments'); setIsMenuOpen(false); }}
                       >
                         {t('appointments')}
                       </button>
@@ -84,74 +104,10 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
               {role !== 'user' && (
                 <button
                   className={`nav-link-btn ${currentView === 'network' ? 'active' : ''}`}
-                  onClick={() => onNavClick?.('network')}
+                  onClick={() => { onNavClick?.('network'); setIsMenuOpen(false); }}
                 >
                   {t('hospital_network')}
                 </button>
-              )}
-              {role === 'hospital_admin' && (
-                <>
-                  <button
-                    className={`nav-link-btn ${currentView === 'management' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('management')}
-                  >
-                    Facility Management
-                  </button>
-                  <button
-                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('hospital-chat')}
-                  >
-                    💬 Team Hub
-                  </button>
-                </>
-              )}
-              {role === 'secretary' && (
-                <>
-                  <button
-                    className={`nav-link-btn ${currentView === 'dashboard' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('dashboard')}
-                  >
-                    📋 Coordinator Hub
-                  </button>
-                  <button
-                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('hospital-chat')}
-                  >
-                    💬 Team Hub
-                  </button>
-                </>
-              )}
-              {role === 'nurse' && (
-                <>
-                  <button
-                    className={`nav-link-btn ${currentView === 'dashboard' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('dashboard')}
-                  >
-                    💊 Nurse Station
-                  </button>
-                  <button
-                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('hospital-chat')}
-                  >
-                    💬 Team Hub
-                  </button>
-                </>
-              )}
-              {role === 'doctor' && (
-                <>
-                  <button
-                    className={`nav-link-btn ${currentView === 'dashboard' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('dashboard')}
-                  >
-                    🩺 Practitioner Desk
-                  </button>
-                  <button
-                    className={`nav-link-btn ${currentView === 'hospital-chat' ? 'active' : ''}`}
-                    onClick={() => onNavClick?.('hospital-chat')}
-                  >
-                    💬 Team Hub
-                  </button>
-                </>
               )}
             </>
           )}
@@ -165,9 +121,6 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
           >
             <option value="ar">🇦🇪 AR</option>
             <option value="en">🇺🇸 EN</option>
-            <option value="fr">🇫🇷 FR</option>
-            <option value="de">🇩🇪 DE</option>
-            <option value="es">🇪🇸 ES</option>
           </select>
 
           {(!isGuest || currentView !== 'landing') && !['doctor', 'nurse', 'hospital_admin', 'secretary', 'it'].includes(role) && (
@@ -175,21 +128,13 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
               <span>🆘</span> {t('sos')}
             </button>
           )}
-          <div className="user-info">
-            <span className="user-name">{user?.name}</span>
-            <span className="role-tag" style={{ color: config.color, borderColor: config.color + '44' }}>
-              {isGuest ? t('guest') : role}
-            </span>
-          </div>
+
           {isGuest ? (
             <button className="btn-login-nav" onClick={() => onNavClick?.('login')}>
               {t('sign_in')}
             </button>
           ) : (
             <>
-              <button className="btn-logout" onClick={lockSession} title="Lock Session" style={{ marginRight: '0.5rem', background: 'rgba(255,255,255,0.1)' }}>
-                🔒
-              </button>
               <button className="btn-logout" onClick={logout} title="Logout">
                 ✕
               </button>
@@ -203,6 +148,37 @@ const AppLayout = ({ children, onNavClick, currentView }) => {
       </main>
 
       <style>{`
+        @media (max-width: 1024px) {
+          .nav-mobile-toggle { display: block !important; }
+          .main-nav {
+            position: fixed !important;
+            flex-direction: column !important;
+            height: auto !important;
+            padding: 2rem !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            transform: translateY(-100%) !important;
+            border-radius: 0 !important;
+            transition: transform 0.3s ease !important;
+            gap: 2rem;
+            background: var(--bg-surface) !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+          }
+          .main-nav.menu-open {
+            transform: translateY(0) !important;
+          }
+          .nav-links {
+            flex-direction: column;
+            width: 100%;
+            gap: 1rem !important;
+          }
+          .nav-link-btn { width: 100%; text-align: center; padding: 1rem !important; }
+          .nav-profile { width: 100%; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; }
+          .app-container { padding-top: 0 !important; overflow-x: hidden; }
+          .content-area { padding: 1rem !important; width: 100% !important; box-sizing: border-box; }
+        }
         .app-container {
           padding-top: 80px;
           min-height: 100vh;
