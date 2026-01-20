@@ -113,13 +113,20 @@ export function AuthProvider({ children }) {
         };
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log(`[Auth] Event: ${event}`);
+            console.log(`[Auth] Event: ${event}`, {
+                hasSession: !!session,
+                userId: session?.user?.id,
+                url: window.location.href
+            });
+
             if (event === 'SIGNED_OUT') {
                 setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
                 setIsInitialized(true);
             } else if (session) {
+                console.log('[Auth] Valid session found, fetching profile...');
                 await fetchProfile(session.user);
             } else {
+                console.log('[Auth] No session present');
                 setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
                 setIsInitialized(true);
             }
