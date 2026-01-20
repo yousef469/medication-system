@@ -100,37 +100,37 @@ const LandingPage = ({ onGetStarted }) => {
 
             <section className="mobile-app-section glass-card fade-in">
                 <div className="mobile-content">
-                    <span className="platform-badge">NOW ON ANDROID</span>
-                    <h2 className="text-gradient">Clinical Care in Your Pocket</h2>
+                    <span className="platform-badge">NOW AVAILABLE AS PWA</span>
+                    <h2 className="text-gradient">Clinical Care on Any Device</h2>
                     <p>
-                        Experience our high-fidelity 3D Bio-Anatomy Lab and AI diagnostics directly on your mobile device.
-                        Synchronize your medical history and clinical referrals with a single touch.
+                        Experience our high-fidelity 3D Bio-Anatomy Lab and AI diagnostics directly in your pocket.
+                        No downloads required—simply add the app to your home screen for a native experience.
                     </p>
                     <ul className="mobile-features">
+                        <li><span>✓</span> Instant Installation (No APK)</li>
                         <li><span>✓</span> Native 3D Humanoid Engine</li>
-                        <li><span>✓</span> Real-time AI Health Consultation</li>
-                        <li><span>✓</span> Instant Hospital Referral System</li>
+                        <li><span>✓</span> Automatic Cloud Updates</li>
                     </ul>
-                    <div className="download-actions">
-                        <a href="/downloads/clinical-hub.apk" download className="btn-primary btn-large download-btn">
-                            <span className="icon">⬇️</span>
-                            <div className="btn-text">
-                                <label>Install Mobile App</label>
-                                <span>Download Clinical Hub</span>
-                            </div>
-                        </a>
 
-                        <div className="installation-guide glass-card">
-                            <h4>🚀 Installation Guide</h4>
-                            <ol>
-                                <li><strong>Build App</strong>: Generate APK in Android Studio</li>
-                                <li><strong>Enable Sources</strong>: Toggle "Install Unknown Apps" in phone settings</li>
-                                <li><strong>Download</strong>: Get APK from this secure portal</li>
-                                <li><strong>Verify</strong>: Grant permissions and tap "Install"</li>
-                            </ol>
-                            <p className="security-note">
-                                <strong>⚠️ Security Note:</strong> This clinical tool uses a direct peer-to-peer distribution to maintain medical diagnostic sovereignty. Always ensure you are on the official <code>clinical.hub</code> domain.
-                            </p>
+                    <div className="installation-guide glass-card">
+                        <h4>📲 How to Install</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }}>
+                            <div>
+                                <h5 style={{ color: 'white', marginBottom: '0.5rem' }}>🤖 Android (Chrome)</h5>
+                                <ol style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '1.2rem' }}>
+                                    <li>Open this page in Chrome</li>
+                                    <li>Tap the <strong>three dots (⋮)</strong></li>
+                                    <li>Select <strong>"Install App"</strong></li>
+                                </ol>
+                            </div>
+                            <div>
+                                <h5 style={{ color: 'white', marginBottom: '0.5rem' }}>🍎 iPhone (Safari)</h5>
+                                <ol style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: '1.2rem' }}>
+                                    <li>Open this page in Safari</li>
+                                    <li>Tap the <strong>Share</strong> button</li>
+                                    <li>Select <strong>"Add to Home Screen"</strong></li>
+                                </ol>
+                            </div>
                         </div>
                     </div>
                 </div>
