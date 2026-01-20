@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.medication.system.app-debug-28:/layout_activity_main.xml.flat",
+        "source": "com.medication.system.app-main-30:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.medication.system.app-debug-28:/layout_activity_chat.xml.flat",
+        "source": "com.medication.system.app-main-30:/layout/activity_chat.xml"
+    },
+    {
+        "merged": "com.medication.system.app-debug-28:/xml_network_security_config.xml.flat",
+        "source": "com.medication.system.app-main-30:/xml/network_security_config.xml"
+    }
+]
