@@ -109,11 +109,11 @@ const LandingPage = ({ onGetStarted }) => {
                         <li><span>✓</span> Instant Hospital Referral System</li>
                     </ul>
                     <div className="download-actions">
-                        <a href="https://github.com/yousef469/medication-system/tree/main/android" target="_blank" rel="noreferrer" className="btn-primary btn-large download-btn">
-                            <span className="icon">🛠️</span>
+                        <a href="/downloads/clinical-hub.apk" download className="btn-primary btn-large download-btn">
+                            <span className="icon">⬇️</span>
                             <div className="btn-text">
-                                <label>Install via Source</label>
-                                <span>Native Kotlin Scaffolding</span>
+                                <label>Install Mobile App</label>
+                                <span>Download Clinical Hub</span>
                             </div>
                         </a>
 
