@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.ico'],
       manifest: {
         name: 'Clinical Hub',
         short_name: 'MedicationSystem',
@@ -15,17 +15,17 @@ export default defineConfig({
         theme_color: '#ffffff',
         icons: [
           {
-            src: 'icons/med-icon-192.png',
+            src: '/icons/med-icon-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'icons/med-icon-512.png',
+            src: '/icons/med-icon-512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'icons/med-icon-512.png',
+            src: '/icons/med-icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
