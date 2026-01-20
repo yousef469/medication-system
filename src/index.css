@@ -33,12 +33,28 @@
   --radius-2xl: 32px;
   --radius-full: 9999px;
 
+  /* Fluid Typography */
+  --font-size-xs: clamp(0.7rem, 0.6rem + 0.5vw, 0.8rem);
+  --font-size-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.95rem);
+  --font-size-base: clamp(0.95rem, 0.9rem + 0.2vw, 1.1rem);
+  --font-size-lg: clamp(1.1rem, 1rem + 0.5vw, 1.35rem);
+  --font-size-xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+  --font-size-2xl: clamp(2rem, 1.5rem + 2.5vw, 4.5rem);
+
   font-family: 'Inter', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: light;
   color: var(--text-primary);
   background-color: var(--bg-app);
+  font-size: var(--font-size-base);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --radius-lg: 12px;
+    --radius-2xl: 20px;
+  }
 }
 
 [data-theme='dark'] {
@@ -92,6 +108,13 @@ h4 {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-main);
+  padding: clamp(1rem, 2vw, 2rem);
+}
+
+@media (max-width: 768px) {
+  .glass-card {
+    border-radius: var(--radius-md);
+  }
 }
 
 .glass-card:hover {
@@ -106,6 +129,11 @@ h4 {
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
+  min-height: 48px;
+  /* Touch target accessibility */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
@@ -123,6 +151,11 @@ h4 {
   color: var(--text-primary);
   border: 1px solid var(--glass-border);
   padding: 0.75rem 1.5rem;
+  min-height: 48px;
+  /* Touch target accessibility */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;

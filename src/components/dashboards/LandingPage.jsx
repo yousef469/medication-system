@@ -241,7 +241,7 @@ const LandingPage = ({ onGetStarted }) => {
                 }
 
                 .hero-title {
-                    font-size: 4.5rem;
+                    font-size: var(--font-size-2xl);
                     line-height: 1.1;
                     margin-bottom: 1.5rem;
                     font-weight: 800;
@@ -249,7 +249,7 @@ const LandingPage = ({ onGetStarted }) => {
                 }
 
                 .hero-subtitle {
-                    font-size: 1.25rem;
+                    font-size: var(--font-size-lg);
                     color: var(--text-secondary);
                     margin-bottom: 3rem;
                     line-height: 1.6;
@@ -261,13 +261,13 @@ const LandingPage = ({ onGetStarted }) => {
                 }
 
                 .btn-large {
-                    padding: 1.2rem 2.5rem;
-                    font-size: 1.1rem;
+                    padding: clamp(0.75rem, 2vw, 1.25rem) clamp(1.5rem, 4vw, 2.5rem);
+                    font-size: clamp(0.9rem, 1.1vw, 1.1rem);
                 }
 
                 .hero-visual {
                     flex: 1;
-                    height: 500px;
+                    height: clamp(300px, 50vh, 500px);
                     background: radial-gradient(circle at center, var(--primary-glow-low), transparent 70%);
                     position: relative;
                 }
@@ -310,8 +310,8 @@ const LandingPage = ({ onGetStarted }) => {
 
                 .features-grid {
                     display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 2.5rem;
+                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                    gap: 2rem;
                 }
 
                 .feature-card {

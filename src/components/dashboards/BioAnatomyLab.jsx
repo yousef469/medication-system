@@ -75,16 +75,32 @@ const BioAnatomyLab = () => {
     ];
 
     return (
-        <div className="bio-lab-page fade-in" style={{ padding: '2rem', minHeight: '100vh', background: '#020617', color: '#f8fafc' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div className="bio-lab-page fade-in" style={{
+            padding: 'clamp(1rem, 5vw, 2rem)',
+            minHeight: '100vh',
+            background: '#020617',
+            color: '#f8fafc'
+        }}>
+            <div style={{
+                display: 'flex',
+                flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+                justifyContent: 'space-between',
+                alignItems: window.innerWidth < 768 ? 'flex-start' : 'center',
+                marginBottom: '2rem',
+                gap: '1rem'
+            }}>
                 <div>
-                    <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>Bio-Anatomy Laboratory</h1>
-                    <p style={{ opacity: 0.6 }}>Advanced AI Diagnostic Environment • Patent ID: {user?.id?.slice(0, 8)}</p>
+                    <h1 className="text-gradient" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', marginBottom: '0.5rem' }}>Bio-Anatomy Laboratory</h1>
+                    <p style={{ opacity: 0.6, fontSize: '0.8rem' }}>Advanced AI Diagnostic Environment • Patent ID: {user?.id?.slice(0, 8)}</p>
                 </div>
                 <ThemeToggle />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
+            <div className="lab-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: window.innerWidth < 1024 ? '1fr' : '1fr 350px',
+                gap: '2rem'
+            }}>
                 {/* Left Col: 3D Visualization */}
                 <div className="glass-card" style={{ padding: '1rem', border: '1px solid rgba(124, 68, 237, 0.4)', position: 'relative', overflow: 'hidden' }}>
                     <div style={{ position: 'absolute', top: '2rem', left: '2rem', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -119,7 +135,7 @@ const BioAnatomyLab = () => {
 
                                 <button
                                     onClick={() => setSelectedDiagnosis(null)}
-                                    style={{ background: '#ef4444', border: 'none', color: 'white', fontSize: '0.65rem', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800 }}
+                                    style={{ background: '#ef4444', border: 'none', color: 'white', fontSize: '0.65rem', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800, width: '100%' }}
                                 >
                                     ✕ EXIT ANALYSIS
                                 </button>
@@ -127,7 +143,8 @@ const BioAnatomyLab = () => {
                         )}
                     </div>
 
-                    <div style={{ height: '75vh' }}>
+
+                    <div style={{ height: window.innerWidth < 768 ? '50vh' : '75vh' }}>
                         <Humanoid3D markers={allMarkers} highlightedParts={allHighlightedParts} />
                     </div>
                 </div>

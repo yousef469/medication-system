@@ -77,35 +77,15 @@ const MedicationHub = () => {
 
         .results-grid { 
           display: grid; 
-          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
-          gap: 2rem; 
-        }
-        .treatment-card { 
-          padding: 2rem; 
-          display: flex; 
-          flex-direction: column; 
-          gap: 1.5rem;
-          transition: transform 0.3s;
-        }
-        .treatment-card:hover { transform: translateY(-5px); border-color: var(--primary); }
-        
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-        .cost-tag { 
-          font-size: 0.7rem; 
-          font-weight: 800; 
-          text-transform: uppercase; 
-          background: var(--glass-highlight); 
-          padding: 0.25rem 0.75rem; 
-          border-radius: 4px;
-          color: var(--secondary);
-          border: 1px solid var(--secondary);
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+          gap: 1.5rem; 
         }
 
-        .hosp-name { font-weight: 600; color: white; }
-        .contact { color: var(--text-muted); font-size: 0.9rem; }
-        
-        .no-results { grid-column: 1 / -1; padding: 4rem; text-align: center; color: var(--text-muted); }
-        .w-full { width: 100%; }
+        @media (max-width: 768px) {
+          .medication-hub { padding: 1rem; }
+          .hub-header { margin-bottom: 2rem; }
+          .treatment-card { padding: 1.5rem; }
+        }
       `}</style>
         </div>
     );

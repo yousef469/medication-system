@@ -121,10 +121,17 @@ const AIAssistant = () => {
                 .ltr { direction: ltr; }
                 
                 .ai-page-container {
-                    padding: 2rem;
+                    padding: clamp(0.5rem, 2vw, 2rem);
                     display: flex;
                     justify-content: center;
-                    height: calc(100vh - 120px);
+                    height: calc(100vh - 80px); /* Tighter for mobile */
+                }
+
+                @media (max-width: 768px) {
+                    .ai-page-container { height: calc(100vh - 140px); }
+                    .chat-messages { padding: 1rem !important; }
+                    .chat-input-area { padding: 1rem !important; flex-wrap: wrap; }
+                    .message-content { max-width: 90%; }
                 }
 
                 .ai-chat-window {
