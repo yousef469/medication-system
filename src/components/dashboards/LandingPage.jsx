@@ -8,9 +8,10 @@ const LandingPage = ({ onGetStarted }) => {
     const [isStandalone, setIsStandalone] = useState(false);
 
     useEffect(() => {
-        // Detect if running as PWA (standalone)
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            setIsStandalone(true);
+        // Check for globally stashed prompt first
+        if (window.deferredPrompt) {
+            setDeferredPrompt(window.deferredPrompt);
+            console.log('[LandingPage] Found stashed PWA prompt');
         }
 
         const handler = (e) => {
@@ -18,7 +19,7 @@ const LandingPage = ({ onGetStarted }) => {
             e.preventDefault();
             // Stash the event so it can be triggered later.
             setDeferredPrompt(e);
-            setIsInstallable(true);
+            window.deferredPrompt = e;
         };
 
         window.addEventListener('beforeinstallprompt', handler);

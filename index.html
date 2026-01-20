@@ -4,11 +4,21 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/icons/med-icon-192.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0ea5e9" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Clinical Hub | MediSystem</title>
+  <script>
+    // Capture the PWA install prompt immediately to avoid missing it during React hydration
+    window.deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      console.log('[PWA] Install prompt detected and stashed');
+    });
+  </script>
 </head>
 
 <body>
