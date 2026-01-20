@@ -169,9 +169,19 @@ const LandingPage = ({ onGetStarted }) => {
                             </div>
                         </button>
                         {!deferredPrompt && (
-                            <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem', textAlign: 'center' }}>
-                                If nothing happens, see the guide below.
-                            </p>
+                            <div className="install-fallback" style={{ marginTop: '1rem' }}>
+                                <p style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '0.5rem', textAlign: 'center' }}>
+                                    Native install stuck? Download the file directly:
+                                </p>
+                                <a
+                                    href="/downloads/clinical-hub.apk"
+                                    download="ClinicalHub.apk"
+                                    className="btn-secondary btn-small"
+                                    style={{ width: '100%', justifyContent: 'center', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
+                                >
+                                    📥 Download APK File (Direct)
+                                </a>
+                            </div>
                         )}
                     </div>
 
