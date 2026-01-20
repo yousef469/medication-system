@@ -61,8 +61,11 @@ const LandingPage = ({ onGetStarted }) => {
                             View Hospital Network
                         </button>
                     </div>
-                    <div style={{ marginTop: '1rem', opacity: 0.5, fontSize: '0.8rem', fontFamily: 'monospace' }}>
-                        System v2.0 • Mobile Config: {window.location.hostname}
+                    <div style={{ marginTop: '1rem', opacity: 0.7, fontSize: '0.7rem', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '4px' }}>
+                        <div>System v2.1 • Mobile Config: {window.location.hostname}</div>
+                        <div style={{ color: window.isSecureContext ? '#4ade80' : '#f87171' }}>Secure: {window.isSecureContext ? 'YES' : 'NO'}</div>
+                        <div style={{ color: 'serviceWorker' in navigator ? '#4ade80' : '#f87171' }}>SW API: {'serviceWorker' in navigator ? 'YES' : 'NO'}</div>
+                        <div style={{ color: deferredPrompt ? '#4ade80' : '#fbbf24' }}>Install Signal: {deferredPrompt ? 'RECEIVED' : 'WAITING...'}</div>
                     </div>
                 </div>
                 <div className="hero-visual">
