@@ -1,18 +1,32 @@
 package com.medication.system
 
 import android.os.Bundle
-import android.webkit.*
-import androidx.appcompat.app.AppCompatActivity
+import android.view.View
+import android.content.Intent
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.Toast
+import android.net.http.SslError
 import org.json.JSONArray
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private lateinit var progressBar: ProgressBar
+
+    // Change this to your Computer's Local IP (e.g., 192.168.1.5) if testing on a physical phone!
+    private val BASE_URL = "http://10.0.2.2:5173" 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        webView = findViewById(R.id.anatomyWebView)
+        progressBar = findViewById(R.id.progressBar)
+        
+        findViewById<Button>(R.id.btnOpenChat).setOnClickListener {
+            startActivity(Intent(this, ChatActivity::class.java))
+        }
 
         setupWebView()
     }
@@ -41,13 +55,27 @@ class MainActivity : AppCompatActivity() {
         }, "AndroidApp")
 
         // Point to your hosted web application with the ?mobile=true flag
-        // Replace with your actual local IP (e.g., http://10.0.2.2:5173 for emulator vs localhost)
-        webView.loadUrl("http://10.0.2.2:5173/?mobile=true")
+        webView.loadUrl("$BASE_URL/?mobile=true")
 
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                progressBar.visibility = View.VISIBLE
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
+                progressBar.visibility = View.GONE
                 syncAnatomyState()
+            }
+
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this@MainActivity, "Connection Error: Check if server is running at $BASE_URL", Toast.LENGTH_LONG).show()
+                // Show a native error view here in a real app
+            }
+
+            override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                // Warning: Only for development!
+                handler?.proceed()
             }
         }
     }
