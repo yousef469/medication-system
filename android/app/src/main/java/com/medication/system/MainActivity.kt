@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
 
     // Change this to your Computer's Local IP (e.g., 192.168.1.5) if testing on a physical phone!
-    private val BASE_URL = "https://sharp-clouds-decide.loca.lt" 
+    private val BASE_URL = "https://green-fireant-73.loca.lt" 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

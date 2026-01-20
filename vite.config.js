@@ -36,11 +36,24 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
+    port: 5173,
+    strictPort: true,
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8001',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('[Vite Proxy] Error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('[Vite Proxy] Sending Request to Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('[Vite Proxy] Received Response from Target:', proxyRes.statusCode, req.url);
+          });
+        }
       }
     }
   }

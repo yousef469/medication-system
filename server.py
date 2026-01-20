@@ -97,11 +97,25 @@ async def analyze_report_endpoint(file: UploadFile = File(...)):
     """
     Detailed OCR and clinical analysis of medical reports/scans.
     """
+    print(f"\n[Server] === NEW REPORT REQUEST ===", flush=True)
+    print(f"[Server] Filename: {file.filename}", flush=True)
+    print(f"[Server] Content-Type: {file.content_type}", flush=True)
     try:
         contents = await file.read()
+        print(f"[Server] File Size: {len(contents)} bytes", flush=True)
+        
+        print(f"[Server] Starting AI Brain analysis...", flush=True)
         response = ai_brain.analyze_medical_report(contents)
+        print(f"[Server] AI Brain analysis complete.", flush=True)
+        
+        if "error" in response:
+            print(f"[Server] !!! AI Brain returned error: {response['error']}", flush=True)
+        
         return response
     except Exception as e:
+        print(f"[Server] !!! CRITICAL ENDPOINT ERROR: {str(e)}", flush=True)
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

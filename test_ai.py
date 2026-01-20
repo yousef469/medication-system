@@ -1,8 +1,14 @@
-import ai_brain
-try:
-    print("Testing AI Brain...")
-    res = ai_brain.process_command("Hello", use_online=True)
-    print(f"Result: {res}")
-except Exception as e:
-    import traceback
-    traceback.print_exc()
+import requests
+import os
+
+url = "http://127.0.0.1:8001/api/analyze_report"
+img_path = r"c:\Users\Yousef\MedicationSystem\public\professional_portal_hero.png"
+
+with open(img_path, "rb") as f:
+    files = {"file": f}
+    try:
+        response = requests.post(url, files=files)
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.text}")
+    except Exception as e:
+        print(f"Error: {e}")

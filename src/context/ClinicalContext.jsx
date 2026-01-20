@@ -17,9 +17,10 @@ export const ClinicalProvider = ({ children }) => {
     const [hospitals, setHospitals] = useState([]);
     const { user } = useAuth();
 
-    // Dynamic API URL for Mobile/Localhost flexibility
-    // Empty string = use current origin (handled by Vite Proxy)
-    const API_URL = "";
+    // Dynamic API URL: Vercel (Cloud) -> Laptop (Tunnel)
+    const API_URL = import.meta.env.PROD
+        ? "https://green-fireant-73.loca.lt"
+        : "";
 
     useEffect(() => {
         const loadOfflineData = () => {
@@ -129,9 +130,13 @@ export const ClinicalProvider = ({ children }) => {
             });
             if (!aiRes.ok) throw new Error("AI Analysis Failed");
             const aiResult = await aiRes.json();
+            console.log("[ClinicalContext] AI Result:", aiResult);
+            if (aiResult.error) {
+                throw new Error(aiResult.error || "AI Synthesis failed");
+            }
+            console.log("[ClinicalContext] User ID:", user?.id);
 
             // 2. Upload to Supabase Storage (Simplified URL for demo)
-            // In real app, use supabase.storage.from('diagnoses').upload()
             const fileUrl = URL.createObjectURL(file);
 
             // 3. Save to DB
@@ -145,7 +150,10 @@ export const ClinicalProvider = ({ children }) => {
                 ai_raw_analysis: aiResult
             }]).select();
 
-            if (error) throw error;
+            if (error) {
+                console.error("[ClinicalContext] Supabase Error:", error);
+                throw error;
+            }
             return data?.[0];
         } catch (err) {
             console.error("Upload Diagnosis Error:", err);

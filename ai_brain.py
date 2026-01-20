@@ -25,16 +25,11 @@ Response Format:
 """
 
 MODEL_IDS = [
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite',
-    'gemini-3-flash-preview',
-    'gemini-2.0-flash',
-    'gemini-flash-latest',
-    'gemini-1.5-flash', # High Quota Fallback (1500 RPM)
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash-8b',
-    'gemini-2.5-pro',
-    'gemini-pro-latest'
+    'models/gemini-2.0-flash',
+    'models/gemini-2.5-flash',
+    'models/gemini-2.0-flash-lite',
+    'models/gemini-flash-latest',
+    'models/gemini-pro-latest'
 ]
 
 # Clinical safety settings to avoid over-blocking
@@ -64,29 +59,25 @@ def process_command(user_text: str, history: list = None, use_online: bool = Tru
     
     prompt = f"{SYSTEM_PROMPT}\n{history_context}\n\nUser: {user_text}"
     
-    # Try preferred models in order, with and without prefix
-    # Try preferred models in order with retries for free tier
-    # Prefer 'models/' prefix to avoid v1beta registration issues
     last_error = "Unknown error"
-    for base_id in MODEL_IDS:
-        for model_id in [f"models/{base_id}", base_id]:
-            for attempt in range(2):
-                try:
-                    model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
-                    result = model.generate_content(prompt)
-                    print(f"[AI Brain] Success with {model_id}")
-                    return _clean_json(result.text)
-                except Exception as e:
-                    last_error = str(e)
-                    error_msg = last_error.lower()
-                    print(f"[AI Brain] {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
-                    
-                    if "429" in error_msg or "quota" in error_msg:
-                        if attempt == 0:
-                            print(f"[AI Brain] Rate limited on {model_id}. Retrying after 2s...")
-                            time.sleep(2)
-                            continue
-                    break # Next model variant
+    for model_id in MODEL_IDS:
+        for attempt in range(2):
+            try:
+                model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
+                result = model.generate_content(prompt)
+                print(f"[AI Brain] Success with {model_id}")
+                return _clean_json(result.text)
+            except Exception as e:
+                last_error = str(e)
+                error_msg = last_error.lower()
+                print(f"[AI Brain] {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
+                
+                if "429" in error_msg or "quota" in error_msg:
+                    if attempt == 0:
+                        print(f"[AI Brain] Rate limited on {model_id}. Retrying after 2s...")
+                        time.sleep(2)
+                        continue
+                break # Next model
             
     # Final fallback message with real error
     return {
@@ -98,26 +89,24 @@ def process_command(user_text: str, history: list = None, use_online: bool = Tru
 
 def analyze_image(image_bytes, prompt="Analyze this medical image.", use_online: bool = True):
     print(f"[AI Brain] Analyzing Image with prompt: {prompt[:50]}...")
-    # Try preferred models in order with retries
     last_error = "Unknown"
-    for base_id in MODEL_IDS:
-        for model_id in [f"models/{base_id}", base_id]:
-            for attempt in range(2):
-                try:
-                    model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
-                    img = Image.open(io.BytesIO(image_bytes))
-                    response = model.generate_content([prompt, img])
-                    print(f"[AI Brain] Image Success with {model_id}")
-                    return {"response": response.text, "source": f"Gemini {model_id}"}
-                except Exception as e:
-                    last_error = str(e)
-                    error_msg = last_error.lower()
-                    print(f"[AI Brain] Image analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
-                    if "429" in error_msg or "quota" in error_msg:
-                        if attempt == 0:
-                            time.sleep(2)
-                            continue
-                    break # Next model variant
+    for model_id in MODEL_IDS:
+        for attempt in range(2):
+            try:
+                model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
+                img = Image.open(io.BytesIO(image_bytes))
+                response = model.generate_content([prompt, img])
+                print(f"[AI Brain] Image Success with {model_id}")
+                return {"response": response.text, "source": f"Gemini {model_id}"}
+            except Exception as e:
+                last_error = str(e)
+                error_msg = last_error.lower()
+                print(f"[AI Brain] Image analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
+                if "429" in error_msg or "quota" in error_msg:
+                    if attempt == 0:
+                        time.sleep(2)
+                        continue
+                break # Next model
             
     return {"response": f"Image analysis unavailable: {last_error}", "source": "Error"}
 
@@ -165,12 +154,12 @@ def analyze_license(image_bytes):
                     model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
                     img = Image.open(io.BytesIO(image_bytes))
                     response = model.generate_content([prompt_text, img])
-                    print(f"[AI Brain] License Success with {model_id}")
+                    print(f"[AI Brain] License Success with {model_id}", flush=True)
                     return _clean_json(result_text=response.text)
                 except Exception as e:
                     last_error = str(e)
                     error_msg = last_error.lower()
-                    print(f"[AI Brain] License analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
+                    print(f"[AI Brain] License analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}", flush=True)
                     if "429" in error_msg or "quota" in error_msg:
                         if attempt == 0:
                             time.sleep(2)
@@ -230,12 +219,12 @@ def analyze_clinical_request(request_text: str, history: list, image_bytes=None)
                         items.append(img)
                     
                     response = model.generate_content(items)
-                    print(f"[AI Brain] Clinical Success with {model_id}")
+                    print(f"[AI Brain] Clinical Success with {model_id}", flush=True)
                     return _clean_json(result_text=response.text)
                 except Exception as e:
                     last_error = str(e)
                     error_msg = last_error.lower()
-                    print(f"[AI Brain] Clinical analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
+                    print(f"[AI Brain] Clinical analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}", flush=True)
                     if "429" in error_msg or "quota" in error_msg:
                         if attempt == 0:
                             time.sleep(2)
@@ -295,11 +284,11 @@ def analyze_medical_report(image_bytes: bytes) -> dict:
                         img = Image.open(io.BytesIO(image_bytes))
                         response = model.generate_content([prompt, img])
                         
-                    print(f"[AI Brain] Report Analysis Success with {model_id}")
+                    print(f"[AI Brain] Report Analysis Success with {model_id}", flush=True)
                     return _clean_json(result_text=response.text)
                 except Exception as e:
                     last_error = str(e)
-                    print(f"[AI Brain] Report analysis for {model_id} failed: {last_error[:100]}")
+                    print(f"[AI Brain] Report analysis for {model_id} failed: {last_error[:100]}", flush=True)
                     if "429" in last_error or "quota" in last_error:
                         if attempt == 0:
                             time.sleep(2)
