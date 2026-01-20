@@ -27,7 +27,10 @@ const LandingPage = ({ onGetStarted }) => {
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
+        if (!deferredPrompt) {
+            alert("To install, please use your browser's menu (⋮ or Share) and select 'Add to Home Screen'. See the guide below!");
+            return;
+        }
 
         // Show the prompt
         deferredPrompt.prompt();
@@ -38,12 +41,12 @@ const LandingPage = ({ onGetStarted }) => {
 
         // We've used the prompt, and can't use it again, throw it away
         setDeferredPrompt(null);
-        setIsInstallable(false);
     };
 
     return (
         <div className="landing-page">
             <section className="hero-section fade-in">
+                {/* ... existing hero content ... */}
                 <div className="hero-content">
                     <h1 className="hero-title text-gradient">The Future of Egyptian Healthcare</h1>
                     <p className="hero-subtitle">
@@ -155,19 +158,19 @@ const LandingPage = ({ onGetStarted }) => {
                     {/* Premium Install Button */}
                     <div className="download-actions" style={{ marginBottom: '2rem' }}>
                         <button
-                            className={`btn-primary btn-large download-btn ${!isInstallable ? 'disabled' : ''}`}
+                            className="btn-primary btn-large download-btn"
                             onClick={handleInstallClick}
-                            style={{ width: '100%', justifyContent: 'center', cursor: isInstallable ? 'pointer' : 'default' }}
+                            style={{ width: '100%', justifyContent: 'center' }}
                         >
                             <span className="icon">📲</span>
                             <div className="btn-text">
-                                <label>{isInstallable ? 'Install Now' : 'PWA Supported'}</label>
+                                <label>{deferredPrompt ? 'Install Now' : 'Tap to Install'}</label>
                                 <span>Install Clinical Hub App</span>
                             </div>
                         </button>
-                        {!isInstallable && (
+                        {!deferredPrompt && (
                             <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem', textAlign: 'center' }}>
-                                Use the browser menu to "Add to Home Screen" if the button is inactive.
+                                If nothing happens, see the guide below.
                             </p>
                         )}
                     </div>
