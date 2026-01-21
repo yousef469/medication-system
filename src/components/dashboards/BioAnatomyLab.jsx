@@ -184,7 +184,10 @@ const BioAnatomyLab = () => {
                         <div style={{ marginBottom: '1.5rem' }}>
                             <button
                                 className="btn-primary"
-                                onClick={() => fileInputRef.current?.click()}
+                                onClick={() => {
+                                    alert("DEBUG: Upload Button Clicked. Signaling Android picker...");
+                                    fileInputRef.current?.click();
+                                }}
                                 disabled={isUploading}
                                 style={{
                                     display: 'block',

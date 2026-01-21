@@ -90,17 +90,32 @@ class MainActivity : AppCompatActivity() {
                 filePathCallback: ValueCallback<Array<Uri>>?,
                 fileChooserParams: FileChooserParams?
             ): Boolean {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "📎 Neural Link: Opening File Selector...", Toast.LENGTH_SHORT).show()
+                }
+                
                 if (this@MainActivity.filePathCallback != null) {
                     this@MainActivity.filePathCallback?.onReceiveValue(null)
                 }
                 this@MainActivity.filePathCallback = filePathCallback
 
-                val intent = fileChooserParams?.createIntent()
+                // Try standard Params Intent
+                var intent = fileChooserParams?.createIntent()
+                
+                // Fallback Intent if params fail (often more robust on older Android)
+                if (intent == null) {
+                    intent = Intent(Intent.ACTION_GET_CONTENT)
+                    intent.addCategory(Intent.CATEGORY_OPENABLE)
+                    intent.type = "*/*"
+                }
+
                 try {
                     startActivityForResult(intent!!, FILE_CHOOSER_RESULT_CODE)
                 } catch (e: Exception) {
                     this@MainActivity.filePathCallback = null
-                    Toast.makeText(this@MainActivity, "Cannot open file chooser", Toast.LENGTH_SHORT).show()
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "❌ Error: Cannot open file gallery", Toast.LENGTH_LONG).show()
+                    }
                     return false
                 }
                 return true
@@ -111,8 +126,22 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_CHOOSER_RESULT_CODE) {
-            if (filePathCallback == null) return
+            if (filePathCallback == null) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "⚠️ File Picker: System callback lost", Toast.LENGTH_SHORT).show()
+                }
+                return
+            }
             val results = WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+            if (results != null) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "✅ File Selected Successfully", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "⚠️ No file selected", Toast.LENGTH_SHORT).show()
+                }
+            }
             filePathCallback?.onReceiveValue(results)
             filePathCallback = null
         }
