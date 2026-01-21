@@ -222,8 +222,11 @@ def analyze_clinical_request(request_text: str, history: list, image_bytes=None)
                     model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
                     items = [prompt]
                     if image_bytes:
-                        img = Image.open(io.BytesIO(image_bytes))
-                        items.append(img)
+                        if image_bytes.startswith(b'%PDF'):
+                            items.append({"mime_type": "application/pdf", "data": image_bytes})
+                        else:
+                            img = Image.open(io.BytesIO(image_bytes))
+                            items.append(img)
                     
                     response = model.generate_content(items)
                     print(f"[AI Brain] Clinical Success with {model_id}", flush=True)

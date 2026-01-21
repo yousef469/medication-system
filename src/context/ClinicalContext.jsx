@@ -15,6 +15,7 @@ export const ClinicalProvider = ({ children }) => {
     const [doctors, setDoctors] = useState([]);
     const [systemLogs, setSystemLogs] = useState([]);
     const [hospitals, setHospitals] = useState([]);
+    const [loading, setLoading] = useState(false);
     const { user } = useAuth();
 
     // Hardened API Selection: Ensure APK/Vercel ALWAYS uses the tunnel
@@ -551,7 +552,8 @@ export const ClinicalProvider = ({ children }) => {
             generateInvite,
             isBackendOnline,
             lastHealthCheck,
-            checkBackendHealth
+            checkBackendHealth,
+            loading
         }}>
             {children}
         </ClinicalContext.Provider>
