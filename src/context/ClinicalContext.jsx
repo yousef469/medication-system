@@ -318,6 +318,7 @@ export const ClinicalProvider = ({ children }) => {
 
             if (uploadError) {
                 console.error('[Storage] Upload failed:', uploadError);
+                alert(`Upload Error: ${uploadError.message}. Check Supabase Storage Policies for bucket 'medical-records'.`);
                 return null;
             }
 

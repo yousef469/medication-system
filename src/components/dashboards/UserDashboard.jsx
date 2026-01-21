@@ -31,6 +31,7 @@ const UserDashboard = () => {
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [preferredDoctorId, setPreferredDoctorId] = useState(null);
   const fileInputRef = useRef(null);
+  const vaultInputRef = useRef(null);
   const isGuest = !user?.isAuthenticated;
 
   // Auto-select first hospital
@@ -304,21 +305,32 @@ const UserDashboard = () => {
                 <p style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '0.2rem' }}>Persistent Secure Medical Record Storage</p>
               </div>
               <div style={{ position: 'relative' }}>
-                <button className="btn-secondary btn-xs" style={{ background: 'var(--primary)', color: 'white', border: 'none' }}>
+                <button
+                  className="btn-secondary btn-xs"
+                  style={{ background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer' }}
+                  onClick={() => {
+                    console.log("[Vault] Triggering file picker via ref");
+                    vaultInputRef.current?.click();
+                  }}
+                >
                   {isUploading ? '📤 Synchronizing...' : '+ Add Secure Report'}
                 </button>
                 <input
                   type="file"
-                  style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                  ref={vaultInputRef}
+                  style={{ display: 'none' }}
                   onChange={async (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
+                    console.log("[Vault] File selected:", file.name);
                     setIsUploading(true);
                     try {
-                      await uploadDiagnosis(file, file.name);
+                      const res = await uploadDiagnosis(file, file.name);
+                      console.log("[Vault] Upload result:", res);
                       loadHistory();
                     } catch (err) {
-                      alert("Vault synchronization failed.");
+                      console.error("[Vault] Error:", err);
+                      alert("Vault synchronization failed: " + err.message);
                     } finally {
                       setIsUploading(false);
                       e.target.value = '';

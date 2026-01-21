@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 this@MainActivity.filePathCallback = filePathCallback
 
-                val contentIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                val contentIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "*/*"
                     val mimetypes = arrayOf("image/*", "application/pdf")

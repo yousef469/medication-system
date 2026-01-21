@@ -132,20 +132,13 @@ const AIAssistant = () => {
                     <div
                         className="voice-btn"
                         style={{ padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: '50px', height: '50px' }}
+                        onClick={() => fileInputRef.current?.click()}
                     >
                         <span style={{ fontSize: '1.2rem' }}>{selectedFile ? '✅' : '📁'}</span>
                         <input
                             type="file"
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                opacity: 0,
-                                width: '100%',
-                                height: '100%',
-                                cursor: 'pointer',
-                                zIndex: 999
-                            }}
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
                             onChange={handleFileChange}
                             accept="*/*"
                         />
