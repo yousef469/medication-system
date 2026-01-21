@@ -13,6 +13,7 @@ const BioAnatomyLab = () => {
     const [selectedDiagnosis, setSelectedDiagnosis] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const fileInputRef = React.useRef(null);
 
     useEffect(() => {
         loadData();
@@ -38,16 +39,22 @@ const BioAnatomyLab = () => {
     const handleVaultUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        console.log("[BioAnatomyLab] File selected:", file.name, file.size);
         setIsUploading(true);
         try {
+            console.log("[BioAnatomyLab] Initiating upload to AI Cerebral Link...");
             const result = await uploadDiagnosis(file, file.name);
+            console.log("[BioAnatomyLab] Upload success, reloading data...");
             await loadData();
             if (result) setSelectedDiagnosis(result);
-            alert("Bio-Anatomy scan complete. Results synthesized.");
+            alert("✅ Neural analysis complete. Findings mapped to 3D structure.");
         } catch (err) {
-            alert("AI analysis failed: " + err.message);
+            console.error("[BioAnatomyLab] Upload Error:", err);
+            alert("❌ AI Cerebral Link Error: " + err.message + "\n\nTip: Ensure your laptop is running 'python server.py'");
         } finally {
             setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = ''; // Reset for re-upload
         }
     };
 
@@ -175,11 +182,13 @@ const BioAnatomyLab = () => {
                         </h3>
 
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <label
-                                htmlFor="bio-scan-upload"
+                            <button
                                 className="btn-primary"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
                                 style={{
                                     display: 'block',
+                                    width: '100%',
                                     textAlign: 'center',
                                     padding: '1rem',
                                     cursor: isUploading ? 'not-allowed' : 'pointer',
@@ -193,13 +202,13 @@ const BioAnatomyLab = () => {
                                 }}
                             >
                                 {isUploading ? '🧬 ANALYZING...' : '🔬 UPLOAD NEW BIO-SCAN'}
-                            </label>
+                            </button>
                             <input
-                                id="bio-scan-upload"
+                                ref={fileInputRef}
                                 type="file"
                                 hidden
                                 onChange={handleVaultUpload}
-                                disabled={isUploading}
+                                accept="image/*,.pdf"
                             />
                         </div>
 

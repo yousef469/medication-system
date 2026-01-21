@@ -143,14 +143,18 @@ export const ClinicalProvider = ({ children }) => {
 
             const aiRes = await fetch(`${API_URL}/api/analyze_report`, {
                 method: 'POST',
-                headers: fetchHeaders, // Added bypass
+                headers: fetchHeaders,
                 body: formData
             });
-            if (!aiRes.ok) throw new Error("AI Analysis Failed");
+
+            if (!aiRes.ok) {
+                const errorText = await aiRes.text();
+                throw new Error(`Backend Error (${aiRes.status}): ${errorText || aiRes.statusText}`);
+            }
+
             const aiResult = await aiRes.json();
-            console.log("[ClinicalContext] AI Result:", aiResult);
             if (aiResult.error) {
-                throw new Error(aiResult.error || "AI Synthesis failed");
+                throw new Error(`AI Analysis Failed: ${aiResult.error}`);
             }
             console.log("[ClinicalContext] User ID:", user?.id);
 
