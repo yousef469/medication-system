@@ -5,7 +5,16 @@ import ProfessionalProfileModal from '../shared/ProfessionalProfileModal';
 import ThemeToggle from '../shared/ThemeToggle';
 
 const UserDashboard = () => {
-  const { hospitals, doctors, fetchDoctors, submitRequest, fetchPatientHistory, fetchDiagnoses, uploadDiagnosis } = useClinical();
+  const {
+    hospitals,
+    doctors,
+    fetchDoctors,
+    submitRequest,
+    fetchPatientHistory,
+    fetchDiagnoses,
+    uploadDiagnosis,
+    isBackendOnline
+  } = useClinical();
   const { user } = useAuth();
   const [requestContent, setRequestContent] = useState('');
   const [medicalHistory, setMedicalHistory] = useState([]);
