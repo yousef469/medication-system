@@ -65,24 +65,6 @@ const UserDashboard = () => {
     setIsLoadingHistory(false);
   };
 
-  const handleVaultUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    try {
-      const result = await uploadDiagnosis(file, file.name);
-      await loadHistory();
-      alert("✅ Your bio-scan has been submitted. It has been routed to the clinical team for review.");
-    } catch (err) {
-      console.error("Upload Error:", err);
-      alert("❌ Submission Failed: " + err.message);
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -148,62 +130,6 @@ const UserDashboard = () => {
       <div className="main-discovery-layout">
         <section className="request-portal glass-card">
           {/* Bio-Anatomy Lab Launchpad */}
-          {!isGuest && (
-            <div className="lab-entry-hero">
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, var(--primary), transparent)' }}></div>
-
-              <div className="lab-entry-content">
-                <h2 className="lab-title" style={{ color: 'var(--primary)' }}>Submit Clinical Bio-Scan</h2>
-                <p className="lab-desc">
-                  Upload your medical reports, radiology, or scans. Our AI will analyze the data and route it directly to your specialist for 3D diagnostic review.
-                </p>
-                <div className="lab-actions">
-                  <div style={{ marginBottom: '1rem', width: '100%' }}>
-                    <button
-                      className="btn-primary"
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        textAlign: 'center',
-                        padding: '1rem',
-                        cursor: isUploading ? 'not-allowed' : 'pointer',
-                        fontWeight: 800,
-                        letterSpacing: '0.05em',
-                        background: 'linear-gradient(45deg, #7c44ed, #8b5cf6)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        color: 'white',
-                        boxShadow: '0 4px 15px rgba(124, 68, 237, 0.4)'
-                      }}
-                    >
-                      {isUploading ? '🧬 SECURELY PROCESSING...' : '🔬 UPLOAD NEW SCAN'}
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      style={{ display: 'none' }}
-                      onChange={handleVaultUpload}
-                      accept="image/*,.pdf"
-                    />
-                  </div>
-                  <div className="lab-status">
-                    <span className="pulse-dot" style={{
-                      background: isBackendOnline ? '#4ade80' : '#ef4444',
-                      boxShadow: isBackendOnline ? '0 0 10px #4ade80' : '0 0 10px #ef4444'
-                    }}></span>
-                    {isBackendOnline ? 'CLINICAL UPLINK ACTIVE' : 'SYSTEM OFFLINE'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="lab-visual-icon">
-                <span>📂</span>
-              </div>
-            </div>
-          )}
 
 
           <h3>Emergency & Clinical Portal</h3>
@@ -230,10 +156,19 @@ const UserDashboard = () => {
                   <button type="button" className={`tool-btn ${isRecording ? 'recording' : ''}`} onClick={handleVoiceToggle}>
                     {isRecording ? '⏹ Stop Recording' : '🎤 Voice Note'}
                   </button>
-                  <button type="button" className="tool-btn" onClick={() => fileInputRef.current.click()}>
+                  <button type="button" className="tool-btn" onClick={() => {
+                    console.log("DEBUG: Triggering Clinical File Input...");
+                    fileInputRef.current?.click();
+                  }}>
                     {selectedFile ? `📁 ${selectedFile.name.slice(0, 10)}...` : '📁 Attach Files'}
                   </button>
-                  <input type="file" ref={fileInputRef} hidden onChange={handleFileChange} />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
+                    onChange={handleFileChange}
+                    accept="image/*,.pdf"
+                  />
                 </div>
               </div>
             </div>

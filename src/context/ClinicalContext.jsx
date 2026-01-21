@@ -316,7 +316,7 @@ export const ClinicalProvider = ({ children }) => {
             urgency: urgency,
             status: 'PENDING_SECRETARY',
             preferred_doctor_id: preferredDoctorId,
-            file_url: typeof file === 'string' ? file : null,
+            file_url: file instanceof File ? URL.createObjectURL(file) : (typeof file === 'string' ? file : null),
             voice_url: voiceUrl,
             ai_analysis: aiResult,
             ai_conclusion: aiResult.conclusion,

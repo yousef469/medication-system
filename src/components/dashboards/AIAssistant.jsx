@@ -19,21 +19,41 @@ const AIAssistant = () => {
     const [isThinking, setIsThinking] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const scrollRef = useRef(null);
+    const fileInputRef = useRef(null);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }, [messages]);
 
-    const handleSend = async (text = inputValue) => {
-        if (!text.trim()) return;
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file);
+            handleSend(`[File Attached: ${file.name}]`, file);
+        }
+    };
 
-        const userMsg = { role: 'user', text };
+    const handleSend = async (text = inputValue, file = selectedFile) => {
+        const queryText = text || inputValue;
+        if (!queryText.trim() && !file) return;
+
+        const userMsg = {
+            role: 'user',
+            text: queryText,
+            fileName: file?.name
+        };
         setMessages(prev => [...prev, userMsg]);
         setInputValue('');
+        setSelectedFile(null);
         setIsThinking(true);
 
         try {
-            const response = await aiConsultation(text);
+            const response = await aiConsultation(
+                queryText,
+                file ? 'image' : 'text',
+                file
+            );
 
             // Enforce Safety Disclaimer if it's a medical query and not just costs
             let safeAnswer = response.answer;
@@ -52,6 +72,7 @@ const AIAssistant = () => {
             setMessages(prev => [...prev, { role: 'assistant', text: "Connection error. Trying offline mode..." }]);
         } finally {
             setIsThinking(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -108,6 +129,20 @@ const AIAssistant = () => {
                     <button className={`voice-btn ${isRecording ? 'recording' : ''}`} onClick={toggleVoice}>
                         {isRecording ? t('voice_stop') : t('voice_start')}
                     </button>
+                    <button
+                        className="voice-btn"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ padding: '0 1rem' }}
+                    >
+                        {selectedFile ? '✅' : '📁'}
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                        accept="image/*,.pdf"
+                    />
                     <input
                         type="text"
                         placeholder={t('search_placeholder')}

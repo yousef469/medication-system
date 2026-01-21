@@ -9,6 +9,8 @@ const UserHospitals = () => {
     const [bookingNote, setBookingNote] = useState('');
     const [selectedSection, setSelectedSection] = useState('');
     const [wasBooked, setWasBooked] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const fileInputRef = React.useRef(null);
 
     const selectedHospital = hospitals.find(h => h.id === selectedHospitalId);
 
@@ -19,10 +21,12 @@ const UserHospitals = () => {
             return;
         }
         await submitRequest(
-            user.name,
+            user.name || "Guest Patient",
             selectedHospitalId,
             `Appointment Booking: ${selectedSection}. Note: ${bookingNote}`,
-            'SCHEDULED'
+            'SCHEDULED',
+            selectedFile ? 'file' : 'text',
+            selectedFile
         );
         setWasBooked(true);
         setTimeout(() => {
@@ -84,6 +88,32 @@ const UserHospitals = () => {
                                         value={bookingNote}
                                         onChange={e => setBookingNote(e.target.value)}
                                     ></textarea>
+                                </div>
+                                <div className="form-group" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                    <button
+                                        type="button"
+                                        className="btn-secondary btn-xs"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        style={{ flex: 1 }}
+                                    >
+                                        {selectedFile ? `📁 ${selectedFile.name.slice(0, 15)}...` : '📎 Attach Medical File'}
+                                    </button>
+                                    {selectedFile && (
+                                        <button
+                                            type="button"
+                                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem' }}
+                                            onClick={() => setSelectedFile(null)}
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => setSelectedFile(e.target.files[0])}
+                                        accept="image/*,.pdf"
+                                    />
                                 </div>
                                 <button type="submit" className="btn-primary w-full">Confirm Booking Request</button>
                             </form>
