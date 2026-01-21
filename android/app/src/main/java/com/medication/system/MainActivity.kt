@@ -41,11 +41,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestPermissions() {
-        val permissions = arrayOf(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
-        )
+        val permissions = mutableListOf(Manifest.permission.CAMERA)
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_INT_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
+            permissions.add(Manifest.permission.READ_MEDIA_VIDEO)
+        } else {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        }
+
         val listPermissionsNeeded = mutableListOf<String>()
         for (p in permissions) {
             if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
@@ -79,6 +84,16 @@ class MainActivity : AppCompatActivity() {
             fun onMeshSelected(meshName: String) {
                 runOnUiThread {
                     Toast.makeText(this@MainActivity, "Selected: $meshName", Toast.LENGTH_LONG).show()
+                }
+            }
+
+            @JavascriptInterface
+            fun triggerFilePicker() {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Manual Picker Triggered", Toast.LENGTH_SHORT).show()
+                    // This forces the file picker to open even if the HTML input fails
+                    // However, we need a way to pass the callback back. 
+                    // This is harder via JS bridge, so we'll sticking to the HTML input fix.
                 }
             }
         }, "AndroidApp")
@@ -151,28 +166,39 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "📎 Neural Link: Opening File Selector...", Toast.LENGTH_SHORT).show()
                 }
                 
-                if (this@MainActivity.filePathCallback != null) {
-                    this@MainActivity.filePathCallback?.onReceiveValue(null)
-                }
+                filePathCallback = null
                 this@MainActivity.filePathCallback = filePathCallback
 
-                // Always try a fresh GET_CONTENT intent first - it's most compatible with modern Android and Chat-GPT style upload
-                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                val contentIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "*/*"
-                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
+                    val mimetypes = arrayOf("image/*", "application/pdf")
+                    putExtra(Intent.EXTRA_MIME_TYPES, mimetypes)
+                }
+
+                val chooserIntent = Intent(Intent.ACTION_CHOOSER).apply {
+                    putExtra(Intent.EXTRA_INTENT, contentIntent)
+                    putExtra(Intent.EXTRA_TITLE, "Select Medical File")
                 }
 
                 try {
-                    startActivityForResult(Intent.createChooser(intent, "Select Clinical File"), FILE_CHOOSER_RESULT_CODE)
+                    startActivityForResult(chooserIntent, FILE_CHOOSER_RESULT_CODE)
                 } catch (e: Exception) {
+                    this@MainActivity.filePathCallback?.onReceiveValue(null)
                     this@MainActivity.filePathCallback = null
                     runOnUiThread {
-                        Toast.makeText(this@MainActivity, "❌ Error: Cannot open file gallery", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, "❌ Permission or System Error. Please check settings.", Toast.LENGTH_LONG).show()
                     }
                     return false
                 }
                 return true
+            }
+
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Neural Link: Granting Web Permissions", Toast.LENGTH_SHORT).show()
+                }
+                request?.grant(request?.resources)
             }
         }
     }

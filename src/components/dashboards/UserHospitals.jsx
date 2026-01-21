@@ -92,7 +92,7 @@ const UserHospitals = () => {
                                 <div className="form-group" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
                                     <div
                                         className="btn-secondary btn-xs"
-                                        style={{ flex: 1, cursor: 'pointer', textAlign: 'center', display: 'block', padding: '0.5rem', position: 'relative', overflow: 'hidden' }}
+                                        style={{ flex: 1, cursor: 'pointer', textAlign: 'center', display: 'block', padding: '0.5rem', position: 'relative' }}
                                     >
                                         {selectedFile ? `📁 ${selectedFile.name.slice(0, 15)}...` : '📎 Attach Medical File'}
                                         <input
@@ -105,16 +105,16 @@ const UserHospitals = () => {
                                                 width: '100%',
                                                 height: '100%',
                                                 cursor: 'pointer',
-                                                zIndex: 10
+                                                zIndex: 999
                                             }}
                                             onChange={(e) => setSelectedFile(e.target.files[0])}
-                                            accept="image/*,.pdf"
+                                            accept="*/*"
                                         />
                                     </div>
                                     {selectedFile && (
                                         <button
                                             type="button"
-                                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem', zIndex: 11 }}
+                                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem', zIndex: 1000 }}
                                             onClick={() => setSelectedFile(null)}
                                         >
                                             ✕

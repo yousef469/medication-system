@@ -158,7 +158,7 @@ const UserDashboard = () => {
                   </button>
                   <div
                     className="tool-btn"
-                    style={{ position: 'relative', overflow: 'hidden', padding: '0.4rem 0.8rem', cursor: 'pointer', textAlign: 'center' }}
+                    style={{ position: 'relative', padding: '0.4rem 0.8rem', cursor: 'pointer', textAlign: 'center' }}
                   >
                     {selectedFile ? `📁 ${selectedFile.name.slice(0, 10)}...` : '📁 Attach Files'}
                     <input
@@ -171,13 +171,13 @@ const UserDashboard = () => {
                         width: '100%',
                         height: '100%',
                         cursor: 'pointer',
-                        zIndex: 10
+                        zIndex: 999
                       }}
                       onChange={(e) => {
                         console.log("DEBUG: Native File Input Triggered!");
                         handleFileChange(e);
                       }}
-                      accept="image/*,.pdf"
+                      accept="*/*"
                     />
                   </div>
                 </div>

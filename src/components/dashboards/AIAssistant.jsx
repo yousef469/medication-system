@@ -131,7 +131,7 @@ const AIAssistant = () => {
                     </button>
                     <div
                         className="voice-btn"
-                        style={{ padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: '50px', height: '50px', overflow: 'hidden' }}
+                        style={{ padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: '50px', height: '50px' }}
                     >
                         <span style={{ fontSize: '1.2rem' }}>{selectedFile ? '✅' : '📁'}</span>
                         <input
@@ -144,11 +144,10 @@ const AIAssistant = () => {
                                 width: '100%',
                                 height: '100%',
                                 cursor: 'pointer',
-                                zIndex: 10
+                                zIndex: 999
                             }}
                             onChange={handleFileChange}
-                            accept="image/*,.pdf"
-                            ref={fileInputRef}
+                            accept="*/*"
                         />
                     </div>
                     <input
