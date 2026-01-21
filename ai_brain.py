@@ -25,11 +25,13 @@ Response Format:
 """
 
 MODEL_IDS = [
-    'models/gemini-1.5-flash',
-    'models/gemini-1.5-flash-latest',
-    'models/gemini-2.0-flash',
-    'models/gemini-2.0-flash-lite',
-    'models/gemini-pro-latest'
+    'gemini-2.0-flash-lite-preview-02-05',
+    'gemini-2.0-flash',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-3-flash',
+    'gemini-pro-latest'
 ]
 
 # Clinical safety settings to avoid over-blocking
@@ -87,33 +89,47 @@ def process_command(user_text: str, history: list = None, use_online: bool = Tru
         "error_type": "exhausted_all_models"
     }
 
+def _get_mime_type(data: bytes) -> str:
+    """Detect MIME type from header bytes."""
+    if data.startswith(b'%PDF'):
+        return "application/pdf"
+    if data.startswith(b'\x89PNG\r\n\x1a\n'):
+        return "image/png"
+    if data.startswith(b'\xff\xd8\xff'):
+        return "image/jpeg"
+    if data.startswith(b'GIF87a') or data.startswith(b'GIF89a'):
+        return "image/gif"
+    if data.startswith(b'RIFF') and data[8:12] == b'WEBP':
+        return "image/webp"
+    # Fallback to image/jpeg for Gemini
+    return "image/jpeg"
+
 def analyze_image(image_bytes, prompt="Analyze this medical image.", use_online: bool = True):
     print(f"[AI Brain] Analyzing Content with prompt: {prompt[:50]}...")
     last_error = "Unknown"
-    for model_id in MODEL_IDS:
-        for attempt in range(2):
-            try:
-                model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
-                
-                # MIME DETECTION
-                if image_bytes.startswith(b'%PDF'):
-                    content = [{"mime_type": "application/pdf", "data": image_bytes}, prompt]
-                else:
-                    img = Image.open(io.BytesIO(image_bytes))
-                    content = [prompt, img]
+    for base_id in MODEL_IDS:
+        # Check both the direct ID and the models/ prefix
+        for model_id in [f"models/{base_id}" if not base_id.startswith('models/') else base_id, base_id]:
+            for attempt in range(2):
+                try:
+                    model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
+                    
+                    # Direct bytes-to-Gemini (Bypasses PIL identification issues)
+                    mime_type = _get_mime_type(image_bytes)
+                    content = [{"mime_type": mime_type, "data": image_bytes}, prompt]
 
-                response = model.generate_content(content)
-                print(f"[AI Brain] Content Success with {model_id}")
-                return {"response": response.text, "source": f"Gemini {model_id}"}
-            except Exception as e:
-                last_error = str(e)
-                error_msg = last_error.lower()
-                print(f"[AI Brain] Analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
-                if "429" in error_msg or "quota" in error_msg:
-                    if attempt == 0:
-                        time.sleep(2)
-                        continue
-                break # Next model
+                    response = model.generate_content(content)
+                    print(f"[AI Brain] Content Success with {model_id}")
+                    return {"response": response.text, "source": f"Gemini {model_id}"}
+                except Exception as e:
+                    last_error = str(e)
+                    error_msg = last_error.lower()
+                    print(f"[AI Brain] Analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
+                    if "429" in error_msg or "quota" in error_msg:
+                        if attempt == 0:
+                            time.sleep(2)
+                            continue
+                    break # Next model
             
     return {"response": f"Content analysis unavailable: {last_error}", "source": "Error"}
 
@@ -186,7 +202,7 @@ def analyze_clinical_request(request_text: str, history: list, image_bytes=None)
         history_summary = "\n".join([f"- {h.get('created_at', '')}: {h.get('diagnosis', 'Unknown')}" for h in history])
 
     prompt = f"""You are a High-Precision Medical AI. 
-    Analyze the CURRENT REQUEST against the PATIENT HISTORY.
+    Analyze the CURRENT REQUEST and any ATTACHED DOCUMENTS against the PATIENT HISTORY.
     
     PATIENT HISTORY:
     {history_summary}
@@ -195,18 +211,21 @@ def analyze_clinical_request(request_text: str, history: list, image_bytes=None)
     {request_text}
     
     TASKS:
-    1. Synthesize a clinical conclusion for the doctor.
-    2. Identify anatomical areas of interest:
-       - RED: Current problematic area (linked to the request).
-       - ORANGE: Areas that maybe have issues based on symptoms/history that should be checked.
-       - GREEN: Areas that had problems in history but are now cured/stable.
+    1. Synthesize a clinical conclusion for the doctor. Be CONCISE and professional. Use bullet points for findings.
+    2. Identify anatomical areas of interest for 3D visualization. 
+       MAPPING RULES:
+       - Knee/ACL/Meniscus -> "Left Leg" or "Right Leg"
+       - Shoulder/Elbow/Wrist -> "Left Arm" or "Right Arm"
+       - Spine/LSO/Disk -> "Back"
+       - Lungs/Heart/Ribs -> "Chest"
+       - Stomach/Liver/Kidney -> "Abdomen"
     
-    Valid anatomical parts (Use these exact names): 
+    Valid anatomical parts (Use these EXACT names for 3D markers): 
     Head, Neck, Chest, Abdomen, Back, Left Arm, Right Arm, Left Leg, Right Leg.
     
     Output JSON ONLY:
     {{
-        "conclusion": "brief summary",
+        "conclusion": "Clinical synthesis with bullet points if needed",
         "markers": [
             {{"part": "string", "status": "RED/ORANGE/GREEN", "reason": "brief explanation"}}
         ]
@@ -216,17 +235,14 @@ def analyze_clinical_request(request_text: str, history: list, image_bytes=None)
     last_error = "Unknown"
     # Try preferred models with prefix priority
     for base_id in MODEL_IDS:
-        for model_id in [f"models/{base_id}", base_id]:
+        for model_id in [f"models/{base_id}" if not base_id.startswith('models/') else base_id, base_id]:
             for attempt in range(2):
                 try:
                     model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
                     items = [prompt]
                     if image_bytes:
-                        if image_bytes.startswith(b'%PDF'):
-                            items.append({"mime_type": "application/pdf", "data": image_bytes})
-                        else:
-                            img = Image.open(io.BytesIO(image_bytes))
-                            items.append(img)
+                        mime_type = _get_mime_type(image_bytes)
+                        items.append({"mime_type": mime_type, "data": image_bytes})
                     
                     response = model.generate_content(items)
                     print(f"[AI Brain] Clinical Success with {model_id}", flush=True)
@@ -279,20 +295,15 @@ def analyze_medical_report(image_bytes: bytes) -> dict:
     
     last_error = "Unknown"
     for base_id in MODEL_IDS:
-        for model_id in [f"models/{base_id}", base_id]:
+        for model_id in [f"models/{base_id}" if not base_id.startswith('models/') else base_id, base_id]:
             for attempt in range(2):
                 try:
                     model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
                     
-                    # MIME DETECTION & MULTI-MODAL DATA
-                    # If it starts with %PDF, treat as PDF
-                    if image_bytes.startswith(b'%PDF'):
-                        data_part = {"mime_type": "application/pdf", "data": image_bytes}
-                        response = model.generate_content([prompt, data_part])
-                    else:
-                        # Default to Image
-                        img = Image.open(io.BytesIO(image_bytes))
-                        response = model.generate_content([prompt, img])
+                    # Direct bytes-to-Gemini
+                    mime_type = _get_mime_type(image_bytes)
+                    data_part = {"mime_type": mime_type, "data": image_bytes}
+                    response = model.generate_content([prompt, data_part])
                         
                     print(f"[AI Brain] Report Analysis Success with {model_id}", flush=True)
                     return _clean_json(result_text=response.text)

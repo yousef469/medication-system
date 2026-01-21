@@ -113,7 +113,7 @@ const BioAnatomyLab = ({ patientId = null, patientName = null }) => {
                             }}>
                                 <h4 style={{ margin: '0 0 0.5rem', color: '#ef4444', fontSize: '0.75rem', fontWeight: 900 }}>AI CLINICAL CONCLUSION</h4>
                                 <p style={{ fontSize: '0.85rem', margin: '0 0 1rem', fontWeight: 600 }}>{selectedDiagnosis.title || selectedDiagnosis.report_name}</p>
-                                <p style={{ fontSize: '0.8rem', opacity: 0.9, lineHeight: 1.5 }}>
+                                <p style={{ fontSize: '0.8rem', opacity: 0.9, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                                     {selectedDiagnosis.ai_conclusion || "Analyzing scan for anatomical anomalies..."}
                                 </p>
                                 <button

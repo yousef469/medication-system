@@ -198,7 +198,7 @@ const NurseDashboard = () => {
                                             {selectedCase.ai_conclusion && (
                                                 <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(var(--primary-rgb), 0.1)', borderRadius: '10px', borderLeft: '3px solid var(--primary)' }}>
                                                     <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.4rem' }}>AI CLINICAL SYNTHESIS</div>
-                                                    <div style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>{selectedCase.ai_conclusion}</div>
+                                                    <div style={{ fontSize: '0.85rem', fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>{selectedCase.ai_conclusion}</div>
                                                 </div>
                                             )}
                                         </div>

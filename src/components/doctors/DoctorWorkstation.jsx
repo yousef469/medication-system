@@ -154,7 +154,7 @@ const DoctorWorkstation = () => {
                                         <div>
                                             <div className="ai-badge">AI ANALYZED</div>
                                             <h3>Clinical Summary: {selectedCase.patient_name}</h3>
-                                            <p style={{ lineHeight: 1.6, opacity: 0.9, fontSize: '1.1rem', marginBottom: '1.5rem' }}>
+                                            <p style={{ lineHeight: 1.6, opacity: 0.9, fontSize: '1.1rem', marginBottom: '1.5rem', whiteSpace: 'pre-wrap' }}>
                                                 {selectedCase.ai_conclusion || `Patient presents with ${selectedCase.service_requested}.`}
                                             </p>
                                             <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>

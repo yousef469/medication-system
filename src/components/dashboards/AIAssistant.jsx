@@ -105,13 +105,27 @@ const AIAssistant = () => {
 
                 <div className="chat-messages" ref={scrollRef}>
                     {messages.map((m, i) => (
-                        <div key={i} className={`message ${m.role}`}>
+                        <div key={i} className={`message ${m.role} fade-in`}>
                             <div className="message-content">
                                 <div className="bubble">
                                     {m.text}
+                                    {m.role === 'assistant' && m.text.length > 5 && (
+                                        <button
+                                            className="copy-mini-btn"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(m.text);
+                                                alert('Copied to clipboard');
+                                            }}
+                                            title="Copy response"
+                                        >
+                                            📋
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="meta-tags">
-                                    <span className="source-tag gemini">{t('gemini_cloud_tag')}</span>
+                                    <span className="source-tag gemini">
+                                        {m.role === 'user' ? 'Patient Inquiry' : t('gemini_cloud_tag')}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -260,17 +274,35 @@ const AIAssistant = () => {
                     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
                 }
                 .message.assistant .bubble { 
-                    background: var(--glass-highlight); 
+                    background: rgba(30, 41, 59, 0.7); 
                     border: 1px solid var(--glass-border); 
                     border-top-left-radius: 4px;
                     color: var(--text-primary);
+                    backdrop-filter: blur(10px);
+                    padding: 1.2rem 1.8rem;
                 }
                 .message.user .bubble { 
-                    background: linear-gradient(135deg, var(--primary), #0284c7); 
+                    background: linear-gradient(135deg, var(--primary), #4f46e5); 
                     color: white; 
                     border-bottom-right-radius: 4px; 
-                    box-shadow: 0 4px 15px var(--primary-glow);
+                    box-shadow: 0 8px 25px rgba(124, 68, 237, 0.3);
+                    padding: 0.8rem 1.4rem;
                 }
+                .copy-mini-btn {
+                    position: absolute;
+                    bottom: 0.5rem;
+                    right: 0.5rem;
+                    background: rgba(255,255,255,0.1);
+                    border: none;
+                    border-radius: 6px;
+                    padding: 4px;
+                    cursor: pointer;
+                    font-size: 0.7rem;
+                    opacity: 0;
+                    transition: 0.2s;
+                }
+                .bubble:hover .copy-mini-btn { opacity: 1; }
+                .copy-mini-btn:hover { background: var(--primary); }
                 .meta-tags {
                     margin-top: 0.5rem;
                     display: flex;
