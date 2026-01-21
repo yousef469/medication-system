@@ -68,15 +68,18 @@ const UserDashboard = () => {
   const handleVaultUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     setIsUploading(true);
     try {
-      await uploadDiagnosis(file, file.name);
-      await loadHistory(); // Refresh
-      alert("Report analyzed and added to your Medical Vault.");
+      const result = await uploadDiagnosis(file, file.name);
+      await loadHistory();
+      alert("✅ Your bio-scan has been submitted. It has been routed to the clinical team for review.");
     } catch (err) {
-      alert("AI analysis failed: " + err.message);
+      console.error("Upload Error:", err);
+      alert("❌ Submission Failed: " + err.message);
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -150,33 +153,54 @@ const UserDashboard = () => {
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: 'linear-gradient(90deg, transparent, var(--primary), transparent)' }}></div>
 
               <div className="lab-entry-content">
-                <h2 className="lab-title">3D Bio-Anatomy Laboratory</h2>
+                <h2 className="lab-title" style={{ color: 'var(--primary)' }}>Submit Clinical Bio-Scan</h2>
                 <p className="lab-desc">
-                  Access your interactive pharmacological profile. Upload reports for neural AI processing and visualize clinical findings on a true 3D rotating biostructure.
+                  Upload your medical reports, radiology, or scans. Our AI will analyze the data and route it directly to your specialist for 3D diagnostic review.
                 </p>
                 <div className="lab-actions">
-                  <button
-                    className="btn-primary lab-launch-btn"
-                    type="button"
-                    onClick={() => {
-                      if (window.location.hash === '#anatomy-lab') return;
-                      document.querySelector('[data-nav="anatomy-lab"]')?.click();
-                    }}
-                  >
-                    🚀 LAUNCH STANDALONE LAB
-                  </button>
+                  <div style={{ marginBottom: '1rem', width: '100%' }}>
+                    <button
+                      className="btn-primary"
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        textAlign: 'center',
+                        padding: '1rem',
+                        cursor: isUploading ? 'not-allowed' : 'pointer',
+                        fontWeight: 800,
+                        letterSpacing: '0.05em',
+                        background: 'linear-gradient(45deg, #7c44ed, #8b5cf6)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        color: 'white',
+                        boxShadow: '0 4px 15px rgba(124, 68, 237, 0.4)'
+                      }}
+                    >
+                      {isUploading ? '🧬 SECURELY PROCESSING...' : '🔬 UPLOAD NEW SCAN'}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      style={{ display: 'none' }}
+                      onChange={handleVaultUpload}
+                      accept="image/*,.pdf"
+                    />
+                  </div>
                   <div className="lab-status">
                     <span className="pulse-dot" style={{
                       background: isBackendOnline ? '#4ade80' : '#ef4444',
                       boxShadow: isBackendOnline ? '0 0 10px #4ade80' : '0 0 10px #ef4444'
                     }}></span>
-                    {isBackendOnline ? 'NEURAL LINK ACTIVE' : 'SYSTEM DISCONNECTED'}
+                    {isBackendOnline ? 'CLINICAL UPLINK ACTIVE' : 'SYSTEM OFFLINE'}
                   </div>
                 </div>
               </div>
 
               <div className="lab-visual-icon">
-                <span>🧬</span>
+                <span>📂</span>
               </div>
             </div>
           )}

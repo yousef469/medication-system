@@ -154,7 +154,7 @@ const MainContent = () => {
         case 'appointments': return <UserAppointments />;
         case 'medication-hub': return <MedicationHub />;
         case 'ai-assistant': return <AIAssistant />;
-        case 'anatomy-lab': return <BioAnatomyLab />;
+        // anatomy-lab REMOVED for patients
         case 'login': return <LoginView />;
         default: return <UserDashboard />;
       }
@@ -163,6 +163,7 @@ const MainContent = () => {
       switch (activeSubView) {
         case 'ai-assistant': return <AIAssistant />;
         case 'network': return <HospitalNetwork />;
+        case 'anatomy-lab': return <BioAnatomyLab />; // Professionals can see it
         default: return <DoctorProfile doctor={user} />;
       }
     }

@@ -83,8 +83,31 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Handle File Chooser (Crucial for Uploads)
+        // Handle JS Alerts, Console, and File Chooser
         webView.webChromeClient = object : WebChromeClient() {
+            override fun onJsAlert(
+                view: WebView?,
+                url: String?,
+                message: String?,
+                result: JsResult?
+            ): Boolean {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "JS Alert: $message", Toast.LENGTH_LONG).show()
+                }
+                result?.confirm()
+                return true
+            }
+
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                val msg = consoleMessage?.message() ?: ""
+                if (msg.contains("DEBUG") || msg.contains("Error")) {
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Web: $msg", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                return true
+            }
+
             override fun onShowFileChooser(
                 webView: WebView?,
                 filePathCallback: ValueCallback<Array<Uri>>?,

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/useAuth';
 import Humanoid3D from '../visual/Humanoid3D';
 import ThemeToggle from '../shared/ThemeToggle';
 
-const BioAnatomyLab = () => {
+const BioAnatomyLab = ({ patientId = null, patientName = null }) => {
     const { user } = useAuth();
     const { fetchDiagnoses, uploadDiagnosis, fetchPatientHistory, deleteDiagnosis, isBackendOnline } = useClinical();
 
@@ -17,18 +17,20 @@ const BioAnatomyLab = () => {
 
     useEffect(() => {
         loadData();
-    }, [user?.id]);
+    }, [user?.id, patientId]);
 
     const loadData = async () => {
-        if (!user?.id) return;
+        const targetId = patientId || user?.id;
+        if (!targetId) return;
+
         setIsLoading(true);
         try {
             const [history, vault] = await Promise.all([
-                fetchPatientHistory(user.id),
-                fetchDiagnoses(user.id)
+                fetchPatientHistory(targetId),
+                fetchDiagnoses(targetId)
             ]);
-            setMedicalHistory(history);
-            setDiagnosesVault(vault);
+            setMedicalHistory(history || []);
+            setDiagnosesVault(vault || []);
         } catch (err) {
             console.error("Data Load Error:", err);
         } finally {
@@ -40,21 +42,17 @@ const BioAnatomyLab = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        console.log("[BioAnatomyLab] File selected:", file.name, file.size);
         setIsUploading(true);
         try {
-            console.log("[BioAnatomyLab] Initiating upload to AI Cerebral Link...");
-            const result = await uploadDiagnosis(file, file.name);
-            console.log("[BioAnatomyLab] Upload success, reloading data...");
+            await uploadDiagnosis(file, file.name);
             await loadData();
-            if (result) setSelectedDiagnosis(result);
             alert("✅ Neural analysis complete. Findings mapped to 3D structure.");
         } catch (err) {
-            console.error("[BioAnatomyLab] Upload Error:", err);
-            alert("❌ AI Cerebral Link Error: " + err.message + "\n\nTip: Ensure your laptop is running 'python server.py'");
+            console.error("Upload Error:", err);
+            alert("❌ AI Error: " + err.message);
         } finally {
             setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = ''; // Reset for re-upload
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -75,7 +73,6 @@ const BioAnatomyLab = () => {
         ...diagnosesVault.flatMap(d => d.ai_markers || [])
     ];
 
-    // AI MESH HIGHLIGHTING INTEGRATION
     const allHighlightedParts = [
         ...(selectedDiagnosis?.ai_raw_analysis?.mesh_names || []),
         ...diagnosesVault.flatMap(d => d.ai_raw_analysis?.mesh_names || [])
@@ -88,195 +85,100 @@ const BioAnatomyLab = () => {
             background: '#020617',
             color: '#f8fafc'
         }}>
-            <div style={{
+            <header style={{
                 display: 'flex',
-                flexDirection: window.innerWidth < 768 ? 'column' : 'row',
                 justifyContent: 'space-between',
-                alignItems: window.innerWidth < 768 ? 'flex-start' : 'center',
-                marginBottom: '2rem',
-                gap: '1rem'
+                alignItems: 'center',
+                marginBottom: '2rem'
             }}>
                 <div>
-                    <h1 className="text-gradient" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', marginBottom: '0.5rem' }}>Bio-Anatomy Laboratory</h1>
-                    <p style={{ opacity: 0.6, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        Advanced AI Diagnostic Environment • Patent ID: {user?.id?.slice(0, 8)} •
-                        <span style={{
-                            color: isBackendOnline ? '#4ade80' : '#ef4444',
-                            fontWeight: 800,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                        }}>
-                            <span style={{
-                                width: '8px',
-                                height: '8px',
-                                background: isBackendOnline ? '#4ade80' : '#ef4444',
-                                borderRadius: '50%',
-                                boxShadow: isBackendOnline ? '0 0 10px #4ade80' : '0 0 10px #ef4444'
-                            }}></span>
-                            {isBackendOnline ? 'NEURAL LINK ACTIVE' : 'SYSTEM OFFLINE'}
-                        </span>
+                    <h1 className="text-gradient" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', margin: 0 }}>
+                        {patientName ? `${patientName}'s Bio-Anatomy Lab` : 'Personal Bio-Anatomy Laboratory'}
+                    </h1>
+                    <p style={{ opacity: 0.6, fontSize: '0.8rem', marginTop: '0.4rem' }}>
+                        Advanced AI Diagnostic Environment • {isBackendOnline ? '🔬 NEURAL LINK ACTIVE' : '⚠️ SYSTEM OFFLINE'}
                     </p>
                 </div>
                 <ThemeToggle />
-            </div>
+            </header>
 
             <div className="lab-grid" style={{
-                display: 'grid',
-                gridTemplateColumns: window.innerWidth < 1024 ? '1fr' : '1fr 350px',
-                gap: '2rem'
+                display: 'grid', gridTemplateColumns: window.innerWidth < 1024 ? '1fr' : '1fr 350px', gap: '2rem'
             }}>
-                {/* Left Col: 3D Visualization */}
                 <div className="glass-card" style={{ padding: '1rem', border: '1px solid rgba(124, 68, 237, 0.4)', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: '2rem', left: '2rem', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ position: 'absolute', top: '2rem', left: '2rem', zIndex: 10, maxWidth: '300px' }}>
                         {selectedDiagnosis && (
                             <div className="fade-in" style={{
-                                background: 'rgba(239, 68, 68, 0.1)',
-                                padding: '1.2rem',
-                                borderRadius: '18px',
-                                border: '1px solid #ef444455',
-                                backdropFilter: 'blur(20px)',
-                                width: '320px',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                                background: 'rgba(239, 68, 68, 0.1)', padding: '1.2rem', borderRadius: '18px', border: '1px solid #ef444455', backdropFilter: 'blur(20px)'
                             }}>
                                 <h4 style={{ margin: '0 0 0.5rem', color: '#ef4444', fontSize: '0.75rem', fontWeight: 900 }}>AI CLINICAL CONCLUSION</h4>
-                                <p style={{ fontSize: '0.85rem', margin: '0 0 1rem', fontWeight: 600, color: 'white' }}>{selectedDiagnosis.title}</p>
-                                <p style={{ fontSize: '0.8rem', margin: '0 0 1rem', opacity: 0.9, lineHeight: 1.5 }}>
-                                    {selectedDiagnosis.ai_conclusion || selectedDiagnosis.ai_raw_analysis?.conclusion}
+                                <p style={{ fontSize: '0.85rem', margin: '0 0 1rem', fontWeight: 600 }}>{selectedDiagnosis.title || selectedDiagnosis.report_name}</p>
+                                <p style={{ fontSize: '0.8rem', opacity: 0.9, lineHeight: 1.5 }}>
+                                    {selectedDiagnosis.ai_conclusion || "Analyzing scan for anatomical anomalies..."}
                                 </p>
-
-                                {selectedDiagnosis.ai_raw_analysis?.mesh_names?.length > 0 && (
-                                    <div style={{ marginBottom: '1rem', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                        <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 800, color: '#ef4444', textTransform: 'uppercase' }}>Precision Highlights</p>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.4rem' }}>
-                                            {selectedDiagnosis.ai_raw_analysis.mesh_names.map((mn, idx) => (
-                                                <span key={idx} style={{ fontSize: '0.6rem', color: 'white', background: 'rgba(239, 68, 68, 0.4)', padding: '2px 6px', borderRadius: '4px' }}>
-                                                    {mn}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
                                 <button
                                     onClick={() => setSelectedDiagnosis(null)}
-                                    style={{ background: '#ef4444', border: 'none', color: 'white', fontSize: '0.65rem', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800, width: '100%' }}
+                                    style={{ background: '#ef4444', border: 'none', color: 'white', fontSize: '0.65rem', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 800, width: '100%', marginTop: '1rem' }}
                                 >
-                                    ✕ EXIT ANALYSIS
+                                    ✕ CLOSE ANALYSIS
                                 </button>
                             </div>
                         )}
                     </div>
-
 
                     <div style={{ height: window.innerWidth < 768 ? '50vh' : '75vh' }}>
                         <Humanoid3D markers={allMarkers} highlightedParts={allHighlightedParts} />
                     </div>
                 </div>
 
-                {/* Right Col: Diagnostics Vault */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    <div className="glass-card" style={{ padding: '1.5rem', flex: 1, overflowY: 'auto', maxHeight: '85vh', border: '1px solid rgba(124, 68, 237, 0.2)' }}>
-                        <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '1.2rem' }}>
-                            <span style={{ color: 'var(--primary)', filter: 'drop-shadow(0 0 5px var(--primary))' }}>📁</span> Neural Records
-                        </h3>
-
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <button
-                                className="btn-primary"
-                                onClick={() => {
-                                    alert("DEBUG: Upload Button Clicked. Signaling Android picker...");
-                                    fileInputRef.current?.click();
-                                }}
-                                disabled={isUploading}
-                                style={{
-                                    display: 'block',
-                                    width: '100%',
-                                    textAlign: 'center',
-                                    padding: '1rem',
-                                    cursor: isUploading ? 'not-allowed' : 'pointer',
-                                    fontWeight: 800,
-                                    letterSpacing: '0.05em',
-                                    background: 'linear-gradient(45deg, #7c44ed, #8b5cf6)',
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    color: 'white',
-                                    boxShadow: '0 4px 15px rgba(124, 68, 237, 0.4)'
-                                }}
-                            >
-                                {isUploading ? '🧬 ANALYZING...' : '🔬 UPLOAD NEW BIO-SCAN'}
-                            </button>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                hidden
-                                onChange={handleVaultUpload}
-                                accept="image/*,.pdf"
-                            />
+                    <section className="glass-card" style={{ padding: '1.5rem', flex: 1, overflowY: 'auto', maxHeight: '85vh', border: '1px solid rgba(124, 68, 237, 0.2)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1rem' }}>📁 Neural Records</h3>
+                            <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>{diagnosesVault.length} Scans</span>
                         </div>
 
+                        {!patientId && (
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                    style={{ width: '100%', padding: '0.8rem', borderRadius: '10px' }}
+                                >
+                                    {isUploading ? '🧬 ANALYZING...' : '🔬 UPLOAD NEW SCAN'}
+                                </button>
+                                <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleVaultUpload} accept="image/*,.pdf" />
+                            </div>
+                        )}
+
                         {isLoading ? (
-                            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>Syncing local vault...</div>
+                            <p style={{ textAlign: 'center', opacity: 0.5 }}>Syncing records...</p>
                         ) : diagnosesVault.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>Vault empty. Upload data to begin mapping.</div>
+                            <p style={{ textAlign: 'center', opacity: 0.3, padding: '2rem' }}>No scans available for this patient.</p>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {diagnosesVault.map((diag) => (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                {diagnosesVault.map(diag => (
                                     <div
                                         key={diag.id}
                                         onClick={() => setSelectedDiagnosis(diag)}
                                         style={{
-                                            padding: '1rem',
+                                            padding: '1rem', cursor: 'pointer', borderRadius: '12px', transition: '0.3s',
                                             background: selectedDiagnosis?.id === diag.id ? 'rgba(124, 68, 237, 0.15)' : 'rgba(255,255,255,0.03)',
-                                            borderRadius: '12px',
-                                            cursor: 'pointer',
-                                            border: `1px solid ${selectedDiagnosis?.id === diag.id ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`,
-                                            transition: 'all 0.3s ease',
-                                            position: 'relative'
+                                            border: `1px solid ${selectedDiagnosis?.id === diag.id ? 'var(--primary)' : 'transparent'}`
                                         }}
                                     >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>SCAN RESULT</span>
-                                            <button
-                                                onClick={(e) => handleDeleteDiagnosis(diag.id, e)}
-                                                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.7rem', cursor: 'pointer', padding: '4px' }}
-                                                title="Delete Record"
-                                            >
-                                                🗑️
-                                            </button>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--primary)' }}>BIO-SCAN</span>
+                                            {!patientId && <button onClick={(e) => handleDeleteDiagnosis(diag.id, e)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>🗑️</button>}
                                         </div>
-                                        <h4 style={{ margin: '0 0 0.4rem', fontSize: '0.9rem' }}>{diag.title}</h4>
-                                        <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', opacity: 0.6, lineHeight: 1.4 }}>
-                                            {diag.ai_conclusion?.slice(0, 80)}...
-                                        </p>
-
-                                        <div style={{ fontSize: '0.6rem', marginBottom: '0.5rem' }}>
-                                            <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>SYSTEM: </span>
-                                            <span style={{ padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', fontWeight: 800 }}>
-                                                {diag.suggested_layer || 'SYSTEMIC'}
-                                            </span>
-                                        </div>
-
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                            {diag.ai_markers?.map((m, idx) => (
-                                                <span key={idx} style={{
-                                                    fontSize: '0.65rem',
-                                                    padding: '3px 10px',
-                                                    borderRadius: '6px',
-                                                    background: m.status === 'RED' ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)',
-                                                    color: m.status === 'RED' ? '#ef4444' : '#4ade80',
-                                                    border: `1px solid ${m.status === 'RED' ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`,
-                                                    fontWeight: 800
-                                                }}>
-                                                    {m.part}
-                                                </span>
-                                            ))}
-                                        </div>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{diag.report_name}</div>
+                                        <div style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '0.2rem' }}>{new Date(diag.created_at).toLocaleDateString()}</div>
                                     </div>
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>

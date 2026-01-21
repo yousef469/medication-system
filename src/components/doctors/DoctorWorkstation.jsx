@@ -3,6 +3,7 @@ import { useAuth } from '../../context/useAuth';
 import { useClinical } from '../../context/ClinicalContext';
 import ProfessionalProfile from '../shared/ProfessionalProfile';
 import HumanoidVisualizer from '../shared/HumanoidVisualizer';
+import BioAnatomyLab from '../dashboards/BioAnatomyLab';
 
 const DoctorWorkstation = () => {
     const { user } = useAuth();
@@ -12,6 +13,7 @@ const DoctorWorkstation = () => {
     const [patientHistory, setPatientHistory] = useState([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [showFullLab, setShowFullLab] = useState(false);
     const [diagnosis, setDiagnosis] = useState('');
     const [prescription, setPrescription] = useState('');
     const [nurseNotes, setNurseNotes] = useState('');
@@ -36,6 +38,7 @@ const DoctorWorkstation = () => {
         } else {
             setPatientHistory([]);
         }
+        setShowFullLab(false); // Reset lab when changing patients
     }, [selectedCase?.id]);
 
     const handlePrescribe = async () => {
@@ -187,7 +190,23 @@ const DoctorWorkstation = () => {
                                         >
                                             🏁 Complete Case
                                         </button>
+                                        <button
+                                            className="btn-primary btn-xs"
+                                            onClick={() => setShowFullLab(!showFullLab)}
+                                            style={{ background: 'linear-gradient(45deg, #7c44ed, #ef4444)', border: 'none' }}
+                                        >
+                                            {showFullLab ? '📊 Back to Chart' : '🚀 Full 3D Clinical Analysis'}
+                                        </button>
                                     </div>
+
+                                    {showFullLab && (
+                                        <div className="fade-in" style={{ marginTop: '2rem', borderTop: '2px solid var(--primary)', paddingTop: '2rem' }}>
+                                            <BioAnatomyLab
+                                                patientId={selectedCase.patient_id}
+                                                patientName={selectedCase.patient_name}
+                                            />
+                                        </div>
+                                    )}
 
                                     {showAssistanceUI && (
                                         <div className="fade-in" style={{ marginTop: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/useAuth';
 import { useClinical } from '../../context/ClinicalContext';
 import ProfessionalProfile from '../shared/ProfessionalProfile';
 import HumanoidVisualizer from '../shared/HumanoidVisualizer';
+import BioAnatomyLab from './BioAnatomyLab';
 
 const NurseDashboard = () => {
     const { user } = useAuth();
@@ -12,6 +13,7 @@ const NurseDashboard = () => {
     const [patientHistory, setPatientHistory] = useState([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
+    const [showFullLab, setShowFullLab] = useState(false);
 
     // Auto-fetch history when case is selected
     useEffect(() => {
@@ -20,6 +22,7 @@ const NurseDashboard = () => {
         } else {
             setPatientHistory([]);
         }
+        setShowFullLab(false); // Reset lab when changing patients
     }, [selectedCase?.id]);
     const [vitals, setVitals] = useState({ bp: '', heartRate: '', temp: '', spo2: '' });
 
@@ -168,7 +171,23 @@ const NurseDashboard = () => {
                                                 <button className="btn-secondary btn-xs" onClick={handleViewHistory} style={{ display: 'inline-block', marginLeft: '0.5rem' }}>
                                                     📂 View Contextual History
                                                 </button>
+                                                <button
+                                                    className="btn-primary btn-xs"
+                                                    style={{ display: 'inline-block', marginLeft: '0.5rem', background: 'linear-gradient(45deg, #7c44ed, #ef4444)', border: 'none' }}
+                                                    onClick={() => setShowFullLab(!showFullLab)}
+                                                >
+                                                    {showFullLab ? '📊 Back to Chart' : '🚀 Full 3D Analysis'}
+                                                </button>
                                             </div>
+
+                                            {showFullLab && (
+                                                <div className="fade-in" style={{ marginTop: '2rem', borderTop: '2px solid var(--secondary)', paddingTop: '2rem' }}>
+                                                    <BioAnatomyLab
+                                                        patientId={selectedCase.patient_id}
+                                                        patientName={selectedCase.patient_name}
+                                                    />
+                                                </div>
+                                            )}
 
                                             <div style={{ margin: '1.5rem 0', borderBottom: '1px solid var(--glass-border)' }}></div>
 
