@@ -17,16 +17,33 @@ export const ClinicalProvider = ({ children }) => {
     const [hospitals, setHospitals] = useState([]);
     const { user } = useAuth();
 
-    const API_URL = import.meta.env.PROD
-        ? "https://common-chairs-read.loca.lt"
+    // Hardened API Selection: Ensure APK/Vercel ALWAYS uses the tunnel
+    const tunnelUrl = "https://common-chairs-read.loca.lt";
+    const API_URL = import.meta.env.PROD || window.location.hostname !== 'localhost'
+        ? tunnelUrl
         : "";
 
     // Localtunnel bypass headers for production
-    const fetchHeaders = import.meta.env.PROD
-        ? { "Bypass-Tunnel-Reminder": "true" }
-        : {};
+    const fetchHeaders = { "Bypass-Tunnel-Reminder": "true" };
+
+    const [isBackendOnline, setIsBackendOnline] = useState(false);
+    const [lastHealthCheck, setLastHealthCheck] = useState(null);
+
+    const checkBackendHealth = async () => {
+        try {
+            const res = await fetch(`${API_URL}/`, { headers: fetchHeaders });
+            setIsBackendOnline(res.ok);
+            setLastHealthCheck(new Date().toLocaleTimeString());
+        } catch (err) {
+            setIsBackendOnline(false);
+            setLastHealthCheck(new Date().toLocaleTimeString());
+        }
+    };
 
     useEffect(() => {
+        checkBackendHealth();
+        const healthInterval = setInterval(checkBackendHealth, 30000);
+
         const loadOfflineData = () => {
             const cachedHospitals = localStorage.getItem('medi_offline_hospitals');
             const cachedRequests = localStorage.getItem('medi_offline_requests');
@@ -34,16 +51,11 @@ export const ClinicalProvider = ({ children }) => {
             if (cachedHospitals) setHospitals(JSON.parse(cachedHospitals));
         };
         loadOfflineData();
-
         fetchHospitals();
 
-        // 2. Real-time Subscriptions (Global)
         const requestsChannel = supabase
             .channel('public:appointment_requests')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'appointment_requests' }, payload => {
-                // If we are a coordinator, we might want to refresh. 
-                // However, detailed filtering happens in components or via local state refresh.
-                // We'll keep a general listener for now but refresh specifically.
                 refreshGlobalData();
             })
             .subscribe();
@@ -58,6 +70,7 @@ export const ClinicalProvider = ({ children }) => {
         return () => {
             supabase.removeChannel(requestsChannel);
             supabase.removeChannel(profilesChannel);
+            clearInterval(healthInterval);
         };
     }, []);
 
@@ -453,7 +466,10 @@ export const ClinicalProvider = ({ children }) => {
             confirmAdministration,
             requestNurseHelp,
             completeCase,
-            generateInvite
+            generateInvite,
+            isBackendOnline,
+            lastHealthCheck,
+            checkBackendHealth
         }}>
             {children}
         </ClinicalContext.Provider>

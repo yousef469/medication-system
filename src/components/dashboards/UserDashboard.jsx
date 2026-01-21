@@ -157,7 +157,11 @@ const UserDashboard = () => {
                     🚀 LAUNCH STANDALONE LAB
                   </button>
                   <div className="lab-status">
-                    <span className="pulse-dot"></span> NEURAL LINK ACTIVE
+                    <span className="pulse-dot" style={{
+                      background: isBackendOnline ? '#4ade80' : '#ef4444',
+                      boxShadow: isBackendOnline ? '0 0 10px #4ade80' : '0 0 10px #ef4444'
+                    }}></span>
+                    {isBackendOnline ? 'NEURAL LINK ACTIVE' : 'SYSTEM DISCONNECTED'}
                   </div>
                 </div>
               </div>

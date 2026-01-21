@@ -6,7 +6,7 @@ import ThemeToggle from '../shared/ThemeToggle';
 
 const BioAnatomyLab = () => {
     const { user } = useAuth();
-    const { fetchDiagnoses, uploadDiagnosis, fetchPatientHistory, deleteDiagnosis } = useClinical();
+    const { fetchDiagnoses, uploadDiagnosis, fetchPatientHistory, deleteDiagnosis, isBackendOnline } = useClinical();
 
     const [diagnosesVault, setDiagnosesVault] = useState([]);
     const [medicalHistory, setMedicalHistory] = useState([]);
@@ -91,7 +91,25 @@ const BioAnatomyLab = () => {
             }}>
                 <div>
                     <h1 className="text-gradient" style={{ fontSize: 'clamp(1.5rem, 5vw, 2.5rem)', marginBottom: '0.5rem' }}>Bio-Anatomy Laboratory</h1>
-                    <p style={{ opacity: 0.6, fontSize: '0.8rem' }}>Advanced AI Diagnostic Environment • Patent ID: {user?.id?.slice(0, 8)}</p>
+                    <p style={{ opacity: 0.6, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        Advanced AI Diagnostic Environment • Patent ID: {user?.id?.slice(0, 8)} •
+                        <span style={{
+                            color: isBackendOnline ? '#4ade80' : '#ef4444',
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <span style={{
+                                width: '8px',
+                                height: '8px',
+                                background: isBackendOnline ? '#4ade80' : '#ef4444',
+                                borderRadius: '50%',
+                                boxShadow: isBackendOnline ? '0 0 10px #4ade80' : '0 0 10px #ef4444'
+                            }}></span>
+                            {isBackendOnline ? 'NEURAL LINK ACTIVE' : 'SYSTEM OFFLINE'}
+                        </span>
+                    </p>
                 </div>
                 <ThemeToggle />
             </div>

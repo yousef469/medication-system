@@ -3,7 +3,7 @@ import { useClinical } from '../../context/ClinicalContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 const AIAssistant = () => {
-    const { aiConsultation } = useClinical();
+    const { aiConsultation, isBackendOnline } = useClinical();
     const { t, isRTL } = useLanguage();
 
     // Initial message based on current language
@@ -70,7 +70,10 @@ const AIAssistant = () => {
             <div className="ai-chat-window glass-card">
                 <div className="chat-header">
                     <div className="avatar__wrapper">
-                        <div className="status-dot"></div>
+                        <div className="status-dot" style={{
+                            background: isBackendOnline ? '#10b981' : '#ef4444',
+                            boxShadow: isBackendOnline ? '0 0 10px #10b981' : '0 0 10px #ef4444'
+                        }}></div>
                         <span className="ai-avatar">🤖</span>
                     </div>
                     <div className="header-info">
