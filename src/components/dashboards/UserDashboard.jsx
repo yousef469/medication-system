@@ -156,19 +156,19 @@ const UserDashboard = () => {
                   <button type="button" className={`tool-btn ${isRecording ? 'recording' : ''}`} onClick={handleVoiceToggle}>
                     {isRecording ? '⏹ Stop Recording' : '🎤 Voice Note'}
                   </button>
-                  <button type="button" className="tool-btn" onClick={() => {
-                    console.log("DEBUG: Triggering Clinical File Input...");
-                    fileInputRef.current?.click();
-                  }}>
+                  <label
+                    className="tool-btn"
+                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    onClick={() => console.log("DEBUG: Triggering Clinical File Input via Label...")}
+                  >
                     {selectedFile ? `📁 ${selectedFile.name.slice(0, 10)}...` : '📁 Attach Files'}
-                  </button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-                    onChange={handleFileChange}
-                    accept="image/*,.pdf"
-                  />
+                    <input
+                      type="file"
+                      style={{ position: 'absolute', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none' }}
+                      onChange={handleFileChange}
+                      accept="image/*,.pdf"
+                    />
+                  </label>
                 </div>
               </div>
             </div>

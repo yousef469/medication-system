@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity() {
             }
         }, "AndroidApp")
 
-        webView.loadUrl("https://medication-system.vercel.app/?portal=patient")
+        webView.loadUrl("https://sharp-clouds-decide.loca.lt/?portal=patient")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {

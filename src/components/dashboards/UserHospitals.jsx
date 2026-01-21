@@ -90,14 +90,18 @@ const UserHospitals = () => {
                                     ></textarea>
                                 </div>
                                 <div className="form-group" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                    <button
-                                        type="button"
+                                    <label
                                         className="btn-secondary btn-xs"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        style={{ flex: 1 }}
+                                        style={{ flex: 1, cursor: 'pointer', textAlign: 'center', display: 'block', padding: '0.5rem' }}
                                     >
                                         {selectedFile ? `📁 ${selectedFile.name.slice(0, 15)}...` : '📎 Attach Medical File'}
-                                    </button>
+                                        <input
+                                            type="file"
+                                            style={{ position: 'absolute', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none' }}
+                                            onChange={(e) => setSelectedFile(e.target.files[0])}
+                                            accept="image/*,.pdf"
+                                        />
+                                    </label>
                                     {selectedFile && (
                                         <button
                                             type="button"
@@ -107,13 +111,6 @@ const UserHospitals = () => {
                                             ✕
                                         </button>
                                     )}
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        style={{ display: 'none' }}
-                                        onChange={(e) => setSelectedFile(e.target.files[0])}
-                                        accept="image/*,.pdf"
-                                    />
                                 </div>
                                 <button type="submit" className="btn-primary w-full">Confirm Booking Request</button>
                             </form>

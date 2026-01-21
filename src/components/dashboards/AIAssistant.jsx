@@ -129,20 +129,18 @@ const AIAssistant = () => {
                     <button className={`voice-btn ${isRecording ? 'recording' : ''}`} onClick={toggleVoice}>
                         {isRecording ? t('voice_stop') : t('voice_start')}
                     </button>
-                    <button
+                    <label
                         className="voice-btn"
-                        onClick={() => fileInputRef.current?.click()}
-                        style={{ padding: '0 1rem' }}
+                        style={{ padding: '0 1rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                     >
                         {selectedFile ? '✅' : '📁'}
-                    </button>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        style={{ display: 'none' }}
-                        onChange={handleFileChange}
-                        accept="image/*,.pdf"
-                    />
+                        <input
+                            type="file"
+                            style={{ position: 'absolute', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none' }}
+                            onChange={handleFileChange}
+                            accept="image/*,.pdf"
+                        />
+                    </label>
                     <input
                         type="text"
                         placeholder={t('search_placeholder')}
