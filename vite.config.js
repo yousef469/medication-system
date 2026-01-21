@@ -11,6 +11,7 @@ export default defineConfig({
       manifest: {
         name: 'Clinical Hub',
         short_name: 'MedicationSystem',
+        id: '/?v=release_3_force_prompt',
         description: 'Advanced Healthcare Monitoring and Medication System',
         theme_color: '#ffffff',
         icons: [
