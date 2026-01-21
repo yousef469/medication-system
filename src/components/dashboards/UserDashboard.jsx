@@ -280,6 +280,12 @@ const UserDashboard = () => {
                             <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Clinical Physician</label>
                             <div style={{ fontSize: '0.8rem' }}>Dr. {doctors.find(d => d.id === record.assigned_doctor_id)?.name || 'Specialist'}</div>
                           </div>
+                          {record.file_url && (
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Clinical Evidence</label>
+                              <a href={record.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 800 }}>📎 VIEW MEDIA</a>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -289,6 +295,74 @@ const UserDashboard = () => {
             </div>
           )}
         </section>
+
+        {!isGuest && (
+          <section className="medical-vault-section" style={{ padding: '0 2rem', marginBottom: '3rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.8rem' }}>
+              <div>
+                <h3 style={{ margin: 0 }}>Clinical Vault</h3>
+                <p style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '0.2rem' }}>Persistent Secure Medical Record Storage</p>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <button className="btn-secondary btn-xs" style={{ background: 'var(--primary)', color: 'white', border: 'none' }}>
+                  {isUploading ? '📤 Synchronizing...' : '+ Add Secure Report'}
+                </button>
+                <input
+                  type="file"
+                  style={{ position: 'absolute', top: 0, left: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    setIsUploading(true);
+                    try {
+                      await uploadDiagnosis(file, file.name);
+                      loadHistory();
+                    } catch (err) {
+                      alert("Vault synchronization failed.");
+                    } finally {
+                      setIsUploading(false);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+              {diagnosesVault.length === 0 ? (
+                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px dashed var(--glass-border)' }}>
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '1rem' }}>🧬</span>
+                  <p style={{ opacity: 0.4 }}>Your clinical vault is empty. Upload scans for AI mapping.</p>
+                </div>
+              ) : (
+                diagnosesVault.map(diag => (
+                  <div key={diag.id} className="glass-card fade-in" style={{ padding: '1.2rem', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: '45px', height: '45px', background: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>📄</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{diag.title}</div>
+                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>{new Date(diag.created_at).toLocaleDateString()}</div>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
+                          <a href={diag.file_url} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-xs" style={{ fontSize: '0.6rem' }}>View</a>
+                          <button
+                            className="btn-secondary btn-xs"
+                            style={{ fontSize: '0.6rem', color: '#ef4444' }}
+                            onClick={async () => {
+                              if (window.confirm('Wipe this clinical data from cloud storage?')) {
+                                await deleteDiagnosis(diag.id);
+                                loadHistory();
+                              }
+                            }}
+                          >Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="highlights">
           <h3>Top Care Centers in Egypt</h3>

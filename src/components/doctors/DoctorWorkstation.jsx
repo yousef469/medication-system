@@ -160,6 +160,23 @@ const DoctorWorkstation = () => {
                                             <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>
                                                 <strong>AI Reasoning:</strong> Analyzing current symptoms against {patientHistory.length} previous clinical sessions for diagnostic continuity.
                                             </p>
+
+                                            {selectedCase.file_url && (
+                                                <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                                    <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.5rem' }}>ATTACHED CLINICAL MEDIA</div>
+                                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                                        {selectedCase.file_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                                                            <img src={selectedCase.file_url} alt="Clinical Attachment" style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--primary)' }} />
+                                                        ) : (
+                                                            <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontSize: '1.5rem', border: '1px solid var(--glass-border)' }}>📋</div>
+                                                        )}
+                                                        <div>
+                                                            <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Medical File Attachment</div>
+                                                            <a href={selectedCase.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}>🔓 OPEN FULL RESOLUTION</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="humanoid-container" style={{ borderRadius: '24px', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.4)' }}>
                                             <HumanoidVisualizer

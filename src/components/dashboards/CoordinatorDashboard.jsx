@@ -163,6 +163,12 @@ const CoordinatorDashboard = ({ initialTab = 'triage' }) => {
                                                 <div>
                                                     <strong>{req.patient_name}</strong>
                                                     <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>{req.service_requested}</div>
+                                                    {req.file_url && (
+                                                        <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                                            <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 800 }}>📎 ATTACHMENT:</span>
+                                                            <a href={req.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.7rem', color: 'var(--primary)', textDecoration: 'none', borderBottom: '1px solid currentColor' }}>VIEW CLINICAL FILE</a>
+                                                        </div>
+                                                    )}
                                                     {req.preferred_doctor_id && (
                                                         <div style={{ marginTop: '0.5rem', fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 800 }}>
                                                             ★ PREFERRED SPECIALIST: Dr. {myDoctors.find(d => d.id === req.preferred_doctor_id)?.name || 'Matching...'}

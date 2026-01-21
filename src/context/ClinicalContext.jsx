@@ -158,8 +158,8 @@ export const ClinicalProvider = ({ children }) => {
             }
             console.log("[ClinicalContext] User ID:", user?.id);
 
-            // 2. Upload to Supabase Storage (Simplified URL for demo)
-            const fileUrl = URL.createObjectURL(file);
+            // 2. Upload to Supabase Storage
+            const fileUrl = await uploadFileToSupabase(file);
 
             // 3. Save to DB
             const { data, error } = await supabase.from('patient_diagnoses').insert([{
@@ -296,39 +296,84 @@ export const ClinicalProvider = ({ children }) => {
         }
     };
 
+    const uploadFileToSupabase = async (file) => {
+        if (!file || !(file instanceof File)) return null;
+
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+            const filePath = `${user?.id || 'anonymous'}/${fileName}`;
+
+            const { data, error: uploadError } = await supabase.storage
+                .from('medical-records')
+                .upload(filePath, file);
+
+            if (uploadError) {
+                console.error('[Storage] Upload failed:', uploadError);
+                return null;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('medical-records')
+                .getPublicUrl(filePath);
+
+            console.log('[Storage] Uploaded successfully:', publicUrl);
+            return publicUrl;
+        } catch (err) {
+            console.error('[Storage] Unexpected error:', err);
+            return null;
+        }
+    };
+
     const submitRequest = async (patientName, hospitalId, content, urgency = 'SCHEDULED', type = 'text', file = null, voiceUrl = null, preferredDoctorId = null, manualHighlights = []) => {
-        // 1. Fetch Patient History for Gemini Analysis
-        const { data: pastHistory } = await supabase
-            .from('appointment_requests')
-            .select('*')
-            .eq('patient_id', user?.id)
-            .eq('status', 'COMPLETED');
+        setLoading(true);
+        try {
+            // 0. Upload file to Supabase if present
+            let persistentFileUrl = null;
+            if (file instanceof File) {
+                persistentFileUrl = await uploadFileToSupabase(file);
+            } else if (typeof file === 'string') {
+                persistentFileUrl = file;
+            }
 
-        // 2. Perform AI Anatomical Analysis
-        const aiResult = await analyzeClinicalRequest(content, pastHistory || [], file instanceof File ? file : null);
+            // 1. Fetch Patient History for Gemini Analysis
+            const { data: pastHistory } = await supabase
+                .from('appointment_requests')
+                .select('*')
+                .eq('patient_id', user?.id)
+                .eq('status', 'COMPLETED');
 
-        // 3. Insert Request with AI Insights
-        const { data, error } = await supabase.from('appointment_requests').insert([{
-            patient_name: patientName,
-            patient_id: user?.id,
-            hospital_id: hospitalId,
-            service_requested: content,
-            urgency: urgency,
-            status: 'PENDING_SECRETARY',
-            preferred_doctor_id: preferredDoctorId,
-            file_url: file instanceof File ? URL.createObjectURL(file) : (typeof file === 'string' ? file : null),
-            voice_url: voiceUrl,
-            ai_analysis: aiResult,
-            ai_conclusion: aiResult.conclusion,
-            ai_humanoid_markers: aiResult.markers,
-            // Referral Hub fields
-            is_referral: !!(aiResult.markers?.length || content.includes('[REFERRAL]')),
-            manual_highlights: manualHighlights,
-            clinical_snapshot: aiResult
-        }]).select();
+            // 2. Perform AI Anatomical Analysis
+            const aiResult = await analyzeClinicalRequest(content, pastHistory || [], file instanceof File ? file : null);
 
-        if (error) console.error('Error submitting request:', error);
-        return data?.[0];
+            // 3. Insert Request with AI Insights
+            const { data, error } = await supabase.from('appointment_requests').insert([{
+                patient_name: patientName,
+                patient_id: user?.id,
+                hospital_id: hospitalId,
+                service_requested: content,
+                urgency: urgency,
+                status: 'PENDING_SECRETARY',
+                preferred_doctor_id: preferredDoctorId,
+                file_url: persistentFileUrl,
+                voice_url: voiceUrl,
+                ai_analysis: aiResult,
+                ai_conclusion: aiResult.conclusion,
+                ai_humanoid_markers: aiResult.markers,
+                // Referral Hub fields
+                is_referral: !!(aiResult.markers?.length || content.includes('[REFERRAL]')),
+                manual_highlights: manualHighlights,
+                clinical_snapshot: aiResult
+            }]).select();
+
+            if (error) console.error('Error submitting request:', error);
+            return data?.[0];
+        } catch (err) {
+            console.error('Error submitting request:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
     };
 
     const routeToDoctor = async (requestId, doctorId) => {
@@ -443,8 +488,32 @@ export const ClinicalProvider = ({ children }) => {
     };
 
     const deleteDiagnosis = async (diagnosisId) => {
-        const { error } = await supabase.from('patient_diagnoses').delete().eq('id', diagnosisId);
-        if (error) console.error('Error deleting diagnosis:', error);
+        try {
+            // 1. Get file path from URL
+            const { data: diagnosis } = await supabase
+                .from('patient_diagnoses')
+                .select('file_url')
+                .eq('id', diagnosisId)
+                .single();
+
+            if (diagnosis?.file_url) {
+                const urlParts = diagnosis.file_url.split('/');
+                const fileName = urlParts.pop();
+                const folderName = urlParts.pop();
+                const filePath = `${folderName}/${fileName}`;
+
+                // 2. Delete from Storage
+                await supabase.storage.from('medical-records').remove([filePath]);
+            }
+
+            // 3. Delete from DB
+            const { error } = await supabase.from('patient_diagnoses').delete().eq('id', diagnosisId);
+            if (error) throw error;
+
+            console.log('[Storage] Deleted diagnosis and file successfully');
+        } catch (err) {
+            console.error('Error deleting diagnosis:', err);
+        }
     };
 
     return (
