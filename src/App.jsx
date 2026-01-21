@@ -26,7 +26,7 @@ import MedicationHub from './components/dashboards/MedicationHub';
 import BioAnatomyLab from './components/dashboards/BioAnatomyLab';
 import VerificationPending from './components/auth/VerificationPending';
 import MobileAnatomyBridge from './components/mobile/MobileAnatomyBridge';
-import { ClinicalProvider } from './context/ClinicalContext';
+import { ClinicalProvider, useClinical } from './context/ClinicalContext';
 import { ThemeProvider } from './context/ThemeContext';
 
 // Demo Data
