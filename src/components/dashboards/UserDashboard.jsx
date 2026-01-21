@@ -156,19 +156,30 @@ const UserDashboard = () => {
                   <button type="button" className={`tool-btn ${isRecording ? 'recording' : ''}`} onClick={handleVoiceToggle}>
                     {isRecording ? '⏹ Stop Recording' : '🎤 Voice Note'}
                   </button>
-                  <label
+                  <div
                     className="tool-btn"
-                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                    onClick={() => console.log("DEBUG: Triggering Clinical File Input via Label...")}
+                    style={{ position: 'relative', overflow: 'hidden', padding: '0.4rem 0.8rem', cursor: 'pointer', textAlign: 'center' }}
                   >
                     {selectedFile ? `📁 ${selectedFile.name.slice(0, 10)}...` : '📁 Attach Files'}
                     <input
                       type="file"
-                      style={{ position: 'absolute', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none' }}
-                      onChange={handleFileChange}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        opacity: 0,
+                        width: '100%',
+                        height: '100%',
+                        cursor: 'pointer',
+                        zIndex: 10
+                      }}
+                      onChange={(e) => {
+                        console.log("DEBUG: Native File Input Triggered!");
+                        handleFileChange(e);
+                      }}
                       accept="image/*,.pdf"
                     />
-                  </label>
+                  </div>
                 </div>
               </div>
             </div>

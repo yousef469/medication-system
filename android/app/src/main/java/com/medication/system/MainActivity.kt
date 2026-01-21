@@ -13,6 +13,10 @@ import android.content.ActivityNotFoundException
 import androidx.appcompat.app.AppCompatActivity
 import android.webkit.*
 import org.json.JSONArray
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +37,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupWebView()
+        requestPermissions()
+    }
+
+    private fun requestPermissions() {
+        val permissions = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA
+        )
+        val listPermissionsNeeded = mutableListOf<String>()
+        for (p in permissions) {
+            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
+                listPermissionsNeeded.add(p)
+            }
+        }
+        if (listPermissionsNeeded.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toTypedArray(), 100)
+        }
     }
 
     private fun setupWebView() {
@@ -71,6 +93,18 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 progressBar.visibility = View.GONE
                 syncAnatomyState()
+                
+                // Localtunnel Bypass Script: Automatically click the 'Click to Continue' button if present
+                webView.evaluateJavascript("""
+                    (function() {
+                        const btns = document.querySelectorAll('button, a');
+                        for (let b of btns) {
+                            if (b.innerText.toLowerCase().includes('click to continue')) {
+                                b.click();
+                            }
+                        }
+                    })();
+                """.trimIndent(), null)
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
@@ -122,18 +156,15 @@ class MainActivity : AppCompatActivity() {
                 }
                 this@MainActivity.filePathCallback = filePathCallback
 
-                // Try standard Params Intent
-                var intent = fileChooserParams?.createIntent()
-                
-                // Fallback Intent if params fail (often more robust on older Android)
-                if (intent == null) {
-                    intent = Intent(Intent.ACTION_GET_CONTENT)
-                    intent.addCategory(Intent.CATEGORY_OPENABLE)
-                    intent.type = "*/*"
+                // Always try a fresh GET_CONTENT intent first - it's most compatible with modern Android and Chat-GPT style upload
+                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
                 }
 
                 try {
-                    startActivityForResult(intent!!, FILE_CHOOSER_RESULT_CODE)
+                    startActivityForResult(Intent.createChooser(intent, "Select Clinical File"), FILE_CHOOSER_RESULT_CODE)
                 } catch (e: Exception) {
                     this@MainActivity.filePathCallback = null
                     runOnUiThread {

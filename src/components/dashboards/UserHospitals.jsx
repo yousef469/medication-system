@@ -90,22 +90,31 @@ const UserHospitals = () => {
                                     ></textarea>
                                 </div>
                                 <div className="form-group" style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                    <label
+                                    <div
                                         className="btn-secondary btn-xs"
-                                        style={{ flex: 1, cursor: 'pointer', textAlign: 'center', display: 'block', padding: '0.5rem' }}
+                                        style={{ flex: 1, cursor: 'pointer', textAlign: 'center', display: 'block', padding: '0.5rem', position: 'relative', overflow: 'hidden' }}
                                     >
                                         {selectedFile ? `📁 ${selectedFile.name.slice(0, 15)}...` : '📎 Attach Medical File'}
                                         <input
                                             type="file"
-                                            style={{ position: 'absolute', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none' }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                opacity: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                cursor: 'pointer',
+                                                zIndex: 10
+                                            }}
                                             onChange={(e) => setSelectedFile(e.target.files[0])}
                                             accept="image/*,.pdf"
                                         />
-                                    </label>
+                                    </div>
                                     {selectedFile && (
                                         <button
                                             type="button"
-                                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem' }}
+                                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem', zIndex: 11 }}
                                             onClick={() => setSelectedFile(null)}
                                         >
                                             ✕
