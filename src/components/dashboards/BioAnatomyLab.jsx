@@ -157,22 +157,32 @@ const BioAnatomyLab = () => {
                         </h3>
 
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="btn-primary" style={{
-                                display: 'block',
-                                textAlign: 'center',
-                                padding: '1rem',
-                                cursor: isUploading ? 'not-allowed' : 'pointer',
-                                fontWeight: 800,
-                                letterSpacing: '0.05em',
-                                background: 'linear-gradient(45deg, #7c44ed, #8b5cf6)',
-                                border: 'none',
-                                borderRadius: '12px',
-                                color: 'white',
-                                boxShadow: '0 4px 15px rgba(124, 68, 237, 0.4)'
-                            }}>
+                            <label
+                                htmlFor="bio-scan-upload"
+                                className="btn-primary"
+                                style={{
+                                    display: 'block',
+                                    textAlign: 'center',
+                                    padding: '1rem',
+                                    cursor: isUploading ? 'not-allowed' : 'pointer',
+                                    fontWeight: 800,
+                                    letterSpacing: '0.05em',
+                                    background: 'linear-gradient(45deg, #7c44ed, #8b5cf6)',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    color: 'white',
+                                    boxShadow: '0 4px 15px rgba(124, 68, 237, 0.4)'
+                                }}
+                            >
                                 {isUploading ? '🧬 ANALYZING...' : '🔬 UPLOAD NEW BIO-SCAN'}
-                                <input type="file" hidden onChange={handleVaultUpload} disabled={isUploading} />
                             </label>
+                            <input
+                                id="bio-scan-upload"
+                                type="file"
+                                hidden
+                                onChange={handleVaultUpload}
+                                disabled={isUploading}
+                            />
                         </div>
 
                         {isLoading ? (
