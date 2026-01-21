@@ -88,27 +88,34 @@ def process_command(user_text: str, history: list = None, use_online: bool = Tru
     }
 
 def analyze_image(image_bytes, prompt="Analyze this medical image.", use_online: bool = True):
-    print(f"[AI Brain] Analyzing Image with prompt: {prompt[:50]}...")
+    print(f"[AI Brain] Analyzing Content with prompt: {prompt[:50]}...")
     last_error = "Unknown"
     for model_id in MODEL_IDS:
         for attempt in range(2):
             try:
                 model = genai.GenerativeModel(model_id, safety_settings=SAFETY_SETTINGS)
-                img = Image.open(io.BytesIO(image_bytes))
-                response = model.generate_content([prompt, img])
-                print(f"[AI Brain] Image Success with {model_id}")
+                
+                # MIME DETECTION
+                if image_bytes.startswith(b'%PDF'):
+                    content = [{"mime_type": "application/pdf", "data": image_bytes}, prompt]
+                else:
+                    img = Image.open(io.BytesIO(image_bytes))
+                    content = [prompt, img]
+
+                response = model.generate_content(content)
+                print(f"[AI Brain] Content Success with {model_id}")
                 return {"response": response.text, "source": f"Gemini {model_id}"}
             except Exception as e:
                 last_error = str(e)
                 error_msg = last_error.lower()
-                print(f"[AI Brain] Image analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
+                print(f"[AI Brain] Analysis for {model_id} failed (Attempt {attempt+1}): {error_msg[:100]}")
                 if "429" in error_msg or "quota" in error_msg:
                     if attempt == 0:
                         time.sleep(2)
                         continue
                 break # Next model
             
-    return {"response": f"Image analysis unavailable: {last_error}", "source": "Error"}
+    return {"response": f"Content analysis unavailable: {last_error}", "source": "Error"}
 
 def analyze_license(image_bytes):
     prompt_text = """Analyze this medical license or hospital registration document.

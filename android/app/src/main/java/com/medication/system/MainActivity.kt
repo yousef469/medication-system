@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
             }
         }, "AndroidApp")
 
-        webView.loadUrl("https://sharp-clouds-decide.loca.lt/?portal=patient")
+        webView.loadUrl("https://medication-system.vercel.app/?portal=patient")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 this@MainActivity.filePathCallback = filePathCallback
 
-                val contentIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                val contentIntent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "*/*"
                     val mimetypes = arrayOf("image/*", "application/pdf")
