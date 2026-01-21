@@ -56,7 +56,10 @@ class MainActivity : AppCompatActivity() {
         }, "AndroidApp")
 
         // Point to your hosted web application (Load full Patient Portal)
-        webView.loadUrl("$BASE_URL/")
+        // Add header to bypass Localtunnel warning page
+        val headers = HashMap<String, String>()
+        headers["Bypass-Tunnel-Reminder"] = "true"
+        webView.loadUrl("https://sharp-clouds-decide.loca.lt/", headers)
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
