@@ -17,10 +17,14 @@ export const ClinicalProvider = ({ children }) => {
     const [hospitals, setHospitals] = useState([]);
     const { user } = useAuth();
 
-    // Dynamic API URL: Vercel (Cloud) -> Laptop (Tunnel)
     const API_URL = import.meta.env.PROD
         ? "https://common-chairs-read.loca.lt"
         : "";
+
+    // Localtunnel bypass headers for production
+    const fetchHeaders = import.meta.env.PROD
+        ? { "Bypass-Tunnel-Reminder": "true" }
+        : {};
 
     useEffect(() => {
         const loadOfflineData = () => {
@@ -126,6 +130,7 @@ export const ClinicalProvider = ({ children }) => {
 
             const aiRes = await fetch(`${API_URL}/api/analyze_report`, {
                 method: 'POST',
+                headers: fetchHeaders, // Added bypass
                 body: formData
             });
             if (!aiRes.ok) throw new Error("AI Analysis Failed");
@@ -198,6 +203,7 @@ export const ClinicalProvider = ({ children }) => {
 
                 const res = await fetch(`${API_URL}/api/analyze_image`, {
                     method: 'POST',
+                    headers: fetchHeaders, // Added bypass
                     body: formData
                 });
                 if (!res.ok) throw new Error("Backend Error");
@@ -218,7 +224,10 @@ export const ClinicalProvider = ({ children }) => {
 
                 const res = await fetch(`${API_URL}/api/chat`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...fetchHeaders // Added bypass
+                    },
                     body: JSON.stringify({
                         message: query,
                         history: history || [],
@@ -255,6 +264,7 @@ export const ClinicalProvider = ({ children }) => {
 
             const res = await fetch(`${API_URL}/api/analyze_clinical_request`, {
                 method: 'POST',
+                headers: fetchHeaders, // Added bypass
                 body: formData
             });
 
