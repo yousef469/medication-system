@@ -132,7 +132,7 @@ const UserDashboard = () => {
           {/* Bio-Anatomy Lab Launchpad */}
 
 
-          <h3>Emergency & Clinical Portal</h3>
+          <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v3.1 (Deep Sync)</span></h3>
           <p className="section-desc">Submit text, files, or voice for clinical routing.</p>
 
           <form onSubmit={handleRequest} className="request-form">

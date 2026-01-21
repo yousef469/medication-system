@@ -1,3 +1,0 @@
-com.medication.system.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme

@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
     private fun requestPermissions() {
         val permissions = mutableListOf(Manifest.permission.CAMERA)
         
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_INT_CODES.TIRAMISU) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
             permissions.add(Manifest.permission.READ_MEDIA_VIDEO)
         } else {
@@ -166,7 +166,9 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this@MainActivity, "📎 Neural Link: Opening File Selector...", Toast.LENGTH_SHORT).show()
                 }
                 
-                filePathCallback = null
+                if (this@MainActivity.filePathCallback != null) {
+                    this@MainActivity.filePathCallback?.onReceiveValue(null)
+                }
                 this@MainActivity.filePathCallback = filePathCallback
 
                 val contentIntent = Intent(Intent.ACTION_GET_CONTENT).apply {
