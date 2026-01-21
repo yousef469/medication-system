@@ -25,10 +25,10 @@ Response Format:
 """
 
 MODEL_IDS = [
+    'models/gemini-1.5-flash',
+    'models/gemini-1.5-flash-latest',
     'models/gemini-2.0-flash',
-    'models/gemini-2.5-flash',
     'models/gemini-2.0-flash-lite',
-    'models/gemini-flash-latest',
     'models/gemini-pro-latest'
 ]
 

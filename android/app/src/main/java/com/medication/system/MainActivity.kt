@@ -7,6 +7,9 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.Toast
 import android.net.http.SslError
+import android.net.Uri
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import androidx.appcompat.app.AppCompatActivity
 import android.webkit.*
 import org.json.JSONArray
@@ -15,9 +18,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private lateinit var progressBar: ProgressBar
-
-    // Change this to your Computer's Local IP (e.g., 192.168.1.5) if testing on a physical phone!
-    private val BASE_URL = "https://green-fireant-73.loca.lt" 
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private val FILE_CHOOSER_RESULT_CODE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,10 +39,12 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.anatomyWebView)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
-        // Spoof User-Agent to bypass Google's 'disallowed_useragent' block for WebViews
+        webView.settings.allowFileAccess = true
+        webView.settings.allowContentAccess = true
+        
+        // Spoof User-Agent to bypass Google's 'disallowed_useragent' block
         webView.settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
         
-        // The Bridge: Connects JS 'AndroidApp' to this class
         webView.addJavascriptInterface(object : Any() {
             @JavascriptInterface
             fun onBridgeReady() {
@@ -57,9 +61,7 @@ class MainActivity : AppCompatActivity() {
             }
         }, "AndroidApp")
 
-        // Point to your hosted web application (Load full Patient Portal)
-        // Vercel Production URL (Stable)
-        webView.loadUrl("https://medication-system.vercel.app/")
+        webView.loadUrl("https://medication-system.vercel.app/?portal=patient")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
@@ -73,20 +75,52 @@ class MainActivity : AppCompatActivity() {
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
                 progressBar.visibility = View.GONE
-                Toast.makeText(this@MainActivity, "Connection Error: Check if server is running at $BASE_URL", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, "Connection Error: Check if server is running", Toast.LENGTH_LONG).show()
             }
 
             override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
                 handler?.proceed()
             }
         }
+
+        // Handle File Chooser (Crucial for Uploads)
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                if (this@MainActivity.filePathCallback != null) {
+                    this@MainActivity.filePathCallback?.onReceiveValue(null)
+                }
+                this@MainActivity.filePathCallback = filePathCallback
+
+                val intent = fileChooserParams?.createIntent()
+                try {
+                    startActivityForResult(intent!!, FILE_CHOOSER_RESULT_CODE)
+                } catch (e: Exception) {
+                    this@MainActivity.filePathCallback = null
+                    Toast.makeText(this@MainActivity, "Cannot open file chooser", Toast.LENGTH_SHORT).show()
+                    return false
+                }
+                return true
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == FILE_CHOOSER_RESULT_CODE) {
+            if (filePathCallback == null) return
+            val results = WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+            filePathCallback?.onReceiveValue(results)
+            filePathCallback = null
+        }
     }
 
     private fun syncAnatomyState() {
-        // Example: Push markers from Kotlin to JS
         val markers = JSONArray() 
         val highlights = JSONArray()
-        
         webView.evaluateJavascript("window.updateAnatomy('$markers', '$highlights')", null)
     }
 }
