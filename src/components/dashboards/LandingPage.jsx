@@ -6,24 +6,27 @@ const LandingPage = ({ onGetStarted }) => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [isInstallable, setIsInstallable] = useState(false);
     const [isStandalone, setIsStandalone] = useState(false);
+    const [isPatientPortal, setIsPatientPortal] = useState(false);
 
     useEffect(() => {
+        // Detect Portal Mode
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('portal') === 'patient') {
+            setIsPatientPortal(true);
+        }
+
         // Check for globally stashed prompt first
         if (window.deferredPrompt) {
             setDeferredPrompt(window.deferredPrompt);
-            console.log('[LandingPage] Found stashed PWA prompt');
         }
 
         const handler = (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
             e.preventDefault();
-            // Stash the event so it can be triggered later.
             setDeferredPrompt(e);
             window.deferredPrompt = e;
         };
 
         window.addEventListener('beforeinstallprompt', handler);
-
         return () => window.removeEventListener('beforeinstallprompt', handler);
     }, []);
 
@@ -115,11 +118,13 @@ const LandingPage = ({ onGetStarted }) => {
                     {hospitals.length === 0 && <p style={{ opacity: 0.5, gridColumn: '1/-1', textAlign: 'center', padding: '4rem' }}>Initializing Medical Network Nodes...</p>}
                 </div>
 
-                <div className="discovery-cta">
-                    <button className="btn-primary btn-large" style={{ boxShadow: '0 0 30px var(--primary-glow)' }} onClick={onGetStarted}>
-                        Begin Professional Onboarding
-                    </button>
-                </div>
+                {!isPatientPortal && (
+                    <div className="discovery-cta">
+                        <button className="btn-primary btn-large" style={{ boxShadow: '0 0 30px var(--primary-glow)' }} onClick={onGetStarted}>
+                            Begin Professional Onboarding
+                        </button>
+                    </div>
+                )}
             </section>
 
             <section id="features" className="features-section">

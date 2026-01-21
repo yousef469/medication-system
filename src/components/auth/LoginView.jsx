@@ -291,7 +291,9 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
       </div>
 
       <div className="login-form-side">
-        <button className="back-btn" onClick={onBack}>← Back to Portals</button>
+        {!new URLSearchParams(window.location.search).get('portal') && (
+          <button className="back-btn" onClick={onBack}>← Back to Portals</button>
+        )}
 
         <div className={`login-card bounce-in ${isProfessional ? 'pro-mode' : ''}`}>
           <div className="portal-header">
