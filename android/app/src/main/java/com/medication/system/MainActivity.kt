@@ -37,6 +37,8 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.anatomyWebView)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
+        // Spoof User-Agent to bypass Google's 'disallowed_useragent' block for WebViews
+        webView.settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"
         
         // The Bridge: Connects JS 'AndroidApp' to this class
         webView.addJavascriptInterface(object : Any() {
