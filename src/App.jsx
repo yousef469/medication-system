@@ -189,6 +189,7 @@ const MainContent = () => {
     return <MobileAnatomyBridge />;
   }
 
+  const { isBackendOnline } = useClinical();
   const configStatus = !!import.meta.env.VITE_SUPABASE_ANON_KEY && !!import.meta.env.VITE_SUPABASE_URL;
 
   return (
@@ -199,18 +200,39 @@ const MainContent = () => {
         top: '10px',
         right: '10px',
         zIndex: 9999,
-        background: configStatus ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-        color: configStatus ? '#4ade80' : '#f87171',
-        padding: '4px 12px',
-        borderRadius: '20px',
-        fontSize: '0.7rem',
-        fontWeight: 'bold',
-        border: `1px solid ${configStatus ? '#22c55e' : '#ef4444'}`,
-        pointerEvents: 'none',
-        backdropFilter: 'blur(4px)',
-        fontFamily: 'monospace'
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '4px',
+        pointerEvents: 'none'
       }}>
-        SUPABASE: {configStatus ? 'CONNECTED' : 'CONFIG_MISSING'}
+        <div style={{
+          background: configStatus ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+          color: configStatus ? '#4ade80' : '#f87171',
+          padding: '4px 12px',
+          borderRadius: '20px',
+          fontSize: '0.65rem',
+          fontWeight: 'bold',
+          border: `1px solid ${configStatus ? '#22c55e' : '#ef4444'}`,
+          backdropFilter: 'blur(4px)',
+          fontFamily: 'monospace',
+          textAlign: 'right'
+        }}>
+          SUPABASE: {configStatus ? 'READY' : 'CONFIG_ERROR'}
+        </div>
+        <div style={{
+          background: isBackendOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+          color: isBackendOnline ? '#4ade80' : '#f87171',
+          padding: '4px 12px',
+          borderRadius: '20px',
+          fontSize: '0.65rem',
+          fontWeight: 'bold',
+          border: `1px solid ${isBackendOnline ? '#22c55e' : '#ef4444'}`,
+          backdropFilter: 'blur(4px)',
+          fontFamily: 'monospace',
+          textAlign: 'right'
+        }}>
+          AI BRAIN: {isBackendOnline ? 'ONLINE' : 'OFFLINE (CHECK TUNNEL)'}
+        </div>
       </div>
 
       {!isStarted ? (

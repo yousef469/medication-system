@@ -18,7 +18,7 @@ export const ClinicalProvider = ({ children }) => {
     const { user } = useAuth();
 
     // Hardened API Selection: Ensure APK/Vercel ALWAYS uses the tunnel
-    const tunnelUrl = "https://common-chairs-read.loca.lt";
+    const tunnelUrl = "https://medical-hub-brain.loca.lt";
     const API_URL = import.meta.env.PROD || window.location.hostname !== 'localhost'
         ? tunnelUrl
         : "";
@@ -137,38 +137,46 @@ export const ClinicalProvider = ({ children }) => {
 
     const uploadDiagnosis = async (file, title) => {
         try {
-            // 1. AI Analysis
-            const formData = new FormData();
-            formData.append('file', file);
+            let aiResult = {
+                title: title || file.name,
+                conclusion: "AI Analysis Offline. Record stored for manual physician review.",
+                markers: [],
+                suggested_layer: 'SYSTEMIC'
+            };
 
-            const aiRes = await fetch(`${API_URL}/api/analyze_report`, {
-                method: 'POST',
-                headers: fetchHeaders,
-                body: formData
-            });
+            // 1. AI Analysis (Attempt)
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
 
-            if (!aiRes.ok) {
-                const errorText = await aiRes.text();
-                throw new Error(`Backend Error (${aiRes.status}): ${errorText || aiRes.statusText}`);
+                const aiRes = await fetch(`${API_URL}/api/analyze_report`, {
+                    method: 'POST',
+                    headers: fetchHeaders,
+                    body: formData
+                });
+
+                if (aiRes.ok) {
+                    const json = await aiRes.json();
+                    if (!json.error) aiResult = json;
+                }
+            } catch (aiErr) {
+                console.warn("[ClinicalContext] AI unreachable, proceeding with manual upload.");
             }
 
-            const aiResult = await aiRes.json();
-            if (aiResult.error) {
-                throw new Error(`AI Analysis Failed: ${aiResult.error}`);
-            }
             console.log("[ClinicalContext] User ID:", user?.id);
 
             // 2. Upload to Supabase Storage
             const fileUrl = await uploadFileToSupabase(file);
+            if (!fileUrl) throw new Error("Cloud Storage Upload Failed");
 
             // 3. Save to DB
             const { data, error } = await supabase.from('patient_diagnoses').insert([{
                 patient_id: user?.id,
                 file_url: fileUrl,
-                title: title || aiResult.title,
+                title: aiResult.title,
                 ai_conclusion: aiResult.conclusion,
                 ai_markers: aiResult.markers,
-                suggested_layer: aiResult.suggested_layer || 'SYSTEMIC',
+                suggested_layer: aiResult.suggested_layer,
                 ai_raw_analysis: aiResult
             }]).select();
 
