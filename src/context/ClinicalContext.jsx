@@ -19,7 +19,7 @@ export const ClinicalProvider = ({ children }) => {
 
     // Dynamic API URL: Vercel (Cloud) -> Laptop (Tunnel)
     const API_URL = import.meta.env.PROD
-        ? "https://green-fireant-73.loca.lt"
+        ? "https://common-chairs-read.loca.lt"
         : "";
 
     useEffect(() => {
