@@ -11,8 +11,8 @@ export default defineConfig({
       manifest: {
         name: 'Clinical Hub',
         short_name: 'MedicationSystem',
-        id: '/?v=release_3_force_prompt',
-        description: 'Advanced Healthcare Monitoring and Medication System',
+        id: '/?nuclear_v=5',
+        description: 'Advanced Healthcare Monitoring and Medication System - v4.0.1',
         theme_color: '#ffffff',
         icons: [
           {
@@ -37,7 +37,7 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',
-    port: 5173,
+    port: 5174,
     strictPort: true,
     proxy: {
       '/api': {

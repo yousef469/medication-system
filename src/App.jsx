@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import AppLayout from './components/layout/AppLayout';
-import DoctorWorkstation from './components/doctors/DoctorWorkstation';
+import DoctorDashboard from './components/dashboards/DoctorDashboard';
+import DoctorProfile from './components/doctors/DoctorProfile';
 import UserDashboard from './components/dashboards/UserDashboard';
 import SecretaryDashboard from './components/dashboards/SecretaryDashboard';
 import ITSupportDashboard from './components/dashboards/ITSupportDashboard';
@@ -19,41 +20,90 @@ import HospitalChat from './components/dashboards/HospitalChat';
 import NurseDashboard from './components/dashboards/NurseDashboard';
 import CoordinatorDashboard from './components/dashboards/CoordinatorDashboard';
 import LockScreen from './components/auth/LockScreen';
-import ProfessionalSidebar from './components/layout/ProfessionalSidebar';
 
 import LandingPage from './components/dashboards/LandingPage';
 import MedicationHub from './components/dashboards/MedicationHub';
 import BioAnatomyLab from './components/dashboards/BioAnatomyLab';
 import VerificationPending from './components/auth/VerificationPending';
 import MobileAnatomyBridge from './components/mobile/MobileAnatomyBridge';
+import PharmacyPortal from './components/dashboards/PharmacyPortal';
 import { ClinicalProvider, useClinical } from './context/ClinicalContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 
-// Demo Data
-const mockDoctor = {
-  name: "Dr. Sarah Miller",
-  specialty: "Cardiologist",
-  hospital: "St. Mary's Hospital",
-  image: "https://randomuser.me/api/portraits/women/44.jpg",
-  stats: { patients: 12, rating: 4.8, reviews: 154 }
-};
+const CURRENT_RELEASE = "v4.0.3"; // Nuclear check for mobile sync
+
+// Error Boundary for Mobile Recovery
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, errorInfo) { console.error("[PWA Recovery] Caught error:", error, errorInfo); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '2rem', textAlign: 'center', background: '#020617', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <h1 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '1rem' }}>Clinical Hub Recovery</h1>
+          <p style={{ opacity: 0.8, maxWidth: '400px', margin: '0 auto 2rem' }}>
+            The app encountered a synchronization error (likely a stale cache). We need to perform a hard reset.
+          </p>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', padding: '1rem', borderRadius: '12px', fontSize: '0.8rem', color: '#fca5a5', marginBottom: '2rem' }}>
+            {this.state.error?.message}
+          </div>
+          <button
+            onClick={() => {
+              if (window.confirm("This will clear local session storage and force a full reload. Continue?")) {
+                localStorage.clear();
+                sessionStorage.clear();
+                // Clear service workers
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+                }
+                setTimeout(() => window.location.reload(true), 500);
+              }
+            }}
+            style={{ padding: '1rem 2rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 0 20px rgba(124, 58, 237, 0.4)' }}
+          >
+            NUCLEAR RESET & FIX APP
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const MainContent = () => {
   // Force HMR Refresh: 2026-01-18T02:07:00Z
   const { user: authUser, login, logout, isInitialized, isLocked, unlockSession } = useAuth();
+  const { isBackendOnline } = useClinical();
+
   const user = authUser || { role: 'user', name: 'Guest', isAuthenticated: false, verification_status: 'APPROVED' };
   const [isStarted, setIsStarted] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState('user');
   const [activeSubView, setActiveSubView] = useState('discovery');
   const [selectedPortal, setSelectedPortal] = useState(null);
 
+  // Mobile Bridge Detect (Embedded Mode for Android)
+  const queryParams = new URLSearchParams(window.location.search);
+  const isMobileBridge = queryParams.get('mobile') === 'true';
+
   // Automatically start if authenticated (handles OAuth redirect)
   useEffect(() => {
+    // Check for Invite Link (Legacy or Secure Token)
     // Check for Invite Link (Legacy or Secure Token)
     const params = new URLSearchParams(window.location.search);
     if (params.get('invite') || params.get('token')) {
       console.log("[App] Invitation token/link detected, switching to Professional Portal");
       setSelectedPortal('professional');
+    }
+
+    // PUBLIC PHARMACY ROUTE
+    if (window.location.pathname === '/pharmacy') {
+      setSelectedSystem('pharmacy');
+      setIsStarted(true);
     }
 
     if (user?.isAuthenticated) {
@@ -113,7 +163,7 @@ const MainContent = () => {
       switch (user.role) {
         case 'doctor':
           if (activeSubView === 'chat') return <HospitalChat />;
-          return <DoctorWorkstation />;
+          return <DoctorDashboard />;
         case 'nurse':
           if (activeSubView === 'chat') return <HospitalChat />;
           return <NurseDashboard />;
@@ -130,21 +180,7 @@ const MainContent = () => {
     };
 
     if (isProfessional && isStarted) {
-      return (
-        <div className="professional-layout" style={{ display: 'flex', width: '100%', minHeight: '100vh', background: '#000212' }}>
-          <ProfessionalSidebar
-            activeTab={activeSubView === 'hospital-chat' || activeSubView === 'chat' ? 'chat' : activeSubView === 'profile' ? 'profile' : 'dashboard'}
-            onTabChange={(tab) => {
-              if (tab === 'chat') setActiveSubView('chat');
-              else if (tab === 'profile') setActiveSubView('profile');
-              else setActiveSubView('dashboard');
-            }}
-          />
-          <main style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
-            {renderProfessionalSystem()}
-          </main>
-        </div>
-      );
+      return renderProfessionalSystem();
     }
 
     // 4. Default User Discovery System (Patient)
@@ -171,25 +207,17 @@ const MainContent = () => {
     return <UserDashboard />;
   };
 
-  const mockDoctor = {
-    name: "Alexander Vance",
-    specialty: "Senior Neurosurgeon • AI Diagnostic Specialist",
-    bio: "Pioneering robotic-assisted neurosurgery and integrating local AI models.",
-    followers: "12.4K",
-    rating: "4.9/5",
-    surgeryCount: "1,240+",
-    posts: []
-  };
-
   if (!isInitialized) return <div className="loading-screen">Clinical environment initializing...</div>;
 
-  // Mobile Bridge Detect (Embedded Mode for Android)
-  const isMobileBridge = new URLSearchParams(window.location.search).get('mobile') === 'true';
   if (isMobileBridge) {
     return <MobileAnatomyBridge />;
   }
 
-  const { isBackendOnline } = useClinical();
+  // PUBLIC PHARMACY ROUTE
+  if (selectedSystem === 'pharmacy') {
+    return <PharmacyPortal />;
+  }
+
   const configStatus = !!import.meta.env.VITE_SUPABASE_ANON_KEY && !!import.meta.env.VITE_SUPABASE_URL;
 
   return (
@@ -258,20 +286,19 @@ const MainContent = () => {
   );
 };
 
-
-import { LanguageProvider } from './context/LanguageContext';
-
 function App() {
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <ClinicalProvider>
-          <ThemeProvider>
-            <MainContent />
-          </ThemeProvider>
-        </ClinicalProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <AuthProvider>
+          <ClinicalProvider>
+            <ThemeProvider>
+              <MainContent />
+            </ThemeProvider>
+          </ClinicalProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }
 

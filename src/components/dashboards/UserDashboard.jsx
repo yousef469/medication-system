@@ -3,6 +3,8 @@ import { useClinical } from '../../context/ClinicalContext';
 import { useAuth } from '../../context/useAuth';
 import ProfessionalProfileModal from '../shared/ProfessionalProfileModal';
 import ThemeToggle from '../shared/ThemeToggle';
+import QRCode from 'react-qr-code';
+import Humanoid3D from '../visual/Humanoid3D';
 
 const UserDashboard = () => {
   const {
@@ -13,7 +15,9 @@ const UserDashboard = () => {
     fetchPatientHistory,
     fetchDiagnoses,
     uploadDiagnosis,
-    isBackendOnline
+    deleteDiagnosis,
+    isBackendOnline,
+    fetchPatientPrescriptions
   } = useClinical();
   const { user } = useAuth();
   const [requestContent, setRequestContent] = useState('');
@@ -22,6 +26,7 @@ const UserDashboard = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [expandedHistoryId, setExpandedHistoryId] = useState(null);
+  const [expandedRxId, setExpandedRxId] = useState(null);
   const [selectedHospitalId, setSelectedHospitalId] = useState('');
   const [urgency, setUrgency] = useState('NEXT HOUR');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -33,6 +38,39 @@ const UserDashboard = () => {
   const fileInputRef = useRef(null);
   const vaultInputRef = useRef(null);
   const isGuest = !user?.isAuthenticated;
+
+  const [activePrescriptions, setActivePrescriptions] = useState([]);
+  const [syncStatus, setSyncStatus] = useState('IDLE'); // IDLE, SYNCING, SUCCESS, ERROR
+
+  const syncPrescriptions = async () => {
+    if (!user?.id) return;
+    setSyncStatus('SYNCING');
+    try {
+      console.log("[UserDashboard] Explicit Sync: Fetching prescriptions for:", user.id);
+      const rxList = await fetchPatientPrescriptions(user.id);
+      if (Array.isArray(rxList)) {
+        const active = rxList.filter(rx => rx.status === 'ACTIVE');
+        setActivePrescriptions(active);
+        setSyncStatus('SUCCESS');
+        setTimeout(() => setSyncStatus('IDLE'), 3000);
+      } else {
+        throw new Error("Invalid Prescription Data Received");
+      }
+    } catch (err) {
+      console.error("[UserDashboard] Sync Failed:", err);
+      setSyncStatus('ERROR');
+    }
+  };
+
+  React.useEffect(() => {
+    if (user?.id) {
+      syncPrescriptions();
+      // Also sync when window regains focus (mobile app return flow)
+      const handleFocus = () => syncPrescriptions();
+      window.addEventListener('focus', handleFocus);
+      return () => window.removeEventListener('focus', handleFocus);
+    }
+  }, [user?.id]);
 
   // Auto-select first hospital
   React.useEffect(() => {
@@ -56,16 +94,16 @@ const UserDashboard = () => {
   }, [user?.id]);
 
   const loadHistory = async () => {
+    if (!user?.id) return;
     setIsLoadingHistory(true);
     const [history, vault] = await Promise.all([
       fetchPatientHistory(user.id),
       fetchDiagnoses(user.id)
     ]);
-    setMedicalHistory(history);
-    setDiagnosesVault(vault);
+    setMedicalHistory(history || []);
+    setDiagnosesVault(vault || []);
     setIsLoadingHistory(false);
   };
-
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -125,15 +163,87 @@ const UserDashboard = () => {
           <h1 className="text-gradient">Egyptian Medical Discovery</h1>
           <p className="subtitle">Expert clinical care across Egypt - From Cairo to Aswan</p>
         </div>
-        <ThemeToggle />
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {/* SYNC CONTROL CENTER (MOBILE DEBUG) */}
+          <div className="sync-status-bar" style={{
+            background: 'var(--glass-highlight)',
+            padding: '0.4rem 0.8rem',
+            borderRadius: '12px',
+            fontSize: '0.6rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+            border: '1px solid var(--glass-border)'
+          }}>
+            <div style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: isBackendOnline ? '#10b981' : '#ef4444',
+              boxShadow: isBackendOnline ? '0 0 8px #10b981' : 'none'
+            }}></div>
+            <span style={{ fontWeight: 800, opacity: 0.8 }}>
+              {isBackendOnline ? 'SYNC: ONLINE' : 'SYNC: OFFLINE'}
+            </span>
+            <button
+              onClick={() => {
+                syncPrescriptions();
+                loadHistory();
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                fontSize: '0.8rem',
+                opacity: syncStatus === 'SYNCING' ? 0.5 : 1
+              }}
+              title="Force Sync Now"
+            >
+              {syncStatus === 'SYNCING' ? '⏳' : '🔄'}
+            </button>
+            {!isGuest && (
+              <span style={{ paddingLeft: '0.5rem', borderLeft: '1px solid var(--glass-border)', opacity: 0.6, fontWeight: 700 }}>
+                {user?.email}
+              </span>
+            )}
+          </div>
+          <ThemeToggle />
+        </div>
       </header>
 
       <div className="main-discovery-layout">
         <section className="request-portal glass-card">
-          {/* Bio-Anatomy Lab Launchpad */}
+          {/* 📲 NEW DEDICATED QR CODES SECTION AT TOP */}
+          {activePrescriptions.length > 0 && (
+            <div className="qr-wallet-hero fade-in" style={{ marginBottom: '2.5rem', padding: '2rem', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', borderRadius: '24px', color: 'white' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 900 }}>📲 My Active QR Codes</h2>
+                  <p style={{ margin: '0.2rem 0 0', opacity: 0.9, fontSize: '0.8rem' }}>Present these to the pharmacy for dispensing.</p>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.5rem 1rem', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700 }}>
+                  {activePrescriptions.length} Active Rx
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                {activePrescriptions.map(rx => (
+                  <div key={rx.token} style={{ background: 'white', padding: '1rem', borderRadius: '18px', minWidth: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#064e3b' }}>
+                    <div style={{ background: '#f0fdf4', padding: '0.8rem', borderRadius: '12px', marginBottom: '0.8rem' }}>
+                      <QRCode value={`MED_RX:${rx.token}`} size={140} />
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', color: '#10b981', letterSpacing: '0.05em' }}>Pharmacy Token</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 800, margin: '0.2rem 0' }}>{rx.token.slice(0, 8).toUpperCase()}...</div>
+                      <div style={{ fontSize: '0.65rem', opacity: 0.7 }}>Issued: {new Date(rx.created_at).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-
-          <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v3.1 (Deep Sync)</span></h3>
+          <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v3.2 (Sync Ready)</span></h3>
           <p className="section-desc">Submit text, files, or voice for clinical routing.</p>
 
           <form onSubmit={handleRequest} className="request-form">
@@ -174,10 +284,7 @@ const UserDashboard = () => {
                         cursor: 'pointer',
                         zIndex: 999
                       }}
-                      onChange={(e) => {
-                        console.log("DEBUG: Native File Input Triggered!");
-                        handleFileChange(e);
-                      }}
+                      onChange={handleFileChange}
                       accept="*/*"
                     />
                   </div>
@@ -222,98 +329,127 @@ const UserDashboard = () => {
                     <p style={{ opacity: 0.4 }}>No historical clinical records found.</p>
                   </div>
                 ) : (
-                  medicalHistory.map(record => (
-                    <div key={record.id} className="history-card" style={{ background: 'var(--glass-highlight)', padding: '1.2rem', borderRadius: '14px', marginBottom: '1rem', borderLeft: '3px solid var(--secondary)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>
-                          {new Date(record.created_at).toLocaleDateString()} at {hospitals.find(h => h.id === record.hospital_id)?.name || 'Medical Center'}
-                        </span>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          {record.status === 'COMPLETED' && (
-                            <span style={{ fontSize: '0.6rem', color: '#4ade80', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ width: '6px', height: '6px', background: '#4ade80', borderRadius: '50%' }}></span>
-                              DOCTOR VERIFIED
-                            </span>
-                          )}
-                          <span style={{ fontSize: '0.65rem', background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: '4px' }}>FINISHED</span>
-                          <button
-                            className="btn-secondary btn-xs"
-                            style={{ padding: '2px 8px', fontSize: '0.6rem' }}
-                            onClick={() => setExpandedHistoryId(expandedHistoryId === record.id ? null : record.id)}
-                          >
-                            {expandedHistoryId === record.id ? 'CLOSE' : 'VIEW AI MAP'}
-                          </button>
-                        </div>
-                      </div>
-                      <div style={{ marginBottom: '0.8rem' }}>
-                        <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Clinical Diagnosis</label>
-                        <div style={{ fontWeight: 600, fontSize: '1rem' }}>{record.diagnosis || 'Standard Consultation'}</div>
-                      </div>
-
-                      {expandedHistoryId === record.id ? (
-                        <div className="fade-in" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)', display: 'grid', gridTemplateColumns: '1fr 180px', gap: '1.5rem', alignItems: 'center' }}>
-                          <div>
-                            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>GEMINI CLINICAL SYNTHESIS</div>
-                            <p style={{ fontSize: '0.85rem', fontStyle: 'italic', lineHeight: 1.5, opacity: 0.9 }}>{record.ai_conclusion || "Standard historical record analysis."}</p>
-
-                            <div style={{ marginTop: '1rem', display: 'flex', gap: '2rem' }}>
-                              <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Medication</label>
-                                <div style={{ fontSize: '0.8rem' }}>{record.medication_schedule || 'None listed'}</div>
+                  medicalHistory.map(record => {
+                    const associatedRx = activePrescriptions.find(rx => rx.request_id === record.id);
+                    return (
+                      <div key={record.id} className="history-card" style={{ background: 'var(--glass-highlight)', padding: '1.2rem', borderRadius: '14px', marginBottom: '1rem', borderLeft: '3px solid var(--secondary)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>
+                            {new Date(record.created_at).toLocaleDateString()} at {hospitals.find(h => h.id === record.hospital_id)?.name || 'Medical Center'}
+                          </span>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            {record.status === 'COMPLETED' && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {associatedRx && (
+                                  <button
+                                    className="btn-primary btn-xs"
+                                    style={{ padding: '2px 8px', fontSize: '0.6rem', background: '#10b981', borderColor: '#10b981' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExpandedRxId(expandedRxId === record.id ? null : record.id);
+                                    }}
+                                  >
+                                    💊 VIEW QR RX
+                                  </button>
+                                )}
+                                <span style={{ fontSize: '0.6rem', color: '#4ade80', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span style={{ width: '6px', height: '6px', background: '#4ade80', borderRadius: '50%' }}></span>
+                                  DOCTOR VERIFIED
+                                </span>
                               </div>
-                              <div style={{ flex: 1 }}>
-                                <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Physician</label>
-                                <div style={{ fontSize: '0.8rem' }}>Dr. {doctors.find(d => d.id === record.assigned_doctor_id)?.name || 'Specialist'}</div>
+                            )}
+                            <span style={{ fontSize: '0.65rem', background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '2px 8px', borderRadius: '4px' }}>FINISHED</span>
+                            <button
+                              className="btn-secondary btn-xs"
+                              style={{ padding: '2px 8px', fontSize: '0.6rem' }}
+                              onClick={() => setExpandedHistoryId(expandedHistoryId === record.id ? null : record.id)}
+                            >
+                              {expandedHistoryId === record.id ? 'CLOSE' : 'VIEW AI MAP'}
+                            </button>
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: '0.8rem' }}>
+                          <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Clinical Diagnosis</label>
+                          <div style={{ fontWeight: 600, fontSize: '1rem' }}>{record.diagnosis || 'Standard Consultation'}</div>
+                        </div>
+
+                        {expandedHistoryId === record.id ? (
+                          <div className="fade-in" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--glass-border)', display: 'grid', gridTemplateColumns: '1fr 180px', gap: '1.5rem', alignItems: 'center' }}>
+                            <div>
+                              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '0.5rem', letterSpacing: '0.1em' }}>GEMINI CLINICAL SYNTHESIS</div>
+                              <p style={{ fontSize: '0.85rem', fontStyle: 'italic', lineHeight: 1.5, opacity: 0.9 }}>{record.ai_conclusion || "Standard historical record analysis."}</p>
+
+                              <div style={{ marginTop: '1rem', display: 'flex', gap: '2rem' }}>
+                                <div style={{ flex: 1 }}>
+                                  <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Medication</label>
+                                  <div style={{ fontSize: '0.8rem' }}>{record.medication_schedule || 'None listed'}</div>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                  <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block', textTransform: 'uppercase' }}>Physician</label>
+                                  <div style={{ fontSize: '0.8rem' }}>Dr. {doctors.find(d => d.id === record.assigned_doctor_id)?.name || 'Specialist'}</div>
+                                </div>
                               </div>
                             </div>
+                            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '15px', padding: '0.5rem' }}>
+                              <Humanoid3D markers={record.ai_humanoid_markers || []} />
+                            </div>
                           </div>
-                          <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '15px', padding: '0.5rem' }}>
-                            <HumanoidVisualizer markers={record.ai_humanoid_markers || []} />
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', gap: '2rem' }}>
-                          <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Medication Prescribed</label>
-                            <div style={{ fontSize: '0.8rem' }}>{record.medication_schedule || 'No medicine required'}</div>
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Clinical Physician</label>
-                            <div style={{ fontSize: '0.8rem' }}>Dr. {doctors.find(d => d.id === record.assigned_doctor_id)?.name || 'Specialist'}</div>
-                          </div>
-                          {record.file_url && (
+                        ) : (
+                          <div style={{ display: 'flex', gap: '2rem' }}>
                             <div style={{ flex: 1 }}>
-                              <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Clinical Evidence</label>
-                              <a href={record.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 800 }}>📎 VIEW MEDIA</a>
+                              <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Medication Prescribed</label>
+                              <div style={{ fontSize: '0.8rem' }}>{record.medication_schedule || 'No medicine required'}</div>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))
+                            <div style={{ flex: 1 }}>
+                              <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Clinical Physician</label>
+                              <div style={{ fontSize: '0.8rem' }}>Dr. {doctors.find(d => d.id === record.assigned_doctor_id)?.name || 'Specialist'}</div>
+                            </div>
+                            {record.file_url && (
+                              <div style={{ flex: 1 }}>
+                                <label style={{ fontSize: '0.6rem', opacity: 0.5, display: 'block' }}>Clinical Evidence</label>
+                                <a href={record.file_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: 'var(--primary)', textDecoration: 'none', fontWeight: 800 }}>📎 VIEW MEDIA</a>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {expandedRxId === record.id && associatedRx && (
+                          <div className="fade-in" style={{ marginTop: '1rem', padding: '1.5rem', background: 'white', borderRadius: '12px', border: '1px solid #10b981', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '1rem' }}>
+                              <h4 style={{ margin: 0, color: '#065f46' }}>Secure Prescription QR</h4>
+                              <button className="btn-secondary btn-xs" onClick={() => setExpandedRxId(null)}>CLOSE</button>
+                            </div>
+                            <QRCode value={`MED_RX:${associatedRx.token}`} size={160} />
+                            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                              <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#047857' }}>READY FOR PHARMACY SCAN</div>
+                              <div style={{ fontSize: '0.6rem', opacity: 0.6, fontFamily: 'monospace' }}>{associatedRx.token}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
           )}
         </section>
 
-        {!isGuest && (
-          <section className="medical-vault-section" style={{ padding: '0 2rem', marginBottom: '3rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.8rem' }}>
-              <div>
-                <h3 style={{ margin: 0 }}>Clinical Vault</h3>
-                <p style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '0.2rem' }}>Persistent Secure Medical Record Storage</p>
-              </div>
-              <div style={{ position: 'relative' }}>
+        {/* RIGHT COLUMN: Highlights & Vault */}
+        <section className="highlights">
+          {!isGuest && (
+            <div className="medical-vault-section" style={{ marginBottom: '3rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.8rem' }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>Clinical Vault</h3>
+                  <p style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '0.2rem' }}>Persistent Storage</p>
+                </div>
                 <button
                   className="btn-secondary btn-xs"
                   style={{ background: 'var(--primary)', color: 'white', border: 'none', cursor: 'pointer' }}
-                  onClick={() => {
-                    console.log("[Vault] Triggering file picker via ref");
-                    vaultInputRef.current?.click();
-                  }}
+                  onClick={() => vaultInputRef.current?.click()}
                 >
-                  {isUploading ? '📤 Synchronizing...' : '+ Add Secure Report'}
+                  {isUploading ? '📤 ...' : '+ Add'}
                 </button>
                 <input
                   type="file"
@@ -322,15 +458,12 @@ const UserDashboard = () => {
                   onChange={async (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
-                    console.log("[Vault] File selected:", file.name);
                     setIsUploading(true);
                     try {
-                      const res = await uploadDiagnosis(file, file.name);
-                      console.log("[Vault] Upload result:", res);
+                      await uploadDiagnosis(file, file.name);
                       loadHistory();
                     } catch (err) {
-                      console.error("[Vault] Error:", err);
-                      alert("Vault synchronization failed: " + err.message);
+                      alert("Vault sync failed: " + err.message);
                     } finally {
                       setIsUploading(false);
                       e.target.value = '';
@@ -338,45 +471,34 @@ const UserDashboard = () => {
                   }}
                 />
               </div>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-              {diagnosesVault.length === 0 ? (
-                <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px dashed var(--glass-border)' }}>
-                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '1rem' }}>🧬</span>
-                  <p style={{ opacity: 0.4 }}>Your clinical vault is empty. Upload scans for AI mapping.</p>
-                </div>
-              ) : (
-                diagnosesVault.map(diag => (
-                  <div key={diag.id} className="glass-card fade-in" style={{ padding: '1.2rem', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                      <div style={{ width: '45px', height: '45px', background: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>📄</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{diag.title}</div>
-                        <div style={{ fontSize: '0.7rem', opacity: 0.5 }}>{new Date(diag.created_at).toLocaleDateString()}</div>
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem' }}>
-                          <a href={diag.file_url} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-xs" style={{ fontSize: '0.6rem' }}>View</a>
-                          <button
-                            className="btn-secondary btn-xs"
-                            style={{ fontSize: '0.6rem', color: '#ef4444' }}
-                            onClick={async () => {
-                              if (window.confirm('Wipe this clinical data from cloud storage?')) {
-                                await deleteDiagnosis(diag.id);
-                                loadHistory();
-                              }
-                            }}
-                          >Delete</button>
-                        </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {diagnosesVault.length === 0 ? (
+                  <p style={{ opacity: 0.4, fontSize: '0.8rem', textAlign: 'center' }}>Vault is empty.</p>
+                ) : (
+                  diagnosesVault.map(diag => (
+                    <div key={diag.id} className="glass-card" style={{ padding: '1rem' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{diag.title}</div>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        <a href={diag.file_url} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-xs">View</a>
+                        <button
+                          className="btn-secondary btn-xs"
+                          style={{ color: '#ef4444' }}
+                          onClick={async () => {
+                            if (window.confirm('Wipe this clinical data?')) {
+                              await deleteDiagnosis(diag.id);
+                              loadHistory();
+                            }
+                          }}
+                        >Delete</button>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
-          </section>
-        )}
+          )}
 
-        <section className="highlights">
           <h3>Top Care Centers in Egypt</h3>
           <div className="hospitals-scroll">
             {hospitals.map(h => (
@@ -390,33 +512,29 @@ const UserDashboard = () => {
                   backgroundImage: h.cover_image_url ? `url(${h.cover_image_url})` : 'none',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
-                  height: '120px',
+                  height: '100px',
                   borderRadius: 'var(--radius-md)',
                   marginBottom: '1rem'
                 }}></div>
                 <h4>{h.name}</h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: '0.4rem 0' }}>
-                  <span style={{ fontSize: '0.6rem', background: 'rgba(34,197,94,0.1)', color: '#4ade80', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(34,197,94,0.3)', fontWeight: 800 }}>VERIFIED FACILITY</span>
-                </div>
                 <p className="hosp-loc">📍 {h.address}</p>
               </div>
             ))}
           </div>
 
           <h3 style={{ marginTop: '2.5rem' }}>Hospital Staff</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Available Specialists at {hospitals.find(h => h.id === selectedHospitalId)?.name}</p>
           <div className="doctors-list">
             {doctors.length === 0 ? (
-              <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>No staff profiles listed for this facility contact yet.</p>
+              <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>No specialist profiles list available.</p>
             ) : (
               doctors.map(dr => (
                 <div
                   key={dr.id}
                   className={`glass-card dr-item ${preferredDoctorId === dr.id ? 'preferred' : ''}`}
                   onClick={() => setSelectedProfileId(dr.id)}
-                  style={{ cursor: 'pointer', position: 'relative' }}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
                     <div className="dr-avatar-small">
                       {dr.avatar_url ? <img src={dr.avatar_url} alt={dr.name} className="avatar-img-round-mini" /> : dr.name?.charAt(0)}
                     </div>
@@ -434,7 +552,7 @@ const UserDashboard = () => {
                       setRequestContent(prev => `Attention: Dr. ${dr.name}\n\n` + prev);
                     }}
                   >
-                    {preferredDoctorId === dr.id ? '★ REQUESTED' : 'Request this Specialist'}
+                    {preferredDoctorId === dr.id ? '★ REQUESTED' : 'Request Specialist'}
                   </button>
                 </div>
               ))
@@ -447,41 +565,8 @@ const UserDashboard = () => {
         .user-dashboard { display: flex; flex-direction: column; gap: 2rem; max-width: 100vw; overflow-x: hidden; }
         .main-discovery-layout { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; }
         
-        .lab-entry-hero {
-          margin-bottom: 2.5rem;
-          padding: 2.5rem;
-          background: linear-gradient(135deg, rgba(124, 68, 237, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%);
-          border-radius: 28px;
-          border: 1px solid rgba(124, 68, 237, 0.4);
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-          position: relative;
-          overflow: hidden;
-        }
-        .lab-entry-content { max-width: 65%; z-index: 1; }
-        .lab-title { margin: 0; color: var(--primary); fontSize: 2rem; text-shadow: 0 0 20px var(--primary-glow-low); }
-        .lab-desc { margin: 1rem 0 2rem; opacity: 0.8; fontSize: 0.95rem; line-height: 1.6; }
-        .lab-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .lab-launch-btn { padding: 0.8rem 2.5rem; fontSize: 0.9rem; fontWeight: 800; letter-spacing: 0.05em; }
-        .lab-status { display: flex; alignItems: center; gap: 0.5rem; color: var(--primary); fontSize: 0.75rem; fontWeight: 700; }
-        .lab-visual-icon {
-          height: 180px; width: 180px;
-          background: radial-gradient(circle, rgba(124, 68, 237, 0.3) 0%, transparent 70%);
-          borderRadius: 50%; display: flex; alignItems: center; justifyContent: center;
-          border: 1px solid rgba(124, 68, 237, 0.2); animation: float 6s ease-in-out infinite;
-        }
-        .lab-visual-icon span { fontSize: 5rem; filter: drop-shadow(0 0 15px var(--primary)); }
-
         @media (max-width: 1024px) {
           .main-discovery-layout { grid-template-columns: 1fr; }
-          .lab-entry-hero { flex-direction: column; text-align: center; padding: 1.5rem; }
-          .lab-entry-content { max-width: 100%; order: 2; }
-          .lab-visual-icon { order: 1; height: 120px; width: 120px; margin-bottom: 1.5rem; }
-          .lab-visual-icon span { fontSize: 3rem; }
-          .lab-title { font-size: 1.5rem; }
-          .lab-actions { justify-content: center; }
           .request-portal { padding: 1.5rem; }
         }
 
@@ -506,11 +591,6 @@ const UserDashboard = () => {
           color: var(--text-primary);
           padding: 0.8rem;
           outline: none;
-        }
-
-        .form-group select option {
-          background: var(--bg-surface);
-          color: var(--text-primary);
         }
 
         textarea { height: 120px; resize: none; }
@@ -555,8 +635,6 @@ const UserDashboard = () => {
         .hospitals-scroll { display: flex; flex-direction: column; gap: 1.5rem; }
         .hospital-mini-card { padding: 1rem; }
         .hosp-loc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
-        .mini-tags { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-        .m-tag { font-size: 0.65rem; background: var(--glass-highlight); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary); }
 
         .guest-btn { 
           background: var(--accent) !important; 
@@ -568,6 +646,7 @@ const UserDashboard = () => {
         .w-full { width: 100%; }
         .mt-1 { margin-top: 1rem; }
       `}</style>
+
       {selectedProfileId && (
         <ProfessionalProfileModal
           userId={selectedProfileId}

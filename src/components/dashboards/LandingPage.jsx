@@ -65,7 +65,28 @@ const LandingPage = ({ onGetStarted }) => {
                         </button>
                     </div>
                     <div style={{ marginTop: '1rem', opacity: 0.7, fontSize: '0.7rem', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '4px' }}>
-                        <div>System v2.1 • Mobile Config: {window.location.hostname}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span>System v4.0.3 • Mobile Config: {window.location.hostname}</span>
+                            <button
+                                onClick={() => {
+                                    if (confirm("DANGER: This will wipe your mobile cache and force a fresh download. Use this if the app feels broken or outdated.")) {
+                                        localStorage.clear();
+                                        sessionStorage.clear();
+                                        if ('serviceWorker' in navigator) {
+                                            navigator.serviceWorker.getRegistrations().then(regs => {
+                                                regs.forEach(r => r.unregister());
+                                                location.href = location.origin + '/?force_update=' + Date.now();
+                                            });
+                                        } else {
+                                            location.href = location.origin + '/?force_update=' + Date.now();
+                                        }
+                                    }
+                                }}
+                                style={{ background: '#ef4444', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.65rem', fontWeight: 900, boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)' }}
+                            >
+                                ☢️ NUCLEAR SYNC
+                            </button>
+                        </div>
                         <div style={{ color: window.isSecureContext ? '#4ade80' : '#f87171' }}>Secure: {window.isSecureContext ? 'YES' : 'NO'}</div>
                         <div style={{ color: 'serviceWorker' in navigator ? '#4ade80' : '#f87171' }}>SW API: {'serviceWorker' in navigator ? 'YES' : 'NO'}</div>
                         <div style={{ color: deferredPrompt ? '#4ade80' : '#fbbf24' }}>Install Signal: {deferredPrompt ? 'RECEIVED' : 'WAITING...'}</div>
@@ -162,6 +183,7 @@ const LandingPage = ({ onGetStarted }) => {
                         <li><span>✓</span> Instant Installation (No APK)</li>
                         <li><span>✓</span> Native 3D Humanoid Engine</li>
                         <li><span>✓</span> Automatic Cloud Updates</li>
+                        <li style={{ color: '#fca5a5' }}><span>⚠️</span> Stuck? Delete shortcut & re-add from browser</li>
                     </ul>
 
                     {/* Premium Install Button */}

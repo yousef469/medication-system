@@ -9,11 +9,23 @@ const MAPPING = {
     'Chest': [0, 1.45, 0.22],
     'Abdomen': [0, 0.85, 0.22],
     'Neck': [0, 1.85, 0.08],
-    'Left Arm': [0.52, 1.38, 0.05],
-    'Right Arm': [-0.52, 1.38, 0.05],
-    'Left Leg': [0.22, -0.35, 0.05],
-    'Right Leg': [-0.22, -0.35, 0.05],
+    'Left Arm': [-0.52, 1.38, 0.05],   // SWAPPED (Mirror Mode)
+    'Right Arm': [0.52, 1.38, 0.05],   // SWAPPED (Mirror Mode)
+    'Left Leg': [-0.22, -0.35, 0.05],  // SWAPPED (Mirror Mode)
+    'Right Leg': [0.22, -0.35, 0.05],  // SWAPPED (Mirror Mode)
     'Back': [0, 1.45, -0.25]
+};
+
+const CLINICAL_SYNONYMS = {
+    'acl': ['knee', 'ligament', 'patella', 'femur', 'tibia'],
+    'meniscus': ['knee', 'tibia', 'femur', 'cartilage'],
+    'rotator cuff': ['shoulder', 'humerus', 'scapula', 'supraspinatus'],
+    'ankle': ['tibia', 'fibula', 'talus', 'calcaneus'],
+    'wrist': ['radius', 'ulna', 'carpal', 'hand'],
+    'hip': ['pelvis', 'femur', 'acetabulum'],
+    'spine': ['vertebra', 'lumbar', 'thoracic', 'cervical', 'sacrum'],
+    'neck': ['cervical', 'vertebra'],
+    'lower back': ['lumbar', 'sacrum', 'vertebra']
 };
 
 const VERSION = Date.now();
@@ -79,15 +91,35 @@ const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1,
                     metalness: 0.6,
                 });
 
+                // SHARED HIGHLIGHT LOGIC:
+                // Check if specific mesh name OR the broader "region" is highlighted by AI
+                const checkHighlight = () => {
+                    return highlightedParts.some(hp => {
+                        const targetString = typeof hp === 'object' ? (hp.part_id || hp.name || hp.part || "") : hp;
+                        if (!targetString) return false;
+
+                        // Normalize: "Left Arm" -> "l arm"
+                        const target = targetString.toLowerCase()
+                            .replace('left', 'l').replace('right', 'r')
+                            .replace(/_/g, ' ').trim();
+                        const meshRaw = child.name.toLowerCase().replace(/_/g, ' ').trim();
+
+                        // EXPAND SYNONYMS: If target is "acl", also check for "knee", "ligament", etc.
+                        let relatedTerms = [target];
+                        Object.keys(CLINICAL_SYNONYMS).forEach(key => {
+                            if (target.includes(key)) {
+                                relatedTerms = [...relatedTerms, ...CLINICAL_SYNONYMS[key]];
+                            }
+                        });
+
+                        // Check if ANY related term matches the mesh name
+                        return relatedTerms.some(term => meshRaw.includes(term) || term.includes(meshRaw));
+                    });
+                };
+
                 // 0. PRESERVE ORIGINAL: For high-fidelity skulls in Muscle mode
                 if (materialType === 'preserve') {
-                    // Check if skull part should be highlighted too
-                    const isHighlighted = highlightedParts.some(hp => {
-                        const target = hp.split(': ').pop().toLowerCase();
-                        const mesh = child.name.toLowerCase();
-                        return mesh.includes(target) || target.includes(mesh);
-                    });
-                    if (isHighlighted) {
+                    if (checkHighlight()) {
                         child.material = redDyeMaterial;
                     }
                     return;
@@ -113,16 +145,7 @@ const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1,
                     child.visible = true;
 
                     // BUT override with Bright Red if specifically diagnosed
-                    const isHighlighted = highlightedParts.some(hp => {
-                        const targetString = typeof hp === 'object' ? (hp.part_id || hp.name || hp.part || "") : hp;
-                        if (!targetString) return false;
-                        const target = targetString.toLowerCase()
-                            .replace('left', 'l').replace('right', 'r')
-                            .replace(/_/g, ' ').trim();
-                        const meshRaw = child.name.toLowerCase().replace(/_/g, ' ').trim();
-                        return meshRaw.includes(target) || target.includes(meshRaw);
-                    });
-                    if (isHighlighted) {
+                    if (checkHighlight()) {
                         child.material = new THREE.MeshStandardMaterial({
                             color: '#ef4444',
                             emissive: '#ef4444',
@@ -134,21 +157,7 @@ const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1,
                 }
 
                 // 3. WHITE SKELETON MODE: Plain white with surgical red highlights
-                const isHighlighted = highlightedParts.some(hp => {
-                    // Extract name from object if it's an ID-centric highlight or AI marker
-                    const targetString = typeof hp === 'object' ? (hp.part_id || hp.name || hp.part || "") : hp;
-                    if (!targetString) return false;
-
-                    // Normalize: "Left Arm" -> "l arm", "arml_humerus" -> "arml humerus"
-                    const target = targetString.toLowerCase()
-                        .replace('left', 'l').replace('right', 'r')
-                        .replace(/_/g, ' ').trim();
-                    const meshRaw = child.name.toLowerCase().replace(/_/g, ' ').trim();
-
-                    return meshRaw.includes(target) || target.includes(meshRaw);
-                });
-
-                if (isHighlighted) {
+                if (checkHighlight()) {
                     child.material = redDyeMaterial;
                     child.visible = true;
                     return;
@@ -230,6 +239,7 @@ const AnatomySystem = ({
                     <BonePart
                         url={PARTS.CENTRAL}
                         prefix="Torso"
+                        region="Chest" // Map Chest/Abdomen to Torso roughly, or specific parts if separate
                         position={[0, 0, 0]}
                         texture={muscleTextures.trapezius}
                         highlightTexture={muscleTextures.base}
@@ -274,6 +284,7 @@ const AnatomySystem = ({
                     <BonePart
                         url={PARTS.VERTEBRAE}
                         prefix="Vertebrae"
+                        region="Back"
                         position={[0, 0, 0]}
                         texture={muscleTextures.trapezius}
                         highlightTexture={muscleTextures.base}
@@ -290,6 +301,7 @@ const AnatomySystem = ({
                             <BonePart
                                 url={PARTS.SKULL_COLORED}
                                 prefix="Torso"
+                                region="Head"
                                 position={[0, skullY, skullZ]}
                                 scale={[skullScale, skullScale, skullScale]}
                                 rotation={[0, skullRotY, 0]}
@@ -301,6 +313,7 @@ const AnatomySystem = ({
                             <BonePart
                                 url={PARTS.SKULL_BASE}
                                 prefix="Torso"
+                                region="Head"
                                 position={[0, skullY, skullZ]}
                                 scale={[skullScale, skullScale, skullScale]}
                                 rotation={[0, skullRotY, 0]}

@@ -25,13 +25,11 @@ Response Format:
 """
 
 MODEL_IDS = [
-    'gemini-2.0-flash-lite-preview-02-05',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash-8b',
-    'gemini-1.5-flash',
     'gemini-2.5-flash-lite',
+    'gemini-2.5-flash',
     'gemini-3-flash',
-    'gemini-pro-latest'
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
 ]
 
 # Clinical safety settings to avoid over-blocking
@@ -211,23 +209,24 @@ def analyze_clinical_request(request_text: str, history: list, image_bytes=None)
     {request_text}
     
     TASKS:
-    1. Synthesize a clinical conclusion for the doctor. Be CONCISE and professional. Use bullet points for findings.
-    2. Identify anatomical areas of interest for 3D visualization. 
-       MAPPING RULES:
-       - Knee/ACL/Meniscus -> "Left Leg" or "Right Leg"
-       - Shoulder/Elbow/Wrist -> "Left Arm" or "Right Arm"
-       - Spine/LSO/Disk -> "Back"
-       - Lungs/Heart/Ribs -> "Chest"
-       - Stomach/Liver/Kidney -> "Abdomen"
-    
-    Valid anatomical parts (Use these EXACT names for 3D markers): 
-    Head, Neck, Chest, Abdomen, Back, Left Arm, Right Arm, Left Leg, Right Leg.
+    1. Synthesize a clinical conclusion. Be CONCISE.
+    2. Identify anatomical areas for 3D visualization. 
+       **CRITICAL: BE SPECIFIC.** Do NOT generalize to "Left Leg" if the problem is "ACL" or "Knee".
+       
+       MAPPING TARGETS (Examples):
+       - Knee -> "Knee", "Patella", "Ligament"
+       - ACL -> "ACL", "Knee"
+       - Femur -> "Femur"
+       - Lungs -> "Lung"
+       - Heart -> "Heart"
+       
+       Only use broad regions (Left Leg, Right Arm) if the location is vague.
     
     Output JSON ONLY:
     {{
-        "conclusion": "Clinical synthesis with bullet points if needed",
+        "conclusion": "Clinical synthesis with bullet points",
         "markers": [
-            {{"part": "string", "status": "RED/ORANGE/GREEN", "reason": "brief explanation"}}
+            {{"part": "string", "status": "RED/ORANGE", "reason": "brief explanation"}}
         ]
     }}
     """
@@ -244,7 +243,12 @@ def analyze_clinical_request(request_text: str, history: list, image_bytes=None)
                         mime_type = _get_mime_type(image_bytes)
                         items.append({"mime_type": mime_type, "data": image_bytes})
                     
-                    response = model.generate_content(items)
+                    response = model.generate_content(
+                        items,
+                        generation_config=genai.types.GenerationConfig(
+                            response_mime_type="application/json"
+                        )
+                    )
                     print(f"[AI Brain] Clinical Success with {model_id}", flush=True)
                     return _clean_json(result_text=response.text)
                 except Exception as e:
@@ -341,10 +345,11 @@ def _clean_json(text=None, result_text=None):
         if "conclusion" not in data: data["conclusion"] = data.get("response", "Analysis complete.")
         return data
     except:
+        # If valid JSON parsing fails, assume the AI returned just the text conclusion
+        # This prevents "JSON_PARSE_ERROR" from hiding a valid text response
         return {
-            "response": raw,
-            "conclusion": "AI response format mismatch.",
+            "conclusion": raw,
             "markers": [],
-            "error": "JSON_PARSE_ERROR"
+            "error": None
         }
 

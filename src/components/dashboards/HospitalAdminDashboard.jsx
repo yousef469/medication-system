@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../context/useAuth';
+import AccordionSidebar from '../shared/AccordionSidebar';
+import HospitalChat from './HospitalChat'; // Import HospitalChat
+import { useTheme } from '../../context/ThemeContext'; // Ensure theme context is used if needed
 
 const HospitalAdminDashboard = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const { setTheme } = useTheme(); // Assuming we want to force light mode or handle theme
     const [pendingStaff, setPendingStaff] = useState([]);
     const [hospitalInfo, setHospitalInfo] = useState(null);
     const [archives, setArchives] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('staff'); // 'staff' or 'archives'
+    const [activeTab, setActiveTab] = useState('staff'); // Default tab
 
     useEffect(() => {
+        setTheme('light'); // Enforce light mode for consistency
         if (user?.id) {
             fetchHospitalData();
         }
@@ -69,188 +74,223 @@ const HospitalAdminDashboard = () => {
         }
     };
 
-    if (loading) return <div className="p-4 text-center">Loading Management Console...</div>;
+    const topNavItems = [
+        { id: 'team_hub', label: 'Team Hub', icon: '🫂', onClick: () => setActiveTab('chat'), active: activeTab === 'chat' },
+        { id: 'dashboard', label: 'Dashboard', icon: '🏠', onClick: () => setActiveTab('staff'), active: activeTab === 'staff' },
+        // Profile might not be as relevant for Admin entity, but good for user account settings
+        { id: 'profile', label: 'Settings', icon: '⚙️', onClick: () => setActiveTab('settings') }
+    ];
 
-    if (!hospitalInfo) return (
-        <div className="glass-card p-4 text-center">
-            <h3>No Hospital Assigned</h3>
-            <p>Your account is not yet linked to a verified hospital facility.</p>
-        </div>
-    );
+    const bottomNavItems = [
+        { id: 'logout', label: 'Log Out', icon: '🚪', onClick: logout }
+    ];
 
-    return (
-        <div className="admin-dashboard fade-in">
-            <header className="admin-header glass-card">
-                <div className="facility-brand">
-                    <span className="facility-icon">🏥</span>
-                    <div>
-                        <h2>{hospitalInfo.name}</h2>
-                        <p className="subtitle">Official Administration Portal • {hospitalInfo.status}</p>
-                    </div>
-                </div>
-                <div className="stats-row">
-                    <div className="stat-pill">
-                        <span className="label">Total Staff</span>
-                        <span className="value">42</span>
-                    </div>
-                    <div className="stat-pill accent">
-                        <span className="label">Medical Logs</span>
-                        <span className="value">{archives.length}</span>
-                    </div>
-                </div>
-            </header>
+    const menuGroups = [
+        {
+            title: 'Administration',
+            icon: '🏢',
+            items: [
+                { id: 'staff', label: 'Staff Management', icon: '👥' },
+                { id: 'archives', label: 'Logistic Archives', icon: '📂' },
+                { id: 'billing', label: 'Billing & Finance', icon: '💳', restricted: true }
+            ]
+        },
+        {
+            title: 'Facility',
+            icon: '🏥',
+            items: [
+                { id: 'settings', label: 'Facility Profile', icon: '⚙️' }
+            ]
+        }
+    ];
 
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <button
-                    className={`nav-chip ${activeTab === 'staff' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('staff')}
-                >
-                    Staff Management
-                </button>
-                <button
-                    className={`nav-chip ${activeTab === 'archives' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('archives')}
-                >
-                    Logistic Archives
-                </button>
+    const renderMainContent = () => {
+        if (loading) return <div className="p-4 text-center">Loading Management Console...</div>;
+        if (!hospitalInfo) return (
+            <div className="glass-card p-4 text-center">
+                <h3>No Hospital Assigned</h3>
+                <p>Your account is not yet linked to a verified hospital facility.</p>
             </div>
+        );
 
-            {activeTab === 'staff' ? (
-                <div className="management-grid">
-                    <section className="staff-requests glass-card">
-                        <div className="section-title">
-                            <h3>Staff Approval Queue</h3>
-                            <span className="badge">Action Required</span>
-                        </div>
-
-                        <div className="request-list">
-                            {pendingStaff.length === 0 ? (
-                                <div className="empty-state">No pending staff applications.</div>
-                            ) : (
-                                pendingStaff.map(staff => (
-                                    <div key={staff.id} className="approval-card">
-                                        <div className="staff-info">
-                                            <div className="staff-avatar">{staff.name?.charAt(0)}</div>
-                                            <div>
-                                                <strong>{staff.name}</strong>
-                                                <p>{staff.role.toUpperCase()} • License Pending AI Scan</p>
-                                            </div>
-                                        </div>
-                                        <div className="actions">
-                                            <button className="btn-view" onClick={() => window.open(`${supabase.storage.from('licenses').getPublicUrl(staff.license_url).data.publicUrl}`)}>View License</button>
-                                            <button className="btn-approve" onClick={() => handleApprove(staff.id)}>Approve</button>
-                                            <button className="btn-reject">Reject</button>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </section>
-
-                    <section className="facility-controls glass-card">
-                        <h3>Facility Status</h3>
-                        <div className="control-list">
+        switch (activeTab) {
+            case 'chat':
+                return <HospitalChat />;
+            case 'settings':
+                return (
+                    <div className="glass-card p-4">
+                        <h3>Facility Settings</h3>
+                        <p>Detailed hospital configuration would go here (Name, Address, Departments).</p>
+                        <div className="control-list" style={{ marginTop: '1rem' }}>
                             <div className="control-item">
                                 <span>Emergency Status</span>
                                 <span className="status-toggle active">Operating</span>
                             </div>
-                            <div className="control-item">
-                                <span>Logic Core Load (Gemini)</span>
-                                <span className="status-toggle">Optimal</span>
-                            </div>
                         </div>
-
-                        <div className="admin-actions mt-2">
-                            <button className="btn-secondary w-full">Update Facility Profile</button>
-                        </div>
-                    </section>
-                </div>
-            ) : (
-                <div className="archives-view glass-card fade-in">
-                    <div className="section-title">
-                        <h3>Logistic Archives</h3>
-                        <p style={{ fontSize: '0.8rem', opacity: 0.5 }}>Historical log of completed sessions. Medical data (Diagnosis) is restricted from admin view.</p>
                     </div>
-
-                    <div className="archive-table-wrapper">
-                        {archives.length === 0 ? (
-                            <div className="empty-state">Archives are currently empty.</div>
-                        ) : (
-                            <table className="archive-table">
-                                <thead>
-                                    <tr>
-                                        <th>Patient ID</th>
-                                        <th>Date</th>
-                                        <th>Physician</th>
-                                        <th>Coordinator</th>
-                                        <th>Clinical Nurse</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {archives.map(rec => (
-                                        <tr key={rec.id}>
-                                            <td>{rec.patient_name}</td>
-                                            <td>{new Date(rec.created_at).toLocaleDateString()}</td>
-                                            <td>DOC-{rec.assigned_doctor_id?.slice(0, 4)}</td>
-                                            <td>COORD-{rec.handled_by_coordinator_id?.slice(0, 4) || 'SYSTEM'}</td>
-                                            <td>NURS-{rec.assigned_nurse_id?.slice(0, 4)}</td>
-                                            <td><span className="status-badge">{rec.status}</span></td>
+                );
+            case 'archives':
+                return (
+                    <div className="archives-view glass-card fade-in">
+                        <div className="section-title">
+                            <h3>Logistic Archives</h3>
+                            <p style={{ fontSize: '0.8rem', opacity: 0.5 }}>Historical log of completed sessions. Medical data (Diagnosis) is restricted from admin view.</p>
+                        </div>
+                        <div className="archive-table-wrapper">
+                            {archives.length === 0 ? (
+                                <div className="empty-state">Archives are currently empty.</div>
+                            ) : (
+                                <table className="archive-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient ID</th>
+                                            <th>Date</th>
+                                            <th>Physician</th>
+                                            <th>Coordinator</th>
+                                            <th>Clinical Nurse</th>
+                                            <th>Status</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
+                                    </thead>
+                                    <tbody>
+                                        {archives.map(rec => (
+                                            <tr key={rec.id}>
+                                                <td>{rec.patient_name}</td>
+                                                <td>{new Date(rec.created_at).toLocaleDateString()}</td>
+                                                <td>DOC-{rec.assigned_doctor_id?.slice(0, 4)}</td>
+                                                <td>COORD-{rec.handled_by_coordinator_id?.slice(0, 4) || 'SYSTEM'}</td>
+                                                <td>NURS-{rec.assigned_nurse_id?.slice(0, 4)}</td>
+                                                <td><span className="status-badge">{rec.status}</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                );
+            case 'staff':
+            default:
+                return (
+                    <div className="management-grid">
+                        <section className="staff-requests glass-card">
+                            <div className="section-title">
+                                <h3>Staff Approval Queue</h3>
+                                <span className="badge">Action Required</span>
+                            </div>
+
+                            <div className="request-list">
+                                {pendingStaff.length === 0 ? (
+                                    <div className="empty-state">No pending staff applications.</div>
+                                ) : (
+                                    pendingStaff.map(staff => (
+                                        <div key={staff.id} className="approval-card">
+                                            <div className="staff-info">
+                                                <div className="staff-avatar">{staff.name?.charAt(0)}</div>
+                                                <div>
+                                                    <strong>{staff.name}</strong>
+                                                    <p>{staff.role.toUpperCase()} • License Pending AI Scan</p>
+                                                </div>
+                                            </div>
+                                            <div className="actions">
+                                                <button className="btn-view" onClick={() => window.open(`${supabase.storage.from('licenses').getPublicUrl(staff.license_url).data.publicUrl}`)}>View License</button>
+                                                <button className="btn-approve" onClick={() => handleApprove(staff.id)}>Approve</button>
+                                                <button className="btn-reject">Reject</button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </section>
+
+                        <section className="facility-controls glass-card">
+                            <h3>Facility Status</h3>
+                            <div className="control-list">
+                                <div className="control-item">
+                                    <span>Emergency Status</span>
+                                    <span className="status-toggle active">Operating</span>
+                                </div>
+                                <div className="control-item">
+                                    <span>Logic Core Load (Gemini)</span>
+                                    <span className="status-toggle">Optimal</span>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                );
+        }
+    };
+
+    return (
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f8fafc' }}>
+            <AccordionSidebar
+                title="HOSPITAL ADMIN"
+                menuGroups={menuGroups}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                topNavItems={topNavItems}
+                bottomNavItems={bottomNavItems}
+            />
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
+                <div className="admin-content fade-in">
+                    <style>{`
+                        .admin-content { padding: 2rem; color: var(--text-primary); max-width: 1600px; margin: 0 auto; width: 100%; }
+                        
+                        /* Reusing existing styles */
+                        .admin-header { padding: 2rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); margin-bottom: 1rem; }
+                        .facility-brand { display: flex; gap: 1.5rem; align-items: center; }
+                        .facility-icon { font-size: 2.5rem; background: var(--glass-highlight); padding: 1rem; border-radius: 12px; }
+                        
+                        .management-grid { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
+                        .section-title { margin-bottom: 1.5rem; }
+                        
+                        .archive-table-wrapper { overflow-x: auto; margin-top: 1rem; }
+                        .archive-table { width: 100%; border-collapse: collapse; }
+                        .archive-table th { text-align: left; padding: 1rem; border-bottom: 1px solid var(--glass-border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+                        .archive-table td { padding: 1rem; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 0.9rem; }
+                        .status-badge { font-size: 0.6rem; background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 4px; font-weight: 800; }
+
+                        .request-list { display: flex; flex-direction: column; gap: 1rem; }
+                        .approval-card { 
+                            display: flex; justify-content: space-between; align-items: center; 
+                            padding: 1rem; background: white; border-radius: 12px; border: 1px solid var(--glass-border);
+                        }
+                        .staff-info { display: flex; gap: 1rem; align-items: center; }
+                        .staff-avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; color: white; }
+                        
+                        .actions { display: flex; gap: 0.5rem; }
+                        .actions button { padding: 0.4rem 0.8rem; border-radius: 6px; border: none; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+                        .btn-view { background: #e2e8f0; color: #475569; }
+                        .btn-approve { background: #10b981; color: white; }
+                        .btn-reject { background: #ef4444; color: white; }
+
+                        .control-list { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+                        .control-item { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted); }
+                        .status-toggle { font-size: 0.7rem; color: #10b981; font-weight: 800; border: 1px solid #10b981; padding: 2px 6px; border-radius: 4px; }
+                        
+                        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); font-style: italic; }
+                        .glass-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+                    `}</style>
+
+                    {/* Header Section - Only show on Dash */}
+                    {activeTab === 'staff' && hospitalInfo && (
+                        <header className="admin-header glass-card">
+                            <div className="facility-brand">
+                                <span className="facility-icon">🏥</span>
+                                <div>
+                                    <h2 style={{ margin: 0, color: '#0f172a' }}>{hospitalInfo.name}</h2>
+                                    <p className="subtitle" style={{ margin: 0, color: '#64748b' }}>Official Administration Portal • {hospitalInfo.status}</p>
+                                </div>
+                            </div>
+                        </header>
+                    )}
+
+                    {/* Viewport Content */}
+                    <div className="module-viewport">
+                        {renderMainContent()}
                     </div>
                 </div>
-            )}
-
-            <style>{`
-                .admin-dashboard { display: flex; flex-direction: column; gap: 2rem; }
-                .admin-header { padding: 2rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent); margin-bottom: 1rem; }
-                .facility-brand { display: flex; gap: 1.5rem; align-items: center; }
-                .facility-icon { font-size: 2.5rem; background: var(--glass-highlight); padding: 1rem; border-radius: 12px; }
-                
-                .nav-chip { background: transparent; border: 1px solid var(--glass-border); color: var(--text-muted); padding: 0.6rem 1.2rem; border-radius: 30px; cursor: pointer; transition: 0.3s; font-weight: 700; font-size: 0.8rem; }
-                .nav-chip:hover { border-color: var(--accent); color: var(--accent); }
-                .nav-chip.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: var(--accent-glow); }
-
-                .stats-row { display: flex; gap: 1rem; }
-                .stat-pill { background: var(--glass-highlight); padding: 0.5rem 1.5rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); }
-                .stat-pill.accent { border-color: var(--accent); }
-                .stat-pill .label { display: block; font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; }
-                .stat-pill .value { font-size: 1.25rem; font-weight: 800; }
-
-                .management-grid { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
-                .section-title { margin-bottom: 1.5rem; }
-                
-                .archive-table-wrapper { overflow-x: auto; margin-top: 1rem; }
-                .archive-table { width: 100%; border-collapse: collapse; }
-                .archive-table th { text-align: left; padding: 1rem; border-bottom: 1px solid var(--glass-border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
-                .archive-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
-                .status-badge { font-size: 0.6rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; font-weight: 800; }
-
-                .request-list { display: flex; flex-direction: column; gap: 1rem; }
-                .approval-card { 
-                    display: flex; justify-content: space-between; align-items: center; 
-                    padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--glass-border);
-                }
-                .staff-info { display: flex; gap: 1rem; align-items: center; }
-                .staff-avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-                
-                .actions { display: flex; gap: 0.5rem; }
-                .actions button { padding: 0.4rem 0.8rem; border-radius: 6px; border: none; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
-                .btn-view { background: var(--glass-highlight); color: white; }
-                .btn-approve { background: var(--secondary); color: white; }
-                .btn-reject { background: #ef4444; color: white; }
-
-                .control-list { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
-                .control-item { display: flex; justify-content: space-between; font-size: 0.9rem; color: var(--text-muted); }
-                .status-toggle { font-size: 0.7rem; color: var(--secondary); font-weight: 800; border: 1px solid var(--secondary); padding: 2px 6px; border-radius: 4px; }
-                
-                .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); font-style: italic; }
-                .mt-2 { margin-top: 2rem; }
-            `}</style>
+            </div>
         </div>
     );
 };

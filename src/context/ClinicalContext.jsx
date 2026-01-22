@@ -15,14 +15,22 @@ export const ClinicalProvider = ({ children }) => {
     const [doctors, setDoctors] = useState([]);
     const [systemLogs, setSystemLogs] = useState([]);
     const [hospitals, setHospitals] = useState([]);
+    const [appointments, setAppointments] = useState([]);
+    const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
 
     // Hardened API Selection: Ensure APK/Vercel ALWAYS uses the tunnel
     const tunnelUrl = "https://medical-hub-brain.loca.lt";
-    const API_URL = import.meta.env.PROD || window.location.hostname !== 'localhost'
+    const API_URL = import.meta.env.PROD || (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.startsWith('192.168.'))
         ? tunnelUrl
         : "";
+
+    console.log("[ClinicalContext] Mode Detection:", {
+        hostname: window.location.hostname,
+        isProd: import.meta.env.PROD,
+        resolvedAPI: API_URL || "Local (Proxy/Relative)"
+    });
 
     // Localtunnel bypass headers for production
     const fetchHeaders = { "Bypass-Tunnel-Reminder": "true" };
@@ -68,15 +76,31 @@ export const ClinicalProvider = ({ children }) => {
             })
             .subscribe();
 
+        const appointmentsChannel = supabase
+            .channel('public:appointments')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, payload => {
+                fetchAppointments();
+            })
+            .subscribe();
+
+        const patientsChannel = supabase
+            .channel('public:patients')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, payload => {
+                fetchPatients();
+            })
+            .subscribe();
+
         return () => {
             supabase.removeChannel(requestsChannel);
             supabase.removeChannel(profilesChannel);
+            supabase.removeChannel(appointmentsChannel);
+            supabase.removeChannel(patientsChannel);
             clearInterval(healthInterval);
         };
     }, []);
 
     const refreshGlobalData = async () => {
-        await Promise.all([fetchRequests(), fetchDoctors()]);
+        await Promise.all([fetchRequests(), fetchDoctors(), fetchAppointments(), fetchPatients()]);
     };
 
     const fetchHospitals = async () => {
@@ -106,7 +130,6 @@ export const ClinicalProvider = ({ children }) => {
             .from('appointment_requests')
             .select('*')
             .eq('patient_id', patientId)
-            .eq('status', 'COMPLETED')
             .order('created_at', { ascending: false });
 
         if (error) console.error('Error fetching patient history:', error);
@@ -193,7 +216,7 @@ export const ClinicalProvider = ({ children }) => {
     };
 
     const fetchDoctors = async (hospitalId = null) => {
-        let query = supabase.from('profiles').select('*').in('role', ['doctor', 'nurse']);
+        let query = supabase.from('profiles').select('*').in('role', ['doctor', 'nurse', 'secretary']);
         if (hospitalId) {
             query = query.eq('hospital_id', hospitalId);
         }
@@ -202,6 +225,70 @@ export const ClinicalProvider = ({ children }) => {
         if (data) {
             setDoctors(data);
             localStorage.setItem('medi_offline_doctors', JSON.stringify(data));
+        }
+    };
+
+    const fetchAppointments = async (hospitalId = null) => {
+        let query = supabase.from('appointments').select('*');
+        if (hospitalId || user?.hospital_id) {
+            query = query.eq('hospital_id', hospitalId || user?.hospital_id);
+        }
+        const { data } = await query.order('appointment_date', { ascending: true });
+        if (data) setAppointments(data);
+    };
+
+    const fetchPatients = async (hospitalId = null) => {
+        let query = supabase.from('patients').select('*');
+        if (hospitalId || user?.hospital_id) {
+            query = query.eq('hospital_id', hospitalId || user?.hospital_id);
+        }
+        const { data } = await query.order('created_at', { ascending: false });
+        if (data) setPatients(data);
+    };
+
+    const registerPatient = async (patientData) => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('patients')
+                .insert([{
+                    ...patientData,
+                    hospital_id: user?.hospital_id,
+                    created_by: user?.id
+                }])
+                .select()
+                .single();
+            if (error) throw error;
+            fetchPatients();
+            return data;
+        } catch (err) {
+            console.error('Error registering patient:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const saveAppointment = async (appointmentData) => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('appointments')
+                .insert([{
+                    ...appointmentData,
+                    hospital_id: user?.hospital_id,
+                    booked_by: user?.id
+                }])
+                .select()
+                .single();
+            if (error) throw error;
+            fetchAppointments();
+            return data;
+        } catch (err) {
+            console.error('Error saving appointment:', err);
+            throw err;
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -281,12 +368,19 @@ export const ClinicalProvider = ({ children }) => {
         }
     };
 
-    const analyzeClinicalRequest = async (requestText, history, file = null) => {
+    const analyzeClinicalRequest = async (requestText, history, file = null, fileUrl = null) => {
         try {
             const formData = new FormData();
             formData.append('request_text', requestText);
             formData.append('history_json', JSON.stringify(history));
-            if (file) formData.append('file', file);
+
+            if (file instanceof File) {
+                formData.append('file', file);
+            } else if (fileUrl) {
+                formData.append('file_url', fileUrl);
+            }
+
+            // If we have a file/url, we pass it. If not, it just analyzes text/history.
 
             const res = await fetch(`${API_URL}/api/analyze_clinical_request`, {
                 method: 'POST',
@@ -434,6 +528,37 @@ export const ClinicalProvider = ({ children }) => {
         if (error) console.error('Error prescribing:', error);
     };
 
+    const updateAllergies = async (requestId, allergies) => {
+        const { error } = await supabase
+            .from('appointment_requests')
+            .update({ allergies_data: allergies })
+            .eq('id', requestId);
+        if (error) console.error('Error updating allergies:', error);
+    };
+
+    const savePatientIntake = async (requestId, intakeData) => {
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('appointment_requests')
+                .update({
+                    vitals_data: intakeData.vitals,
+                    allergies_data: intakeData.allergies,
+                    status: 'NURSE_SEEN',
+                    nurse_seen_at: new Date().toISOString(),
+                    nurse_seen_by: user?.id
+                })
+                .eq('id', requestId);
+            if (error) throw error;
+            await refreshGlobalData();
+        } catch (err) {
+            console.error('Error saving patient intake:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const confirmAdministration = async (requestId, meds) => {
         const { error } = await supabase
             .from('appointment_requests')
@@ -493,10 +618,119 @@ export const ClinicalProvider = ({ children }) => {
         await refreshGlobalData();
     };
 
+    const acknowledgeVisit = async (requestId) => {
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('appointment_requests')
+                .update({
+                    status: 'DR_ACKNOWLEDGED',
+                    dr_acknowledged_at: new Date().toISOString(),
+                    assigned_doctor_id: user?.id
+                })
+                .eq('id', requestId);
+            if (error) throw error;
+            await refreshGlobalData();
+        } catch (err) {
+            console.error('Error acknowledging visit:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const saveDoctorAssessment = async (requestId, assessmentData) => {
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('appointment_requests')
+                .update({
+                    doctor_assessment: assessmentData,
+                    status: 'DOCTOR_SEEN',
+                    doctor_seen_at: new Date().toISOString()
+                })
+                .eq('id', requestId);
+            if (error) throw error;
+            await refreshGlobalData();
+        } catch (err) {
+            console.error('Error saving doctor assessment:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const logEvent = async (message, level = 'INFO') => {
         await supabase.from('system_logs').insert([{ message, level, analyzed_by_ai: true }]);
     };
 
+
+    // --- SECURE PRESCRIPTION SYSTEM ---
+    const generatePrescription = async (prescriptionData) => {
+        try {
+            const response = await fetch(`${API_URL}/api/generate_prescription`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...fetchHeaders
+                },
+                body: JSON.stringify(prescriptionData)
+            });
+            if (!response.ok) throw new Error('Failed to generate prescription');
+            return await response.json();
+        } catch (error) {
+            console.error("Prescription Error:", error);
+            throw error;
+        }
+    };
+
+    const scanPrescription = async (token) => {
+        try {
+            const response = await fetch(`${API_URL}/api/pharmacy/scan/${encodeURIComponent(token)}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...fetchHeaders
+                }
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Scan Failed');
+            }
+            return await response.json();
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    const fetchPatientPrescriptions = async (patientId) => {
+        try {
+            const response = await fetch(`${API_URL}/api/patient/${patientId}/prescriptions`, {
+                headers: { ...fetchHeaders }
+            });
+            if (!response.ok) return [];
+            return await response.json();
+        } catch (error) {
+            console.error("Fetch Prescriptions Error:", error);
+            return []; // Always return empty array to prevent filtering crashes
+        }
+    };
+
+    const dispensePrescription = async (dispenseData) => {
+        try {
+            const response = await fetch(`${API_URL}/api/pharmacy/dispense`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...fetchHeaders
+                },
+                body: JSON.stringify(dispenseData)
+            });
+            if (!response.ok) throw new Error('Dispense Failed');
+            return await response.json();
+        } catch (error) {
+            throw error;
+        }
+    };
     const deleteDiagnosis = async (diagnosisId) => {
         try {
             // 1. Get file path from URL
@@ -550,10 +784,26 @@ export const ClinicalProvider = ({ children }) => {
             requestNurseHelp,
             completeCase,
             generateInvite,
+            registerPatient,
+            saveAppointment,
+            updateAllergies,
+            savePatientIntake,
+            acknowledgeVisit,
+            saveDoctorAssessment,
+            appointments,
+            patients,
+            fetchAppointments,
+            fetchPatients,
+            refreshGlobalData,
             isBackendOnline,
             lastHealthCheck,
             checkBackendHealth,
-            loading
+            loading,
+            analyzeClinicalRequest,
+            generatePrescription,
+            scanPrescription,
+            fetchPatientPrescriptions,
+            dispensePrescription
         }}>
             {children}
         </ClinicalContext.Provider>

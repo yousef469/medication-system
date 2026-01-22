@@ -34,8 +34,15 @@ app.add_middleware(
 
 @app.get("/")
 @app.head("/")
-def health_check():
-    return {"status": "online", "mode": "hybrid"}
+async def health_check():
+    # If not an API request, proxy to Vite (Development Mode)
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get("http://127.0.0.1:5174/")
+            from fastapi.responses import HTMLResponse
+            return HTMLResponse(content=resp.text, status_code=resp.status_code)
+        except Exception:
+            return {"status": "online", "mode": "hybrid", "frontend": "offline_or_starting"}
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
@@ -76,18 +83,34 @@ async def analyze_license_endpoint(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+import httpx
+
 @app.post("/api/analyze_clinical_request")
 async def analyze_clinical_endpoint(
     request_text: str = Form(...),
     history_json: str = Form("[]"),
-    file: UploadFile = File(None)
+    file: UploadFile = File(None),
+    file_url: str = Form(None)
 ):
     """
     Synthesize medical request with history and imaging.
+    Accepts direct file upload OR a file_url (for stored Supabase files).
     """
     try:
         history = json.loads(history_json)
-        image_bytes = await file.read() if file else None
+        image_bytes = None
+
+        if file:
+            image_bytes = await file.read()
+        elif file_url:
+            print(f"[Server] Downloading clinical file from URL: {file_url}")
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(file_url)
+                if resp.status_code == 200:
+                    image_bytes = resp.content
+                else:
+                    print(f"[Server] Failed to download file from URL: {resp.status_code}")
+
         response = ai_brain.analyze_clinical_request(request_text, history, image_bytes)
         return response
     except Exception as e:
@@ -118,6 +141,153 @@ async def analyze_report_endpoint(file: UploadFile = File(...)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- Mock Database for Prescriptions (In-Memory for Prototype) ---
+PRESCRIPTIONS_MockDB = {}
+
+# --- Data Models for Prescriptions ---
+class PrescriptionRequest(BaseModel):
+    doctor_id: str
+    hospital_id: str
+    patient_id: str
+    patient_name: str
+    medications: list
+    diagnosis_context: str # Not shown to pharmacy
+    insurance_data: dict # {provider, id, status}
+    request_id: str = None # Link to the appointment/request ID
+
+class DispenseRequest(BaseModel):
+    token: str
+    pharmacy_id: str
+    pharmacist_id: str
+
+import uuid
+from datetime import datetime, timedelta
+
+@app.post("/api/generate_prescription")
+async def generate_prescription_endpoint(req: PrescriptionRequest):
+    """
+    Generates a secure, time-limited prescription token.
+    """
+    try:
+        token = str(uuid.uuid4())
+        expiry = datetime.utcnow() + timedelta(hours=24)
+        
+        # Store in Mock DB (Replace with Real DB insert in production)
+        PRESCRIPTIONS_MockDB[token] = {
+            "token": token,
+            "created_at": datetime.utcnow().isoformat(),
+            "expires_at": expiry.isoformat(),
+            "status": "ACTIVE",
+            "data": req.dict(),
+            "request_id": req.request_id # Store the request_id
+        }
+        
+        print(f"[Server] Generated Prescription: {token} for {req.patient_name}")
+        return {
+            "token": token,
+            "qr_data": f"MED_RX:{token}",
+            "expires_at": expiry.isoformat(),
+            "status": "generated"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/pharmacy/scan/{token}")
+async def scan_prescription_endpoint(token: str):
+    """
+    Pharmacy scans token. returns MASKED data (No diagnosis).
+    """
+    # Allow passing "MED_RX:" prefix or raw token
+    clean_token = token.replace("MED_RX:", "")
+    
+    record = PRESCRIPTIONS_MockDB.get(clean_token)
+    
+    if not record:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+    
+    if record['status'] == 'DISPENSED':
+        return {"status": "DISPENSED", "dispensed_at": record.get('dispensed_at'), "error": "Already used"}
+        
+    if datetime.fromisoformat(record['expires_at']) < datetime.utcnow():
+         return {"status": "EXPIRED", "error": "Token expired"}
+
+    # MASK SENSITIVE DATA
+    full_data = record['data']
+    masked_data = {
+        "status": "ACTIVE",
+        "doctor_id": full_data['doctor_id'],
+        "hospital_id": full_data['hospital_id'],
+        "patient_name": full_data['patient_name'], # In real world, maybe partial mask?
+        "medications": full_data['medications'],
+        "insurance_status": "APPROVED" if full_data['insurance_data'].get('status') == 'active' else "PENDING",
+        "copay": full_data['insurance_data'].get('copay', 0.0),
+        # EXCLUDED: diagnosis_context, patient_id (if redundant)
+    }
+    
+    return masked_data
+
+@app.post("/api/pharmacy/dispense")
+async def dispense_prescription_endpoint(req: DispenseRequest):
+    """
+    Pharmacy marks as dispensed.
+    """
+    clean_token = req.token.replace("MED_RX:", "")
+    record = PRESCRIPTIONS_MockDB.get(clean_token)
+    
+    if not record:
+        raise HTTPException(status_code=404, detail="Prescription not found")
+        
+    if record['status'] != 'ACTIVE':
+        raise HTTPException(status_code=400, detail=f"Cannot dispense. Status: {record['status']}")
+
+    # Update Status
+    record['status'] = 'DISPENSED'
+    record['dispensed_at'] = datetime.utcnow().isoformat()
+    record['pharmacy_info'] = {
+        "pharmacy_id": req.pharmacy_id,
+        "pharmacist_id": req.pharmacist_id
+    }
+    
+    print(f"[Server] Prescription {clean_token} DISPENSED by {req.pharmacy_id}")
+    return {"status": "success", "dispensed_at": record['dispensed_at']}
+
+@app.get("/api/patient/{patient_id}/prescriptions")
+async def get_patient_prescriptions(patient_id: str):
+    """
+    Returns active prescriptions for a patient (For their Mobile App QR).
+    """
+    results = []
+    
+    # Inefficient linear search for Mock DB (Fine for prototype)
+    for token, record in PRESCRIPTIONS_MockDB.items():
+        if record['data']['patient_id'] == patient_id:
+             # Only show valid ones? Or all history?
+             # Let's show all for now, frontend filters active
+             results.append({
+                 "token": token,
+                 "qr_data": f"MED_RX:{token}",
+                 "status": record['status'],
+                 "request_id": record.get('request_id'),
+                 "created_at": record['created_at'],
+                 "expires_at": record['expires_at'],
+                 "doctor_id": record['data']['doctor_id'],
+                 "medications": record['data']['medications']
+             })
+             
+    return results
+
+@app.get("/{path:path}")
+async def proxy_frontend(path: str):
+    # Specialized catch-all to serve Vite frontend through Python
+    async with httpx.AsyncClient() as client:
+        try:
+            url = f"http://127.0.0.1:5174/{path}"
+            resp = await client.get(url)
+            from fastapi.responses import Response
+            return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
+        except Exception:
+            raise HTTPException(status_code=503, detail="Frontend server starting or unavailable.")
 
 if __name__ == "__main__":
     import traceback

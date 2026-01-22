@@ -3,21 +3,20 @@ import { useAuth } from '../../context/useAuth';
 import { useClinical } from '../../context/ClinicalContext';
 import { useTheme } from '../../context/ThemeContext';
 import ProfessionalProfile from '../shared/ProfessionalProfile';
-import NurseVisitDashboard from './NurseVisitDashboard';
+import DoctorVisitDashboard from './DoctorVisitDashboard';
 import AccordionSidebar from '../shared/AccordionSidebar';
 
 import HospitalChat from './HospitalChat';
 
-const NurseDashboard = () => {
+const DoctorDashboard = () => {
     const { user, logout } = useAuth();
+    const { fetchRequests, refreshGlobalData } = useClinical();
     const { setTheme } = useTheme();
-    const { doctors, fetchDoctors } = useClinical();
     const [activeTab, setActiveTab] = useState('clinical'); // Default
 
-    // Force Light Mode for Professional Dashboards
     useEffect(() => {
         setTheme('light');
-        if (user?.hospital_id) fetchDoctors(user.hospital_id);
+        refreshGlobalData();
     }, []);
 
     const topNavItems = [
@@ -30,36 +29,42 @@ const NurseDashboard = () => {
         { id: 'logout', label: 'Log Out', icon: '🚪', onClick: logout }
     ];
 
-    const launchpadModules = [
-        { id: 'inpatient', label: 'In-Patient Management', sublabel: 'Vital signs, bed status, care notes', icon: '🛌', color: '#0ea5e9' },
-        { id: 'nurse_station', label: 'Nurse Station', sublabel: 'Core nurse workflow', icon: '🧑‍⚕️', color: '#10b981' },
-        { id: 'registration', label: 'Patient Registration', sublabel: 'View basic patient info', icon: '📋', color: '#8b5cf6', restricted: true },
-        { id: 'clinical', label: 'Clinical Management', sublabel: 'Follow doctor orders', icon: '🩻', color: '#6366f1' },
-        { id: 'phlebotomy', label: 'Phlebotomy', sublabel: 'Blood sample tracking', icon: '🧪', color: '#f43f5e' },
-        { id: 'discharge', label: 'Discharge Summary', sublabel: 'View only instructions', icon: '📄', color: '#f59e0b', restricted: true },
-        { id: 'inventory', label: 'Inventory (Limited)', sublabel: 'Supplies & medication stock', icon: '📦', color: '#ec4899' },
-        { id: 'emergency', label: 'Emergency (Read-only)', sublabel: 'Emergency alerts', icon: '🚨', color: '#ef4444' },
+    const doctorModules = [
+        { id: 'clinical', label: 'Clinical Management', icon: '👨‍⚕️', sublabel: 'Patient Consultation & EHR', color: '#0ea5e9' },
+        { id: 'appointment', label: 'Appointment', icon: '📅', sublabel: 'Schedule & Patient Bookings', color: '#10b981' },
+        { id: 'emergency', label: 'Emergency', icon: '🚨', sublabel: 'Critical Care & Alerts', color: '#ef4444' },
+        { id: 'theatre', label: 'Operation Theatre', icon: '🔪', sublabel: 'Surgery Schedule & Status', color: '#8b5cf6' },
+        { id: 'phlebotomy', label: 'Phlebotomy', icon: '🩸', sublabel: 'Blood Sampling', color: '#f43f5e' },
+        { id: 'laboratory', label: 'Laboratory', icon: '🔬', sublabel: 'Test Results & Analysis', color: '#6366f1' },
+        { id: 'radiology', label: 'Radiology', icon: '🩻', sublabel: 'Imaging & Diagnostics', color: '#f59e0b' },
+        { id: 'system', label: 'System Control', icon: '⚙️', sublabel: 'Hospital Configuration', restricted: true, color: '#64748b' }
     ];
 
     const menuGroups = [
         {
-            title: 'Clinical Care',
+            title: 'Clinical Practice',
             icon: '🩺',
             items: [
-                { id: 'clinical', label: 'Clinical Management', icon: '🩻' },
-                { id: 'nurse_station', label: 'Nurse Station', icon: '🧑‍⚕️' },
-                { id: 'inpatient', label: 'In-Patient Mgmt', icon: '🛌' },
-                { id: 'phlebotomy', label: 'Phlebotomy', icon: '🧪' },
-                { id: 'emergency', label: 'Emergency (View)', icon: '🚨' }
+                { id: 'clinical', label: 'Clinical Management', icon: '👨‍⚕️' },
+                { id: 'appointment', label: 'Appointments', icon: '📅' },
+                { id: 'emergency', label: 'Emergency', icon: '🚨' },
+                { id: 'theatre', label: 'Operation Theatre', icon: '🔪' }
+            ]
+        },
+        {
+            title: 'Diagnostics',
+            icon: '🔬',
+            items: [
+                { id: 'laboratory', label: 'Laboratory', icon: '🧪' },
+                { id: 'radiology', label: 'Radiology', icon: '🩻' },
+                { id: 'phlebotomy', label: 'Phlebotomy', icon: '🩸' }
             ]
         },
         {
             title: 'Administrative',
-            icon: '📋',
+            icon: '⚙️',
             items: [
-                { id: 'registration', label: 'Patient Registration', icon: '📝', restricted: true },
-                { id: 'discharge', label: 'Discharge Summary', icon: '📄', restricted: true },
-                { id: 'inventory', label: 'Inventory', icon: '📦' }
+                { id: 'system', label: 'System Control', icon: '🔧', restricted: true }
             ]
         }
     ];
@@ -71,7 +76,7 @@ const NurseDashboard = () => {
             case 'launchpad':
                 return (
                     <div className="launchpad-grid fade-in">
-                        {launchpadModules.map(module => (
+                        {doctorModules.map(module => (
                             <div
                                 key={module.id}
                                 className="modular-icon-card"
@@ -89,7 +94,7 @@ const NurseDashboard = () => {
                     </div>
                 );
             case 'clinical':
-                return <NurseVisitDashboard />;
+                return <DoctorVisitDashboard />;
             case 'profile':
                 return <ProfessionalProfile profile={user} isOwner={true} showFeed={true} />;
             default:
@@ -97,7 +102,7 @@ const NurseDashboard = () => {
                     <div className="empty-state fade-in">
                         <div style={{ fontSize: '3rem' }}>🚧</div>
                         <h3>Module Under Construction</h3>
-                        <p>Accessing {activeTab.toUpperCase()} restricted/admin zone.</p>
+                        <p>The {activeTab.toUpperCase()} module is being calibrated for Silver Hill Hospital standards.</p>
                         <button className="btn-secondary" onClick={() => setActiveTab('clinical')}>Back to Clinical</button>
                     </div>
                 );
@@ -112,7 +117,7 @@ const NurseDashboard = () => {
                 bottomNavItems={bottomNavItems}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
-                userRole="Nurse"
+                userRole="Doctor"
                 hospitalName={user?.hospital_name || 'Unity Medical'}
             />
 
@@ -121,16 +126,21 @@ const NurseDashboard = () => {
                     <header style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem' }}>
                         <div>
                             <h1 style={{ fontSize: '1.5rem', color: '#0f172a' }}>
-                                {activeTab === 'launchpad' ? 'Nurse Dashboard' : (menuGroups.flatMap(g => g.items).find(i => i.id === activeTab)?.label || 'Dashboard')}
+                                {activeTab === 'launchpad' ? 'Doctor Dashboard' : (menuGroups.flatMap(g => g.items).find(i => i.id === activeTab)?.label || 'Dashboard')}
                             </h1>
-                            <p style={{ color: '#64748b', fontSize: '0.8rem' }}>Nurse Portal • {user?.name}</p>
+                            <p style={{ color: '#64748b', fontSize: '0.8rem' }}>Doctor Portal • {user?.name}</p>
                         </div>
-                        <button className="btn-primary" onClick={logout}>Sign Out</button>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0ea5e9' }}>{user?.department || 'GENERAL MEDICINE'}</span>
+                            </div>
+                            <button className="btn-primary" onClick={logout}>Sign Out</button>
+                        </div>
                     </header>
 
                     {/* Re-add styles for launchpad grid locally or assume global/imported */}
                     <style>{`
-                        .launchpad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.5rem; }
+                        .launchpad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; }
                         .modular-icon-card {
                             background: var(--bg-surface);
                             border-radius: 15px;
@@ -175,4 +185,4 @@ const NurseDashboard = () => {
     );
 };
 
-export default NurseDashboard;
+export default DoctorDashboard;
