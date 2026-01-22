@@ -29,7 +29,7 @@ const HospitalAdminDashboard = () => {
                 .from('hospitals')
                 .select('*')
                 .eq('admin_id', user.id)
-                .single();
+                .maybeSingle();
 
             if (hError) throw hError;
             setHospitalInfo(hospital);
