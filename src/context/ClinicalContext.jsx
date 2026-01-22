@@ -22,7 +22,7 @@ export const ClinicalProvider = ({ children }) => {
 
     // Hardened API Selection: Ensure APK/Vercel ALWAYS uses the tunnel
     const tunnelUrl = "https://medical-hub-brain.loca.lt";
-    const API_URL = import.meta.env.PROD || (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.startsWith('192.168.'))
+    const API_URL = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
         ? tunnelUrl
         : "";
 

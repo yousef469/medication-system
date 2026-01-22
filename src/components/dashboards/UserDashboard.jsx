@@ -243,6 +243,28 @@ const UserDashboard = () => {
             </div>
           )}
 
+          {!isGuest && activePrescriptions.length === 0 && (
+            <div className="fade-in" style={{
+              marginBottom: '2.5rem',
+              padding: '1.5rem',
+              background: 'rgba(16, 185, 129, 0.05)',
+              borderRadius: '24px',
+              border: '1px dashed #10b981',
+              textAlign: 'center'
+            }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🎫</div>
+              <div style={{ fontWeight: 800, color: '#10b981', fontSize: '0.9rem' }}>QR Wallet is Active</div>
+              <p style={{ margin: '0.2rem 0', opacity: 0.6, fontSize: '0.75rem' }}>No active prescriptions found in the clinical cloud.</p>
+              <button
+                onClick={syncPrescriptions}
+                type="button"
+                style={{ background: 'none', border: '1px solid #10b981', color: '#10b981', padding: '4px 12px', borderRadius: '8px', fontSize: '0.65rem', marginTop: '0.8rem', cursor: 'pointer', fontWeight: 900 }}
+              >
+                {syncStatus === 'SYNCING' ? 'SYNCING...' : 'FORCE REFRESH CLOUD'}
+              </button>
+            </div>
+          )}
+
           <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v3.2 (Sync Ready)</span></h3>
           <p className="section-desc">Submit text, files, or voice for clinical routing.</p>
 
