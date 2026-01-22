@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 import QRCode from 'react-qr-code';
+import PatientAnatomyReview from './PatientAnatomyReview';
 
 const DoctorConsultation = ({ request, onBack }) => {
     const { saveDoctorAssessment, generatePrescription, loading } = useClinical(); // ADDED generatePrescription
