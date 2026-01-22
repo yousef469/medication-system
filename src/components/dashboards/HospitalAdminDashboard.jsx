@@ -29,6 +29,8 @@ const HospitalAdminDashboard = () => {
                 .from('hospitals')
                 .select('*')
                 .eq('admin_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
                 .maybeSingle();
 
             if (hError) throw hError;
