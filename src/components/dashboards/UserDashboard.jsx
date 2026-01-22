@@ -230,7 +230,7 @@ const UserDashboard = () => {
                 {activePrescriptions.map(rx => (
                   <div key={rx.token} style={{ background: 'white', padding: '1rem', borderRadius: '18px', minWidth: '220px', display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#064e3b' }}>
                     <div style={{ background: '#f0fdf4', padding: '0.8rem', borderRadius: '12px', marginBottom: '0.8rem' }}>
-                      <QRCode value={`MED_RX:${rx.token}`} size={140} />
+                      <QRCode value={`${window.location.origin}/prescription/${rx.token}`} size={140} />
                     </div>
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', color: '#10b981', letterSpacing: '0.05em' }}>Pharmacy Token</div>
@@ -265,7 +265,7 @@ const UserDashboard = () => {
             </div>
           )}
 
-          <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v4.0.3 (Sync Ready)</span></h3>
+          <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v4.0.4 (Sync Ready)</span></h3>
           <p className="section-desc">Submit text, files, or voice for clinical routing.</p>
 
           <form onSubmit={handleRequest} className="request-form">

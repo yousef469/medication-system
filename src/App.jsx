@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
 import AppLayout from './components/layout/AppLayout';
@@ -27,11 +28,12 @@ import BioAnatomyLab from './components/dashboards/BioAnatomyLab';
 import VerificationPending from './components/auth/VerificationPending';
 import MobileAnatomyBridge from './components/mobile/MobileAnatomyBridge';
 import PharmacyPortal from './components/dashboards/PharmacyPortal';
+import PrescriptionTerminal from './components/shared/PrescriptionTerminal';
 import { ClinicalProvider, useClinical } from './context/ClinicalContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 
-const CURRENT_RELEASE = "v4.0.3"; // Nuclear check for mobile sync
+const CURRENT_RELEASE = "v4.0.4"; // Digital Prescription Terminal rollout
 
 // Error Boundary for Mobile Recovery
 class ErrorBoundary extends React.Component {
@@ -221,84 +223,91 @@ const MainContent = () => {
   const configStatus = !!import.meta.env.VITE_SUPABASE_ANON_KEY && !!import.meta.env.VITE_SUPABASE_URL;
 
   return (
-    <>
-      {isLocked && <LockScreen onUnlock={unlockSession} />}
-      <div style={{
-        position: 'fixed',
-        top: '10px',
-        right: '10px',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        pointerEvents: 'none'
-      }}>
-        <div style={{
-          background: configStatus ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-          color: configStatus ? '#4ade80' : '#f87171',
-          padding: '4px 12px',
-          borderRadius: '20px',
-          fontSize: '0.65rem',
-          fontWeight: 'bold',
-          border: `1px solid ${configStatus ? '#22c55e' : '#ef4444'}`,
-          backdropFilter: 'blur(4px)',
-          fontFamily: 'monospace',
-          textAlign: 'right'
-        }}>
-          SUPABASE: {configStatus ? 'READY' : 'CONFIG_ERROR'}
-        </div>
-        <div style={{
-          background: isBackendOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-          color: isBackendOnline ? '#4ade80' : '#f87171',
-          padding: '4px 12px',
-          borderRadius: '20px',
-          fontSize: '0.65rem',
-          fontWeight: 'bold',
-          border: `1px solid ${isBackendOnline ? '#22c55e' : '#ef4444'}`,
-          backdropFilter: 'blur(4px)',
-          fontFamily: 'monospace',
-          textAlign: 'right'
-        }}>
-          AI BRAIN: {isBackendOnline ? 'ONLINE' : 'OFFLINE (CHECK TUNNEL)'}
-        </div>
-      </div>
-
-      {!isStarted ? (
-        <AppLayout onNavClick={handleNavClick} currentView="landing">
-          <LandingPage onGetStarted={() => setIsStarted(true)} />
-        </AppLayout>
-      ) : (
-        ['doctor', 'nurse', 'secretary', 'hospital_admin'].includes(user?.role) ? (
-          getActiveContent()
-        ) : (
-          <AppLayout onNavClick={handleNavClick} currentView={activeSubView}>
-            <div className="system-viewport">
-              {user?.isAuthenticated && user.role !== 'user' && user.verification_status !== 'APPROVED' ? (
-                <VerificationPending />
-              ) : (
-                getActiveContent()
-              )}
+    <Routes>
+      <Route path="/prescription/:token" element={<PrescriptionTerminal />} />
+      <Route path="*" element={
+        <>
+          {isLocked && <LockScreen onUnlock={unlockSession} />}
+          <div style={{
+            position: 'fixed',
+            top: '10px',
+            right: '10px',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            pointerEvents: 'none'
+          }}>
+            <div style={{
+              background: configStatus ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+              color: configStatus ? '#4ade80' : '#f87171',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '0.65rem',
+              fontWeight: 'bold',
+              border: `1px solid ${configStatus ? '#22c55e' : '#ef4444'}`,
+              backdropFilter: 'blur(4px)',
+              fontFamily: 'monospace',
+              textAlign: 'right'
+            }}>
+              SUPABASE: {configStatus ? 'READY' : 'CONFIG_ERROR'}
             </div>
-          </AppLayout>
-        )
-      )}
-    </>
+            <div style={{
+              background: isBackendOnline ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+              color: isBackendOnline ? '#4ade80' : '#f87171',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '0.65rem',
+              fontWeight: 'bold',
+              border: `1px solid ${isBackendOnline ? '#22c55e' : '#ef4444'}`,
+              backdropFilter: 'blur(4px)',
+              fontFamily: 'monospace',
+              textAlign: 'right'
+            }}>
+              AI BRAIN: {isBackendOnline ? 'ONLINE' : 'OFFLINE (CHECK TUNNEL)'}
+            </div>
+          </div>
+
+          {!isStarted ? (
+            <AppLayout onNavClick={handleNavClick} currentView="landing">
+              <LandingPage onGetStarted={() => setIsStarted(true)} />
+            </AppLayout>
+          ) : (
+            ['doctor', 'nurse', 'secretary', 'hospital_admin'].includes(user?.role) ? (
+              getActiveContent()
+            ) : (
+              <AppLayout onNavClick={handleNavClick} currentView={activeSubView}>
+                <div className="system-viewport">
+                  {user?.isAuthenticated && user.role !== 'user' && user.verification_status !== 'APPROVED' ? (
+                    <VerificationPending />
+                  ) : (
+                    getActiveContent()
+                  )}
+                </div>
+              </AppLayout>
+            )
+          )}
+        </>
+      } />
+    </Routes>
   );
 };
 
 function App() {
   return (
-    <ErrorBoundary>
-      <LanguageProvider>
-        <AuthProvider>
-          <ClinicalProvider>
-            <ThemeProvider>
-              <MainContent />
-            </ThemeProvider>
-          </ClinicalProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </ErrorBoundary>
+    <BrowserRouter>
+      <ErrorBoundary>
+        <LanguageProvider>
+          <AuthProvider>
+            <ClinicalProvider>
+              <ThemeProvider>
+                <MainContent />
+              </ThemeProvider>
+            </ClinicalProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ErrorBoundary>
+    </BrowserRouter>
   );
 }
 

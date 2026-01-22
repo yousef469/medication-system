@@ -222,7 +222,7 @@ async def scan_prescription_endpoint(token: str):
         "medications": full_data['medications'],
         "insurance_status": "APPROVED" if full_data['insurance_data'].get('status') == 'active' else "PENDING",
         "copay": full_data['insurance_data'].get('copay', 0.0),
-        # EXCLUDED: diagnosis_context, patient_id (if redundant)
+        "patient_id": full_data['patient_id'],
     }
     
     return masked_data
