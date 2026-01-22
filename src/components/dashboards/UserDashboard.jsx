@@ -265,7 +265,7 @@ const UserDashboard = () => {
             </div>
           )}
 
-          <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v4.0.7 (Sync Ready)</span></h3>
+          <h3>Emergency & Clinical Portal <span style={{ fontSize: '0.6rem', opacity: 0.4, fontWeight: 'normal' }}>v4.0.8 (Sync Ready)</span></h3>
           <p className="section-desc">Submit text, files, or voice for clinical routing.</p>
 
           <form onSubmit={handleRequest} className="request-form">

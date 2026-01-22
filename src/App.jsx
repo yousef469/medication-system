@@ -33,7 +33,7 @@ import { ClinicalProvider, useClinical } from './context/ClinicalContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 
-const CURRENT_RELEASE = "v4.0.7"; // AI Brain Connection Stability (Bypass Header)
+const CURRENT_RELEASE = "v4.0.8"; // Universal Proxy Infrastructure Fix (Async Pool)
 
 // Error Boundary for Mobile Recovery
 class ErrorBoundary extends React.Component {

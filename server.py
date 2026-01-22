@@ -5,6 +5,7 @@ import uvicorn
 import ai_brain
 import os
 import json
+import httpx
 from contextlib import asynccontextmanager
 
 # --- Data Models ---
@@ -23,6 +24,13 @@ async def lifespan(app: FastAPI):
 # --- App Setup ---
 app = FastAPI(title="MediLink AI Backend", lifespan=lifespan)
 
+# Global HTTP Client for Proxying to avoid socket exhaustion
+http_client = httpx.AsyncClient(
+    base_url="http://127.0.0.1:5174",
+    timeout=httpx.Timeout(30.0, connect=10.0), # Extended timeout for large 3D assets
+    limits=httpx.Limits(max_connections=100, max_keepalive_connections=20)
+)
+
 # Allow CORS for React Frontend
 app.add_middleware(
     CORSMiddleware,
@@ -36,13 +44,12 @@ app.add_middleware(
 @app.head("/")
 async def health_check():
     # If not an API request, proxy to Vite (Development Mode)
-    async with httpx.AsyncClient() as client:
-        try:
-            resp = await client.get("http://127.0.0.1:5174/")
-            from fastapi.responses import HTMLResponse
-            return HTMLResponse(content=resp.text, status_code=resp.status_code)
-        except Exception:
-            return {"status": "online", "mode": "hybrid", "frontend": "offline_or_starting"}
+    try:
+        resp = await http_client.get("/")
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(content=resp.text, status_code=resp.status_code)
+    except Exception:
+        return {"status": "online", "mode": "hybrid", "frontend": "offline_or_starting"}
 
 @app.get("/api/health")
 async def api_health():
@@ -87,8 +94,6 @@ async def analyze_license_endpoint(file: UploadFile = File(...)):
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-import httpx
 
 @app.post("/api/analyze_clinical_request")
 async def analyze_clinical_endpoint(
@@ -282,17 +287,36 @@ async def get_patient_prescriptions(patient_id: str):
              
     return results
 
-@app.get("/{path:path}")
-async def proxy_frontend(path: str):
+from fastapi import Request
+from fastapi.responses import Response
+
+@app.api_route("/{path:path}", methods=["GET", "HEAD"])
+async def proxy_frontend(request: Request, path: str):
     # Specialized catch-all to serve Vite frontend through Python
-    async with httpx.AsyncClient() as client:
-        try:
-            url = f"http://127.0.0.1:5174/{path}"
-            resp = await client.get(url)
-            from fastapi.responses import Response
-            return Response(content=resp.content, status_code=resp.status_code, media_type=resp.headers.get("content-type"))
-        except Exception:
-            raise HTTPException(status_code=503, detail="Frontend server starting or unavailable.")
+    # Includes query parameters for versioning/JS modules
+    try:
+        query_string = request.url.query
+        target_url = f"/{path}"
+        if query_string:
+            target_url += f"?{query_string}"
+            
+        # Pass through some headers but exclude host
+        headers = {k: v for k, v in request.headers.items() if k.lower() not in ['host', 'accept-encoding']}
+        
+        resp = await http_client.request(
+            method=request.method,
+            url=target_url,
+            headers=headers
+        )
+        
+        return Response(
+            content=resp.content, 
+            status_code=resp.status_code, 
+            media_type=resp.headers.get("content-type")
+        )
+    except Exception as e:
+        print(f"[Proxy Error] Failed to reach Vite at {path}: {str(e)}")
+        raise HTTPException(status_code=503, detail="Frontend server starting or unavailable.")
 
 if __name__ == "__main__":
     import traceback
