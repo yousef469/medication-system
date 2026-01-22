@@ -165,22 +165,29 @@ const UserHospitals = () => {
                 {hospitals.map(h => (
                     <div key={h.id} className="glass-card hospital-full-card" onClick={() => setSelectedHospitalId(h.id)}>
                         <div className="hosp-banner" style={{
-                            backgroundImage: h.image ? `url(${h.image})` : 'none',
+                            backgroundImage: (h.cover_image_url || h.image) ? `url(${h.cover_image_url || h.image})` : 'none',
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                             height: '200px',
                             borderRadius: 'var(--radius-md) var(--radius-md) 0 0'
-                        }}></div>
+                        }}>
+                            {h.ai_config?.level && (
+                                <span className={`ai-badge ${h.ai_config.level}`}>
+                                    {h.ai_config.level.toUpperCase()} AI
+                                </span>
+                            )}
+                        </div>
                         <div className="hosp-content">
                             <div className="hosp-header">
                                 <h3>{h.name}</h3>
                                 <span className={`mini-status ${h.busyStatus || 'moderate'}`}>●</span>
                             </div>
-                            <p className="location-tag">📍 {h.location || 'Location Pending'}</p>
+                            <p className="location-tag">📍 {h.address || h.location || h.city || 'Location Pending'}</p>
                             <p className="description">{h.description || 'Welcome to our newly registered medical facility.'}</p>
                             <div className="stats">
                                 <span>⭐ 5.0</span>
-                                <span>{h.sections?.length || 0} Depts</span>
+                                <span>{(h.specialty_tags || h.sections)?.length || 0} Depts</span>
+                                {h.digital_reality === 'digital' && <span className="tech-badge">⚡ FULL DIGITAL</span>}
                             </div>
                         </div>
                     </div>
@@ -213,7 +220,10 @@ const UserHospitals = () => {
                 .mini-status.moderate { color: #10b981; }
                 .location-tag { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
                 .description { font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-                .stats { display: flex; gap: 1.5rem; font-size: 0.8rem; font-weight: 700; color: var(--primary); }
+                .stats { display: flex; gap: 1.5rem; font-size: 0.8rem; font-weight: 700; color: var(--primary); align-items: center; }
+                .ai-badge { position: absolute; top: 1rem; right: 1rem; background: rgba(124, 58, 237, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: 900; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+                .ai-badge.advanced { background: linear-gradient(135deg, #7c3aed, #ec4899); }
+                .tech-badge { background: rgba(34, 197, 94, 0.1); color: #4ade80; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; border: 1px solid rgba(34, 197, 94, 0.2); }
                 .mb-2 { margin-bottom: 2rem; }
             `}</style>
         </div>

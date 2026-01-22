@@ -3,6 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../context/useAuth';
 import AccordionSidebar from '../shared/AccordionSidebar';
 import HospitalChat from './HospitalChat'; // Import HospitalChat
+import HospitalOnboarding from './HospitalOnboarding';
 import { useTheme } from '../../context/ThemeContext'; // Ensure theme context is used if needed
 
 const HospitalAdminDashboard = () => {
@@ -59,6 +60,13 @@ const HospitalAdminDashboard = () => {
             setLoading(false);
         }
     };
+
+    if (loading) return <div className="loading-screen">Authenticating Facility Credentials...</div>;
+
+    // Show Onboarding if hospital doesn't exist yet OR phase 1 is not complete
+    if (!hospitalInfo || hospitalInfo.registration_phase < 2) {
+        return <HospitalOnboarding onComplete={fetchHospitalData} />;
+    }
 
     const handleApprove = async (staffId) => {
         try {

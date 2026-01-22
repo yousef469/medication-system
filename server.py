@@ -141,15 +141,27 @@ async def analyze_report_endpoint(file: UploadFile = File(...)):
         print(f"[Server] Starting AI Brain analysis...", flush=True)
         response = ai_brain.analyze_medical_report(contents)
         print(f"[Server] AI Brain analysis complete.", flush=True)
-        
-        if "error" in response:
-            print(f"[Server] !!! AI Brain returned error: {response['error']}", flush=True)
-        
         return response
     except Exception as e:
         print(f"[Server] !!! CRITICAL ENDPOINT ERROR: {str(e)}", flush=True)
         import traceback
         traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/analyze_license")
+async def analyze_license_endpoint(file: UploadFile = File(...)):
+    """
+    Dedicated OCR for professional/hospital licenses.
+    """
+    print(f"\n[Server] === NEW LICENSE ANALYZE REQUEST ===", flush=True)
+    print(f"[Server] Filename: {file.filename}", flush=True)
+    try:
+        contents = await file.read()
+        response = ai_brain.analyze_license(contents)
+        print(f"[Server] AI License Analysis Result: {str(response)[:200]}...", flush=True)
+        return response
+    except Exception as e:
+        print(f"[Server] !!! CRITICAL LICENSE ERROR: {str(e)}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- Mock Database for Prescriptions (In-Memory for Prototype) ---

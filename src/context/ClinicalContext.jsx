@@ -38,7 +38,7 @@ export const ClinicalProvider = ({ children }) => {
         "Bypass-Tunnel-Reminder": "true"
     };
 
-    const [isBackendOnline, setIsBackendOnline] = useState(false);
+    const [isBackendOnline, setIsBackendOnline] = useState(true); // Optimistic default to unblock UI
     const [lastHealthCheck, setLastHealthCheck] = useState(null);
 
     const checkBackendHealth = async () => {
@@ -107,12 +107,49 @@ export const ClinicalProvider = ({ children }) => {
     };
 
     const fetchHospitals = async () => {
-        const { data, error } = await supabase.from('hospitals').select('*').in('status', ['APPROVED', 'PENDING']);
+        const { data, error } = await supabase.from('hospitals').select('*').in('status', ['APPROVED', 'PENDING', 'PENDING_VERIFICATION']);
         if (error) console.error('Error fetching hospitals:', error);
         else {
             setHospitals(data || []);
             localStorage.setItem('medi_offline_hospitals', JSON.stringify(data || []));
         }
+    };
+
+    const registerHospitalNode = async (hospitalData) => {
+        const { data, error } = await supabase
+            .from('hospitals')
+            .insert([{
+                ...hospitalData,
+                registration_phase: 1,
+                status: 'PENDING_VERIFICATION',
+                admin_id: user.id
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    };
+
+    const updateHospitalConfig = async (hospitalId, config) => {
+        const { error } = await supabase
+            .from('hospitals')
+            .update(config)
+            .eq('id', hospitalId);
+
+        if (error) throw error;
+    };
+
+    const analyzeLicenseOCR = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch(`${API_URL}/api/analyze_license`, {
+            method: 'POST',
+            headers: fetchHeaders,
+            body: formData
+        });
+        if (!res.ok) throw new Error("OCR Analysis Failed");
+        return await res.json();
     };
 
     const fetchRequests = async (hospitalId = null) => {
@@ -806,7 +843,11 @@ export const ClinicalProvider = ({ children }) => {
             generatePrescription,
             scanPrescription,
             fetchPatientPrescriptions,
-            dispensePrescription
+            dispensePrescription,
+            registerHospitalNode,
+            updateHospitalConfig,
+            analyzeLicenseOCR,
+            uploadFileToSupabase
         }}>
             {children}
         </ClinicalContext.Provider>
