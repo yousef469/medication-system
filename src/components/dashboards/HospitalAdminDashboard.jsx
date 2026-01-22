@@ -32,6 +32,14 @@ const HospitalAdminDashboard = () => {
                 .maybeSingle();
 
             if (hError) throw hError;
+
+            // If no hospital found, stop here (will trigger Onboarding view)
+            if (!hospital) {
+                setHospitalInfo(null);
+                setLoading(false);
+                return;
+            }
+
             setHospitalInfo(hospital);
 
             // 2. Get Pending Staff for this Hospital
