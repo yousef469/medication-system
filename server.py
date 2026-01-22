@@ -296,16 +296,19 @@ async def proxy_frontend(request: Request, path: str):
     # Includes query parameters for versioning/JS modules
     try:
         query_string = request.url.query
-        target_url = f"/{path}"
+        target_path = f"/{path}" if not path.startswith('/') else path
         if query_string:
-            target_url += f"?{query_string}"
+            target_path += f"?{query_string}"
             
-        # Pass through some headers but exclude host
+        # Pass through some headers but exclude host/encoding to avoid decompression/compression issues
         headers = {k: v for k, v in request.headers.items() if k.lower() not in ['host', 'accept-encoding']}
+        
+        # ADDED LOGGING FOR DIAGNOSTICS
+        # print(f"[Proxy] {request.method} {target_path}")
         
         resp = await http_client.request(
             method=request.method,
-            url=target_url,
+            url=target_path,
             headers=headers
         )
         
@@ -315,7 +318,9 @@ async def proxy_frontend(request: Request, path: str):
             media_type=resp.headers.get("content-type")
         )
     except Exception as e:
+        import traceback
         print(f"[Proxy Error] Failed to reach Vite at {path}: {str(e)}")
+        # traceback.print_exc()
         raise HTTPException(status_code=503, detail="Frontend server starting or unavailable.")
 
 if __name__ == "__main__":

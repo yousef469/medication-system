@@ -32,8 +32,11 @@ export const ClinicalProvider = ({ children }) => {
         resolvedAPI: API_URL || "Local (Proxy/Relative)"
     });
 
-    // Localtunnel bypass headers for production
-    const fetchHeaders = { "bypass-tunnel-reminder": "true" };
+    // Localtunnel bypass headers for production (Dual-case for maximum compatibility)
+    const fetchHeaders = {
+        "bypass-tunnel-reminder": "true",
+        "Bypass-Tunnel-Reminder": "true"
+    };
 
     const [isBackendOnline, setIsBackendOnline] = useState(false);
     const [lastHealthCheck, setLastHealthCheck] = useState(null);
