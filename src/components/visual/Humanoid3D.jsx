@@ -56,9 +56,15 @@ const BodyMarker = ({ position, status }) => {
 // REMOVED onMeshFound prop and logic
 // BonePart component supporting White Skeleton vs Red Muscle modes
 const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1], prefix = "", texture, highlightTexture, materialType = 'muscle', excludeNames = [], highlightedParts = [], visualMode = 'WHITE_SKELETON', showVessels = true, onMeshClick }) => {
-    const { scene } = useGLTF(url);
+    // Inject Localtunnel Bypass Headers for GLTF Loader
+    const { scene } = useGLTF(url, true, true, (loader) => {
+        if (loader.setRequestHeader) {
+            loader.setRequestHeader({ 'bypass-tunnel-reminder': 'true' });
+        }
+    });
+
     const model = useMemo(() => {
-        window.__SCENE__ = scene; // TEMPORARY DEBUG
+        if (!scene) return null;
         const c = scene.clone();
         c.traverse((child) => {
             if (child.isMesh) {
@@ -174,6 +180,8 @@ const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1,
         return c;
     }, [scene, texture, highlightTexture, materialType, excludeNames, highlightedParts, prefix, visualMode]);
 
+    if (!model) return null;
+
     return (
         <primitive
             object={model}
@@ -204,6 +212,10 @@ const AnatomySystem = ({
         plain: '/textures/muscle/muscle_tiles_plain.png',
         tendons: '/textures/muscle/muscle_tendons.png',
         trapezius: '/textures/muscle/muscle_trapezius.png'
+    }, (loader) => {
+        if (loader.setRequestHeader) {
+            loader.setRequestHeader({ 'bypass-tunnel-reminder': 'true' });
+        }
     });
 
     useMemo(() => {
@@ -367,8 +379,10 @@ const Humanoid3D = ({ markers = [], highlightedParts = [], role = 'PATIENT', onM
 
     // INTERNAL STATE: Merge markers into highlights for the visual meshes
     const integratedHighlights = useMemo(() => {
-        const fromMarkers = markers.map(m => m.part).filter(Boolean);
-        return [...new Set([...highlightedParts, ...fromMarkers])];
+        const _marks = Array.isArray(markers) ? markers : [];
+        const _highlights = Array.isArray(highlightedParts) ? highlightedParts : [];
+        const fromMarkers = _marks.map(m => m.part).filter(Boolean);
+        return [...new Set([..._highlights, ...fromMarkers])];
     }, [markers, highlightedParts]);
 
     // LAYERS HUD STATE - Auto-switch to Red Muscle for specialists reviewing 3D cases
@@ -517,7 +531,8 @@ const Humanoid3D = ({ markers = [], highlightedParts = [], role = 'PATIENT', onM
                                     onClick={async () => {
                                         setIsSharing(true);
                                         try {
-                                            const content = `[REFERRAL] Patient shared 3D anatomical profile for specialized review. Highlights: ${highlightedParts.join(', ')}`;
+                                            const highlightsStr = Array.isArray(highlightedParts) ? highlightedParts.join(', ') : '';
+                                            const content = `[REFERRAL] Patient shared 3D anatomical profile for specialized review. Highlights: ${highlightsStr}`;
                                             await submitRequest(
                                                 "Patient Referral",
                                                 h.id,

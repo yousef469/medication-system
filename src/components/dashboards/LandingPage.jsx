@@ -66,7 +66,7 @@ const LandingPage = ({ onGetStarted }) => {
                     </div>
                     <div style={{ marginTop: '1rem', opacity: 0.7, fontSize: '0.7rem', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', padding: '0.5rem', borderRadius: '4px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span>System v4.0.4 • Mobile Config: {window.location.hostname}</span>
+                            <span>System v4.0.5 • Mobile Config: {window.location.hostname}</span>
                             <button
                                 onClick={() => {
                                     if (confirm("DANGER: This will wipe your mobile cache and force a fresh download. Use this if the app feels broken or outdated.")) {
