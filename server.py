@@ -44,6 +44,11 @@ async def health_check():
         except Exception:
             return {"status": "online", "mode": "hybrid", "frontend": "offline_or_starting"}
 
+@app.get("/api/health")
+async def api_health():
+    """Explicit JSON health check for Clinical Hub"""
+    return {"status": "online", "mode": "hybrid", "timestamp": datetime.utcnow().isoformat()}
+
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
     """

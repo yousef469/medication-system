@@ -33,14 +33,14 @@ export const ClinicalProvider = ({ children }) => {
     });
 
     // Localtunnel bypass headers for production
-    const fetchHeaders = { "Bypass-Tunnel-Reminder": "true" };
+    const fetchHeaders = { "bypass-tunnel-reminder": "true" };
 
     const [isBackendOnline, setIsBackendOnline] = useState(false);
     const [lastHealthCheck, setLastHealthCheck] = useState(null);
 
     const checkBackendHealth = async () => {
         try {
-            const res = await fetch(`${API_URL}/`, { headers: fetchHeaders });
+            const res = await fetch(`${API_URL}/api/health`, { headers: fetchHeaders });
             setIsBackendOnline(res.ok);
             setLastHealthCheck(new Date().toLocaleTimeString());
         } catch (err) {
