@@ -18,7 +18,7 @@ export const ClinicalProvider = ({ children }) => {
     const [appointments, setAppointments] = useState([]);
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(false);
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
 
     // Hardened API Selection: Ensure APK/Vercel ALWAYS uses the tunnel
     const tunnelUrl = "https://medical-hub-brain.loca.lt";
@@ -116,18 +116,22 @@ export const ClinicalProvider = ({ children }) => {
     };
 
     const registerHospitalNode = async (hospitalData) => {
-        const { data, error } = await supabase
-            .from('hospitals')
-            .insert([{
-                ...hospitalData,
-                registration_phase: 1,
-                status: 'PENDING_VERIFICATION',
-                admin_id: user.id
-            }])
-            .select()
-            .single();
+        const { data, error } = await supabase.rpc('register_hospital_v2', {
+            p_name: hospitalData.name,
+            p_email_domain: hospitalData.official_email?.split('@')[1] || '',
+            p_license_url: hospitalData.license_url || hospitalData.verification_data?.license_url || '',
+            p_contact_phone: hospitalData.phone_number || '',
+            p_address: hospitalData.address || `${hospitalData.city || ''}, ${hospitalData.country || ''}`.trim()
+        });
 
-        if (error) throw error;
+        if (error) {
+            console.error('[ClinicalContext] RPC Error:', error);
+            throw error;
+        }
+
+        // Refresh session to pick up new role/claims
+        await refreshUser();
+
         return data;
     };
 

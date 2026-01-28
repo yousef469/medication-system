@@ -146,6 +146,13 @@ export function AuthProvider({ children }) {
         setUser({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
     };
 
+    const refreshUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            await fetchProfile(session.user);
+        }
+    };
+
     const [isLocked, setIsLocked] = useState(false);
     const IDLE_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 
@@ -179,7 +186,7 @@ export function AuthProvider({ children }) {
     const unlockSession = () => setIsLocked(false);
 
     const value = useMemo(() => ({
-        user, login, logout, isInitialized, isLocked, lockSession, unlockSession
+        user, login, logout, isInitialized, isLocked, lockSession, unlockSession, refreshUser
     }), [user, isInitialized, isLocked]);
 
     return (

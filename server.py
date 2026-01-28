@@ -1,4 +1,5 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
@@ -31,14 +32,29 @@ http_client = httpx.AsyncClient(
     limits=httpx.Limits(max_connections=100, max_keepalive_connections=20)
 )
 
-# Allow CORS for React Frontend
+# Allow CORS for React Frontend (Vercel + Local)
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://medication-system.vercel.app",
+    "https://medication-system-five.vercel.app", # Potential secondary Vercel names
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict to ["http://localhost:5173"]
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "bypass-tunnel-reminder"],
 )
+
+# Custom Middleware to bypass localtunnel security page
+@app.middleware("http")
+async def add_tunnel_bypass_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["bypass-tunnel-reminder"] = "true"
+    response.headers["Access-Control-Allow-Origin"] = request.headers.get("origin", "*")
+    return response
 
 @app.get("/")
 @app.head("/")

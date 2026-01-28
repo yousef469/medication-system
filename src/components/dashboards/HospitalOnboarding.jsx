@@ -42,6 +42,7 @@ const HospitalOnboarding = ({ onComplete }) => {
         try {
             const data = await registerHospitalNode({
                 ...basicInfo,
+                license_url: licenseData.file,
                 verification_data: licenseData.ocrResult
             });
             setHospitalId(data.id);
