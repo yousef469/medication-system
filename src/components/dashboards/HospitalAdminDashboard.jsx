@@ -297,7 +297,7 @@ const HospitalAdminDashboard = () => {
                 title="HOSPITAL ADMIN"
                 menuGroups={menuGroups}
                 activeTab={activeTab}
-                setActiveTab={setActiveTab}
+                onTabChange={setActiveTab}
                 topNavItems={topNavItems}
                 bottomNavItems={bottomNavItems}
             />

@@ -354,15 +354,15 @@ const HospitalOnboarding = ({ onComplete }) => {
                     <div className="action-links">
                         <div className="invite-card">
                             <span className="icon">🩺</span>
-                            <button className="btn-secondary" onClick={() => handleInvite('doctor')}>Invite Doctor</button>
+                            <button className="btn-primary" onClick={() => handleInvite('doctor')}>Invite Doctor</button>
                         </div>
                         <div className="invite-card">
                             <span className="icon">💊</span>
-                            <button className="btn-secondary" onClick={() => handleInvite('nurse')}>Invite Nurse</button>
+                            <button className="btn-primary" onClick={() => handleInvite('nurse')}>Invite Nurse</button>
                         </div>
                         <div className="invite-card">
                             <span className="icon">📋</span>
-                            <button className="btn-secondary" onClick={() => handleInvite('secretary')}>Invite Coordinator</button>
+                            <button className="btn-primary" onClick={() => handleInvite('secretary')}>Invite Coordinator</button>
                         </div>
                     </div>
                     {copyStatus && <div className="copy-status fade-in">{copyStatus}</div>}

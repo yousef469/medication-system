@@ -320,7 +320,9 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
               </div>
             ) : (
               <>
-                <button className={targetRole !== 'hospital_admin' ? 'active' : ''} onClick={() => setTargetRole('doctor')}>Medical Staff</button>
+                <button className={targetRole === 'doctor' ? 'active' : ''} onClick={() => setTargetRole('doctor')}>Medical Doctor</button>
+                <button className={targetRole === 'nurse' ? 'active' : ''} onClick={() => setTargetRole('nurse')}>Professional Nurse</button>
+                <button className={targetRole === 'secretary' ? 'active' : ''} onClick={() => setTargetRole('secretary')}>Coordinator</button>
                 <button className={targetRole === 'hospital_admin' ? 'active' : ''} onClick={() => setTargetRole('hospital_admin')}>Hospital Admin</button>
               </>
             )}
