@@ -6,7 +6,7 @@ from google import genai
 from config import GEMINI_API_KEY
 
 # Multimodal Live API Target
-MODEL_ID = "gemini-2.5-flash-native-audio-dialog"
+MODEL_ID = "gemini-2.5-flash"
 
 async def manage_voice_session(websocket):
     """
