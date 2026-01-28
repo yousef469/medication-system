@@ -8,6 +8,8 @@ import ai_voice
 import os
 import json
 import httpx
+import config
+from groq import Groq
 from contextlib import asynccontextmanager
 
 # --- Data Models ---
@@ -169,6 +171,46 @@ async def analyze_license_endpoint(file: UploadFile = File(...)):
         return response
     except Exception as e:
         print(f"[Server] !!! CRITICAL LICENSE ERROR: {str(e)}", flush=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/voice_to_text")
+async def voice_to_text_endpoint(file: UploadFile = File(...)):
+    """
+    Transcribes audio to text using Groq's Whisper Turbo.
+    """
+    if not config.GROQ_API_KEY:
+        raise HTTPException(status_code=500, detail="Groq API Key not configured")
+
+    try:
+        # Save temporary file with proper extension
+        ext = file.filename.split('.')[-1] if '.' in file.filename else 'wav'
+        temp_filename = f"temp_voice_{uuid.uuid4()}.{ext}"
+        
+        contents = await file.read()
+        with open(temp_filename, "wb") as f:
+            f.write(contents)
+
+        # Transcribe with Groq
+        groq_client = Groq(api_key=config.GROQ_API_KEY)
+        with open(temp_filename, "rb") as audio_file:
+            transcription = groq_client.audio.transcriptions.create(
+                file=(temp_filename, audio_file.read()),
+                model="whisper-large-v3-turbo",
+                response_format="json",
+                language="en", # You can make this dynamic based on user language context if needed
+            )
+        
+        # Cleanup
+        os.remove(temp_filename)
+        
+        text = transcription.text
+        print(f"[Server] Voice Transcription: {text}")
+        return {"text": text}
+        
+    except Exception as e:
+        print(f"[Server] Voice Transcription Error: {str(e)}")
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.websocket("/api/ws/ai_voice")

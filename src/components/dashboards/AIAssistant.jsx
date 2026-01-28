@@ -4,26 +4,28 @@ import { useLanguage } from '../../context/LanguageContext';
 import LiveVoiceAssistant from './LiveVoiceAssistant';
 
 const AIAssistant = () => {
-    const { aiConsultation, isBackendOnline } = useClinical();
+    const { aiConsultation, transcribeVoice, isBackendOnline } = useClinical();
     const { t, isRTL } = useLanguage();
 
-    // Initial message based on current language
     const [messages, setMessages] = useState([]);
+    const [inputValue, setInputValue] = useState('');
+    const [isThinking, setIsThinking] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [voiceStatus, setVoiceStatus] = useState('Off');
+
+    // Recording Refs
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+
+    const scrollRef = useRef(null);
+    const fileInputRef = useRef(null);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     useEffect(() => {
         setMessages([
             { role: 'assistant', text: t('ai_welcome') }
         ]);
     }, [t]);
-
-    const [inputValue, setInputValue] = useState('');
-    const [isThinking, setIsThinking] = useState(false);
-    const [isRecording, setIsRecording] = useState(false);
-    const [isLiveVoiceActive, setIsLiveVoiceActive] = useState(false);
-    const [voiceStatus, setVoiceStatus] = useState('Off');
-    const scrollRef = useRef(null);
-    const fileInputRef = useRef(null);
-    const [selectedFile, setSelectedFile] = useState(null);
 
     useEffect(() => {
         if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -58,25 +60,72 @@ const AIAssistant = () => {
                 file
             );
 
-            const safeAnswer = response.answer;
-
             const assistantMsg = {
                 role: 'assistant',
-                text: safeAnswer,
+                text: response.answer,
                 type: response.type,
                 suggestion: response.suggestion
             };
             setMessages(prev => [...prev, assistantMsg]);
         } catch (err) {
-            setMessages(prev => [...prev, { role: 'assistant', text: "Connection error. Trying offline mode..." }]);
+            setMessages(prev => [...prev, { role: 'assistant', text: "Connection error. Please check your internet or backend server." }]);
         } finally {
             setIsThinking(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
-    const toggleLiveVoice = () => {
-        setIsLiveVoiceActive(!isLiveVoiceActive);
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+            audioChunksRef.current = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) audioChunksRef.current.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                setVoiceStatus('Transcribing...');
+                try {
+                    const text = await transcribeVoice(audioBlob);
+                    if (text && text.trim()) {
+                        handleSend(text);
+                    }
+                } catch (err) {
+                    console.error("Transcription Error:", err);
+                } finally {
+                    setVoiceStatus('Off');
+                    setIsRecording(false);
+                }
+
+                // Stop all tracks to release mic
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorder.start();
+            setIsRecording(true);
+            setVoiceStatus('Recording...');
+        } catch (err) {
+            console.error("Mic Access Error:", err);
+            alert("Could not access microphone.");
+        }
+    };
+
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+        }
+    };
+
+    const toggleVoice = () => {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
     };
 
     return (
@@ -135,14 +184,19 @@ const AIAssistant = () => {
                 <div className="chat-input-area">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                         <button
-                            className={`voice-btn ${isLiveVoiceActive ? 'recording' : ''}`}
-                            onClick={toggleLiveVoice}
-                            title={isLiveVoiceActive ? "End Live Voice" : "Start Live Voice Call"}
+                            className={`voice-btn ${isRecording ? 'recording' : ''}`}
+                            onClick={toggleVoice}
+                            title={isRecording ? "Stop Recording" : "Voice Message"}
                         >
-                            {isLiveVoiceActive ? '🔴' : '🎙️'}
+                            {isRecording ? '⏹️' : '🎙️'}
                         </button>
-                        {isLiveVoiceActive && (
+                        {isRecording && (
                             <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold' }}>
+                                {voiceStatus}
+                            </span>
+                        )}
+                        {voiceStatus === 'Transcribing...' && (
+                            <span style={{ fontSize: '0.7rem', color: '#6366f1', fontWeight: 'bold' }}>
                                 {voiceStatus}
                             </span>
                         )}
@@ -171,12 +225,6 @@ const AIAssistant = () => {
                     <button className="send-btn" onClick={() => handleSend()}>{t('send')} ➔</button>
                 </div>
             </div>
-
-            <LiveVoiceAssistant
-                isActive={isLiveVoiceActive}
-                onStop={() => setIsLiveVoiceActive(false)}
-                onStatusChange={setVoiceStatus}
-            />
 
             <style>{`
                 .rtl { direction: rtl; }

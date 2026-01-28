@@ -412,6 +412,26 @@ export const ClinicalProvider = ({ children }) => {
         }
     };
 
+    const transcribeVoice = async (audioBlob) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.webm');
+
+            const res = await fetch(`${API_URL}/api/voice_to_text`, {
+                method: 'POST',
+                headers: fetchHeaders,
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("Transcription Failed");
+            const data = await res.json();
+            return data.text;
+        } catch (err) {
+            console.error("Transcription Error:", err);
+            throw err;
+        }
+    };
+
     const analyzeClinicalRequest = async (requestText, history, file = null, fileUrl = null) => {
         try {
             const formData = new FormData();
@@ -851,7 +871,8 @@ export const ClinicalProvider = ({ children }) => {
             registerHospitalNode,
             updateHospitalConfig,
             analyzeLicenseOCR,
-            uploadFileToSupabase
+            uploadFileToSupabase,
+            transcribeVoice
         }}>
             {children}
         </ClinicalContext.Provider>
