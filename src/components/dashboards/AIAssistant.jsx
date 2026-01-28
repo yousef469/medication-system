@@ -19,7 +19,8 @@ const AIAssistant = () => {
     const [inputValue, setInputValue] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const [isLiveVoiceOpen, setIsLiveVoiceOpen] = useState(false);
+    const [isLiveVoiceActive, setIsLiveVoiceActive] = useState(false);
+    const [voiceStatus, setVoiceStatus] = useState('Off');
     const scrollRef = useRef(null);
     const fileInputRef = useRef(null);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -74,14 +75,8 @@ const AIAssistant = () => {
         }
     };
 
-    const toggleVoice = () => {
-        setIsRecording(!isRecording);
-        if (!isRecording) {
-            setTimeout(() => {
-                setIsRecording(false);
-                handleSend(t('voice_start'));
-            }, 3000);
-        }
+    const toggleLiveVoice = () => {
+        setIsLiveVoiceActive(!isLiveVoiceActive);
     };
 
     return (
@@ -99,13 +94,6 @@ const AIAssistant = () => {
                         <h3>{t('ai_assistant')}</h3>
                         <span className="mode-badge">{t('gemini_cloud_tag')}</span>
                     </div>
-                    <button
-                        className="btn-primary live-voice-trigger"
-                        onClick={() => setIsLiveVoiceOpen(true)}
-                        style={{ marginLeft: 'auto', gap: '0.5rem', minHeight: '40px', padding: '0 1.2rem' }}
-                    >
-                        🎙️ Live Voice Call
-                    </button>
                 </div>
 
                 <div className="chat-messages" ref={scrollRef}>
@@ -145,9 +133,20 @@ const AIAssistant = () => {
                 </div>
 
                 <div className="chat-input-area">
-                    <button className={`voice-btn ${isRecording ? 'recording' : ''}`} onClick={toggleVoice}>
-                        {isRecording ? t('voice_stop') : t('voice_start')}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <button
+                            className={`voice-btn ${isLiveVoiceActive ? 'recording' : ''}`}
+                            onClick={toggleLiveVoice}
+                            title={isLiveVoiceActive ? "End Live Voice" : "Start Live Voice Call"}
+                        >
+                            {isLiveVoiceActive ? '🔴' : '🎙️'}
+                        </button>
+                        {isLiveVoiceActive && (
+                            <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold' }}>
+                                {voiceStatus}
+                            </span>
+                        )}
+                    </div>
                     <div
                         className="voice-btn"
                         style={{ padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', width: '50px', height: '50px' }}
@@ -174,8 +173,9 @@ const AIAssistant = () => {
             </div>
 
             <LiveVoiceAssistant
-                isOpen={isLiveVoiceOpen}
-                onClose={() => setIsLiveVoiceOpen(false)}
+                isActive={isLiveVoiceActive}
+                onStop={() => setIsLiveVoiceActive(false)}
+                onStatusChange={setVoiceStatus}
             />
 
             <style>{`

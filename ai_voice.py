@@ -21,7 +21,7 @@ async def manage_voice_session(websocket):
     # Initialize the new Google GenAI Client (supports Multimodal Live)
     client = genai.Client(
         api_key=GEMINI_API_KEY,
-        http_options={'api_version': 'v1alpha'}
+        http_options={'api_version': 'v1beta'}
     )
 
     # Configuration for Voice-to-Voice
