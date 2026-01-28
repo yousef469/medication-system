@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 import { useLanguage } from '../../context/LanguageContext';
+import LiveVoiceAssistant from './LiveVoiceAssistant';
 
 const AIAssistant = () => {
     const { aiConsultation, isBackendOnline } = useClinical();
@@ -18,6 +19,7 @@ const AIAssistant = () => {
     const [inputValue, setInputValue] = useState('');
     const [isThinking, setIsThinking] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [isLiveVoiceOpen, setIsLiveVoiceOpen] = useState(false);
     const scrollRef = useRef(null);
     const fileInputRef = useRef(null);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -55,11 +57,7 @@ const AIAssistant = () => {
                 file
             );
 
-            // Enforce Safety Disclaimer if it's a medical query and not just costs
-            let safeAnswer = response.answer;
-            if (response.type !== 'COST_QUERY') {
-                safeAnswer = `${t('ai_safety_disclaimer')}\n\n${response.answer}`;
-            }
+            const safeAnswer = response.answer;
 
             const assistantMsg = {
                 role: 'assistant',
@@ -101,6 +99,13 @@ const AIAssistant = () => {
                         <h3>{t('ai_assistant')}</h3>
                         <span className="mode-badge">{t('gemini_cloud_tag')}</span>
                     </div>
+                    <button
+                        className="btn-primary live-voice-trigger"
+                        onClick={() => setIsLiveVoiceOpen(true)}
+                        style={{ marginLeft: 'auto', gap: '0.5rem', minHeight: '40px', padding: '0 1.2rem' }}
+                    >
+                        🎙️ Live Voice Call
+                    </button>
                 </div>
 
                 <div className="chat-messages" ref={scrollRef}>
@@ -167,6 +172,11 @@ const AIAssistant = () => {
                     <button className="send-btn" onClick={() => handleSend()}>{t('send')} ➔</button>
                 </div>
             </div>
+
+            <LiveVoiceAssistant
+                isOpen={isLiveVoiceOpen}
+                onClose={() => setIsLiveVoiceOpen(false)}
+            />
 
             <style>{`
                 .rtl { direction: rtl; }
@@ -369,6 +379,12 @@ const AIAssistant = () => {
                     color: white;
                 }
                 .send-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--primary-glow); }
+
+                @media (max-width: 480px) {
+                    .live-voice-trigger span { display: none; }
+                    .live-voice-trigger { padding: 0.5rem !important; width: 40px; border-radius: 50%; }
+                }
+
                 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
                 .thinking span {
                     display: inline-block;

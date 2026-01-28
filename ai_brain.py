@@ -11,23 +11,16 @@ import time
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-SYSTEM_PROMPT = """You are a Medical Triage Assistant powered by Google Gemini.
-Ensure safety first. NEVER diagnose or prescribe. 
-If the user asks for medical advice, provide triage guidance and suggest seeing a doctor.
+SYSTEM_PROMPT = """You are a High-Precision Medical AI Assistant.
+Talk like a professional medical assistant (concise, reassuring, and helpful).
+Keep your answers relatively short and structured for natural speech conversation.
+You are part of the MedicalHub ecosystem.
 Output JSON only.
-
-Response Format:
-{
-    "response": "Text response to user",
-    "action": "none" or "search_hospital" or "analyze_symptoms",
-    "urgency": "low" | "medium" | "high"
-}
 """
 
 MODEL_IDS = [
-    'gemini-2.5-flash-lite',
-    'gemini-2.5-flash',
-    'gemini-3-flash',
+    'gemini-2.0-flash-exp',
+    'gemini-2.0-flash',
     'gemini-1.5-flash',
     'gemini-1.5-pro'
 ]

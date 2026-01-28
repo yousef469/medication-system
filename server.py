@@ -1,9 +1,10 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, WebSocket
 from datetime import datetime
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import ai_brain
+import ai_voice
 import os
 import json
 import httpx
@@ -174,11 +175,25 @@ async def analyze_license_endpoint(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         response = ai_brain.analyze_license(contents)
-        print(f"[Server] AI License Analysis Result: {str(response)[:200]}...", flush=True)
+        print(f"[AI Voice] AI License Analysis Result: {str(response)[:200]}...", flush=True)
         return response
     except Exception as e:
         print(f"[Server] !!! CRITICAL LICENSE ERROR: {str(e)}", flush=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/api/ws/ai_voice")
+async def websocket_ai_voice(websocket: WebSocket):
+    """
+    Real-time Multimodal Live AI Voice session.
+    """
+    await websocket.accept()
+    print("[Server] New AI Voice WebSocket Connection Accepted.")
+    try:
+        await ai_voice.manage_voice_session(websocket)
+    except Exception as e:
+        print(f"[Server] WebSocket Session Error: {e}")
+    finally:
+        print("[Server] AI Voice WebSocket Connection Closed.")
 
 # --- Mock Database for Prescriptions (In-Memory for Prototype) ---
 PRESCRIPTIONS_MockDB = {}
