@@ -26,6 +26,7 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     const inviteId = params.get('invite');
+    const roleParam = params.get('role');
 
     const initializePortal = async () => {
       if (portalMode === 'professional') {
@@ -54,6 +55,10 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
         }
       } else if (inviteId) {
         setSelectedHospital(inviteId);
+        if (roleParam) {
+          setTargetRole(roleParam);
+          setLockedRole(roleParam);
+        }
         setIsSignUp(true);
       }
     };

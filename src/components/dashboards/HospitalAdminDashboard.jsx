@@ -4,12 +4,15 @@ import { useAuth } from '../../context/useAuth';
 import AccordionSidebar from '../shared/AccordionSidebar';
 import HospitalChat from './HospitalChat'; // Import HospitalChat
 import HospitalOnboarding from './HospitalOnboarding';
+import { useClinical } from '../../context/ClinicalContext';
 import { useTheme } from '../../context/ThemeContext'; // Ensure theme context is used if needed
 
 const HospitalAdminDashboard = () => {
     const { user, logout } = useAuth();
+    const { generateInvite } = useClinical();
     const { setTheme } = useTheme(); // Assuming we want to force light mode or handle theme
     const [pendingStaff, setPendingStaff] = useState([]);
+    const [copyStatus, setCopyStatus] = useState('');
     const [hospitalInfo, setHospitalInfo] = useState(null);
     const [archives, setArchives] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -78,6 +81,18 @@ const HospitalAdminDashboard = () => {
         return <HospitalOnboarding onComplete={fetchHospitalData} />;
     }
 
+    const handleInvite = async (role) => {
+        try {
+            const invite = await generateInvite(hospitalInfo.id, role);
+            const link = `${window.location.origin}/?invite=${invite.id}&role=${role}`;
+            await navigator.clipboard.writeText(link);
+            setCopyStatus(`${role.toUpperCase()} link copied!`);
+            setTimeout(() => setCopyStatus(''), 3000);
+        } catch (err) {
+            alert("Failed to generate invite: " + err.message);
+        }
+    };
+
     const handleApprove = async (staffId) => {
         try {
             const { error } = await supabase
@@ -109,6 +124,7 @@ const HospitalAdminDashboard = () => {
             icon: '🏢',
             items: [
                 { id: 'staff', label: 'Staff Management', icon: '👥' },
+                { id: 'invites', label: 'Staff Invitations', icon: '📩' },
                 { id: 'archives', label: 'Logistic Archives', icon: '📂' },
                 { id: 'billing', label: 'Billing & Finance', icon: '💳', restricted: true }
             ]
@@ -134,6 +150,43 @@ const HospitalAdminDashboard = () => {
         switch (activeTab) {
             case 'chat':
                 return <HospitalChat />;
+            case 'invites':
+                return (
+                    <div className="invites-view glass-card fade-in">
+                        <style>{`
+                            .invite-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+                            .invite-card-admin { background: #f8fafc; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; text-align: center; transition: all 0.3s ease; }
+                            .invite-card-admin:hover { border-color: #7c3aed; transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+                            .invite-icon { font-size: 2.5rem; display: block; margin-bottom: 1rem; }
+                            .role-label { display: block; font-weight: 800; font-size: 1.1rem; margin-bottom: 0.5rem; color: #1e293b; }
+                            .role-desc { font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; display: block; }
+                            .copy-banner { margin-top: 1.5rem; background: #f0fdf4; color: #166534; padding: 0.75rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+                        `}</style>
+                        <div className="section-title">
+                            <h3>Staff Invitations</h3>
+                            <p style={{ opacity: 0.6 }}>Generate secure onboarding links for your medical facility.</p>
+                        </div>
+
+                        <div className="invite-grid">
+                            {[
+                                { role: 'doctor', label: 'Doctor', icon: '🩺', desc: 'Full medical authority and triage access.' },
+                                { role: 'nurse', label: 'Nurse', icon: '💊', desc: 'Care execution and patient assessment.' },
+                                { role: 'secretary', label: 'Coordinator', icon: '📋', desc: 'Manage flow and patient routing.' }
+                            ].map(opt => (
+                                <div key={opt.role} className="invite-card-admin">
+                                    <span className="invite-icon">{opt.icon}</span>
+                                    <span className="role-label">{opt.label}</span>
+                                    <span className="role-desc">{opt.desc}</span>
+                                    <button className="btn-primary" style={{ width: '100%' }} onClick={() => handleInvite(opt.role)}>
+                                        Copy Invite Link
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        {copyStatus && <div className="copy-banner fade-in">✅ {copyStatus}</div>}
+                    </div>
+                );
             case 'settings':
                 return (
                     <div className="glass-card p-4">

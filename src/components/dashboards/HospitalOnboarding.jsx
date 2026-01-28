@@ -352,8 +352,18 @@ const HospitalOnboarding = ({ onComplete }) => {
                 <div className="next-steps">
                     <p>While you wait for approval, you can invite your staff:</p>
                     <div className="action-links">
-                        <button className="btn-secondary" onClick={() => handleInvite('doctor')}>Invite Doctors</button>
-                        <button className="btn-secondary" onClick={() => handleInvite('nurse')}>Invite Nurses</button>
+                        <div className="invite-card">
+                            <span className="icon">🩺</span>
+                            <button className="btn-secondary" onClick={() => handleInvite('doctor')}>Invite Doctor</button>
+                        </div>
+                        <div className="invite-card">
+                            <span className="icon">💊</span>
+                            <button className="btn-secondary" onClick={() => handleInvite('nurse')}>Invite Nurse</button>
+                        </div>
+                        <div className="invite-card">
+                            <span className="icon">📋</span>
+                            <button className="btn-secondary" onClick={() => handleInvite('secretary')}>Invite Coordinator</button>
+                        </div>
                     </div>
                     {copyStatus && <div className="copy-status fade-in">{copyStatus}</div>}
                 </div>
@@ -473,8 +483,22 @@ const HospitalOnboarding = ({ onComplete }) => {
                     .success-card { padding: 4rem; text-align: center; margin: 2rem 0; }
                     .success-icon { font-size: 4rem; margin-bottom: 1.5rem; }
                     .next-steps { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
-                    .action-links { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
-                    .copy-status { margin-top: 1rem; font-size: 0.8rem; color: var(--secondary); font-weight: 700; }
+                    .action-links { display: flex; gap: 1.5rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
+                    .invite-card {
+                        background: rgba(255,255,255,0.03);
+                        border: 1px solid rgba(255,255,255,0.1);
+                        padding: 1.5rem;
+                        border-radius: var(--radius-md);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 1rem;
+                        min-width: 160px;
+                        transition: all 0.3s ease;
+                    }
+                    .invite-card:hover { border-color: var(--primary); background: rgba(124, 58, 237, 0.05); transform: translateY(-3px); }
+                    .invite-card .icon { font-size: 2rem; }
+                    .copy-status { margin-top: 1.5rem; font-size: 0.9rem; color: var(--secondary); font-weight: 700; background: rgba(var(--secondary-rgb), 0.1); padding: 0.5rem 1rem; border-radius: 50px; }
                 `}</style>
             </div>
         </div>

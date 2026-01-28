@@ -11,11 +11,13 @@ CREATE OR REPLACE FUNCTION public.register_hospital_v2(
 RETURNS public.hospitals AS $$
 DECLARE
     new_hosp public.hospitals;
-    v_admin_id UUID := auth.uid();
+    v_admin_id UUID;
 BEGIN
-    -- 1. Security Check: Ensure user is authenticated
+    -- 1. Security Check: Resolve current user
+    v_admin_id := (SELECT auth.uid());
+    
     IF v_admin_id IS NULL THEN
-        RAISE EXCEPTION 'Authentication required to register a facility.';
+        RAISE EXCEPTION 'Authentication required. Please sign in again.';
     END IF;
 
     -- 2. Create the Hospital Record
@@ -46,18 +48,12 @@ BEGIN
     SET 
         hospital_id = new_hosp.id,
         role = 'hospital_admin',
-        verification_status = 'APPROVED' -- Admins are approved by default for their own facility setup
+        verification_status = 'APPROVED'
     WHERE id = v_admin_id;
-
-    -- 4. Set Hospital ID in auth.users metadata (for fallback)
-    -- Note: This is done via a trigger in some setups, but we do it explicitly here via SQL if allowed,
-    -- though usually it's easier from the client. However, since we are in PG, we can't easily update auth.users 
-    -- unless we have specific permissions or functions. 
-    -- We will rely on the profiles update which is the primary source of truth.
 
     RETURN new_hosp;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
 
 -- Grant access to authenticated users
 GRANT EXECUTE ON FUNCTION public.register_hospital_v2 TO authenticated;
