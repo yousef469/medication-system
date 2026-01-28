@@ -9,6 +9,7 @@ import os
 import json
 import httpx
 import config
+import uuid
 from groq import Groq
 from contextlib import asynccontextmanager
 
@@ -196,8 +197,7 @@ async def voice_to_text_endpoint(file: UploadFile = File(...)):
             transcription = groq_client.audio.transcriptions.create(
                 file=(temp_filename, audio_file.read()),
                 model="whisper-large-v3-turbo",
-                response_format="json",
-                language="en", # You can make this dynamic based on user language context if needed
+                response_format="json"
             )
         
         # Cleanup
