@@ -84,7 +84,7 @@ const HospitalAdminDashboard = () => {
     const handleInvite = async (role) => {
         try {
             const invite = await generateInvite(hospitalInfo.id, role);
-            const link = `${window.location.origin}/?invite=${invite.id}&role=${role}`;
+            const link = `${window.location.origin}/?token=${invite.token}`;
             await navigator.clipboard.writeText(link);
             setCopyStatus(`${role.toUpperCase()} link copied!`);
             setTimeout(() => setCopyStatus(''), 3000);
