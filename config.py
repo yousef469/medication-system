@@ -17,7 +17,7 @@ WAKE_WORD = os.getenv("WAKE_WORD", "jarvis")
 WAKE_WORD_SENSITIVITY = float(os.getenv("WAKE_WORD_SENSITIVITY", "0.5"))
 
 # API Keys
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDvZgcQpbL6L7ulnc5gRJQnCzI2HSqCsX8")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBUikZZSkNxp4ddI0BX8X8PxBIAQBUVDIY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
