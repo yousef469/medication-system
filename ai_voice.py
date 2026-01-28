@@ -33,11 +33,11 @@ async def manage_voice_session(websocket):
         "system_instruction": "You are a professional Medical AI Assistant. Keep your answers concise, helpful, and natural for a voice conversation. You are part of the MedicalHub network."
     }
 
-    print(f"[AI Voice] Opening session with {MODEL_ID}...")
-
+    print(f"[AI Voice] INITIALIZING SESSION WITH MODEL: {MODEL_ID}")
+    
     try:
         async with client.aio.live.connect(model=MODEL_ID, config=config) as session:
-            print(f"[AI Voice] Session Active.")
+            print(f"[AI Voice] SUCCESS: Session Active with {MODEL_ID}")
 
             async def receive_from_client():
                 """Listen to frontend WebSocket and forward to Gemini."""

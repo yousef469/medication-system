@@ -43,7 +43,7 @@ ALLOWED_ORIGINS = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"], # Allow all for debugging tunnel issues
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*", "bypass-tunnel-reminder"],
@@ -52,9 +52,10 @@ app.add_middleware(
 # Custom Middleware to bypass localtunnel security page
 @app.middleware("http")
 async def add_tunnel_bypass_header(request: Request, call_next):
+    # Process the request
     response = await call_next(request)
+    # Add the required localtunnel bypass header
     response.headers["bypass-tunnel-reminder"] = "true"
-    response.headers["Access-Control-Allow-Origin"] = request.headers.get("origin", "*")
     return response
 
 @app.get("/")
@@ -100,17 +101,6 @@ async def analyze_image_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/analyze_license")
-async def analyze_license_endpoint(file: UploadFile = File(...)):
-    """
-    Medical License OCR and Verification.
-    """
-    try:
-        contents = await file.read()
-        response = ai_brain.analyze_license(contents)
-        return response
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analyze_clinical_request")
 async def analyze_clinical_endpoint(
@@ -338,6 +328,9 @@ async def proxy_frontend(request: Request, path: str):
     # Specialized catch-all to serve Vite frontend through Python
     # Includes query parameters for versioning/JS modules
     try:
+        if path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+            
         query_string = request.url.query
         target_path = f"/{path}" if not path.startswith('/') else path
         if query_string:
