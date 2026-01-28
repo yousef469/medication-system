@@ -10,15 +10,16 @@ const LiveVoiceAssistant = ({ isOpen, onClose }) => {
 
     // Dynamic WebSocket URL
     const getWsUrl = () => {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        // In dev, usually localhost:5173 -> localhost:8001
-        // In prod (tunnel), medical-hub-brain.loca.lt
-        let host = window.location.host;
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const tunnelHost = "medical-hub-brain.loca.lt";
 
-        // Handle local dev port mismatch if needed (Vite 5173 -> Backend 8001)
-        if (host.includes('localhost:5173')) host = 'localhost:8001';
-
-        return `${protocol}//${host}/api/ws/ai_voice`;
+        if (isLocal) {
+            // Local fallback logic (Direct to backend port)
+            return `ws://localhost:8001/api/ws/ai_voice`;
+        } else {
+            // Production / Vercel: Connect to the tunnel
+            return `wss://${tunnelHost}/api/ws/ai_voice`;
+        }
     };
 
     const startSession = async () => {
