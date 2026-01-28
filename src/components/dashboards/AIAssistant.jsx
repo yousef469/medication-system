@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 import { useLanguage } from '../../context/LanguageContext';
-import LiveVoiceAssistant from './LiveVoiceAssistant';
 
 const AIAssistant = () => {
     const { aiConsultation, transcribeVoice, isBackendOnline } = useClinical();
