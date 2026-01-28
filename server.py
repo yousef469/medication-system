@@ -10,7 +10,6 @@ import json
 import httpx
 import config
 import uuid
-from groq import Groq
 from contextlib import asynccontextmanager
 
 # --- Data Models ---
@@ -177,13 +176,14 @@ async def analyze_license_endpoint(file: UploadFile = File(...)):
 @app.post("/api/voice_to_text")
 async def voice_to_text_endpoint(file: UploadFile = File(...)):
     """
-    Transcribes audio to text using Groq's Whisper Turbo.
+    Transcribes audio to text using Gemini's Multimodal capabilities.
+    (Pivoted from Groq to avoid needing multiple API keys).
     """
-    if not config.GROQ_API_KEY:
-        raise HTTPException(status_code=500, detail="Groq API Key not configured")
+    if not config.GEMINI_API_KEY:
+        raise HTTPException(status_code=500, detail="Gemini API Key not configured")
 
     try:
-        # Save temporary file with proper extension
+        # Save temporary file
         ext = file.filename.split('.')[-1] if '.' in file.filename else 'wav'
         temp_filename = f"temp_voice_{uuid.uuid4()}.{ext}"
         
@@ -191,25 +191,35 @@ async def voice_to_text_endpoint(file: UploadFile = File(...)):
         with open(temp_filename, "wb") as f:
             f.write(contents)
 
-        # Transcribe with Groq
-        groq_client = Groq(api_key=config.GROQ_API_KEY)
-        with open(temp_filename, "rb") as audio_file:
-            transcription = groq_client.audio.transcriptions.create(
-                file=(temp_filename, audio_file.read()),
-                model="whisper-large-v3-turbo",
-                response_format="json"
-            )
+        # Transcribe with Gemini
+        import google.generativeai as genai
+        genai.configure(api_key=config.GEMINI_API_KEY)
+        
+        # Use a model that supports audio input
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        # Upload to Gemini (or pass directly)
+        # Note: For small files, passing bytes directly is faster
+        audio_part = {
+            "mime_type": "audio/webm", # MediaRecorder usually outputs webm
+            "data": contents
+        }
+        
+        prompt = "Transcribe this audio exactly as heard. Do not add any commentary or prefix. Return only the transcribed text."
+        
+        response = model.generate_content([prompt, audio_part])
+        text = response.text.strip()
         
         # Cleanup
-        os.remove(temp_filename)
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
         
-        text = transcription.text
-        print(f"[Server] Voice Transcription: {text}")
+        print(f"[Server] Gemini Transcription: {text}")
         return {"text": text}
         
     except Exception as e:
-        print(f"[Server] Voice Transcription Error: {str(e)}")
-        if os.path.exists(temp_filename):
+        print(f"[Server] Gemini Transcription Error: {str(e)}")
+        if 'temp_filename' in locals() and os.path.exists(temp_filename):
             os.remove(temp_filename)
         raise HTTPException(status_code=500, detail=str(e))
 
