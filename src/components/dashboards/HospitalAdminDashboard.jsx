@@ -154,13 +154,26 @@ const HospitalAdminDashboard = () => {
                 return (
                     <div className="invites-view glass-card fade-in">
                         <style>{`
-                            .invite-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
-                            .invite-card-admin { background: #f8fafc; border: 1px solid #e2e8f0; padding: 2rem; border-radius: 12px; text-align: center; transition: all 0.3s ease; }
-                            .invite-card-admin:hover { border-color: #7c3aed; transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-                            .invite-icon { font-size: 2.5rem; display: block; margin-bottom: 1rem; }
-                            .role-label { display: block; font-weight: 800; font-size: 1.1rem; margin-bottom: 0.5rem; color: #1e293b; }
-                            .role-desc { font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; display: block; }
-                            .copy-banner { margin-top: 1.5rem; background: #f0fdf4; color: #166534; padding: 0.75rem; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
+                            .invite-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-top: 2rem; }
+                            .invite-card-admin { 
+                                background: #ffffff; 
+                                border: 1px solid var(--glass-border); 
+                                padding: 2.5rem 2rem; 
+                                border-radius: 20px; 
+                                text-align: center; 
+                                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+                                box-shadow: var(--shadow-main);
+                                font-family: 'Inter', sans-serif;
+                            }
+                            .invite-card-admin:hover { 
+                                transform: translateY(-8px); 
+                                box-shadow: var(--shadow-glow); 
+                                border-color: var(--primary); 
+                            }
+                            .invite-icon { font-size: 3.5rem; display: block; margin-bottom: 1.5rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+                            .role-label { display: block; font-weight: 800; font-size: 1.4rem; margin-bottom: 0.75rem; color: var(--text-primary); font-family: 'Outfit', sans-serif; }
+                            .role-desc { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6; min-height: 3em; }
+                            .copy-banner { margin-top: 2rem; background: var(--secondary); color: white; padding: 1rem; border-radius: 12px; font-weight: 800; font-size: 0.9rem; box-shadow: 0 4px 12px var(--secondary-glow); animation: fadeIn 0.3s ease; }
                         `}</style>
                         <div className="section-title">
                             <h3>Staff Invitations</h3>

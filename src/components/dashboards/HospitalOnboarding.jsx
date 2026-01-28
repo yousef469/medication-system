@@ -485,20 +485,21 @@ const HospitalOnboarding = ({ onComplete }) => {
                     .next-steps { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
                     .action-links { display: flex; gap: 1.5rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
                     .invite-card {
-                        background: rgba(255,255,255,0.03);
-                        border: 1px solid rgba(255,255,255,0.1);
-                        padding: 1.5rem;
-                        border-radius: var(--radius-md);
+                        background: #ffffff;
+                        border: 1px solid var(--glass-border);
+                        padding: 2.5rem 1.5rem;
+                        border-radius: 16px;
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        gap: 1rem;
-                        min-width: 160px;
-                        transition: all 0.3s ease;
+                        gap: 1.5rem;
+                        min-width: 180px;
+                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: var(--shadow-main);
                     }
-                    .invite-card:hover { border-color: var(--primary); background: rgba(124, 58, 237, 0.05); transform: translateY(-3px); }
-                    .invite-card .icon { font-size: 2rem; }
-                    .copy-status { margin-top: 1.5rem; font-size: 0.9rem; color: var(--secondary); font-weight: 700; background: rgba(var(--secondary-rgb), 0.1); padding: 0.5rem 1rem; border-radius: 50px; }
+                    .invite-card:hover { border-color: var(--primary); background: #ffffff; transform: translateY(-8px); box-shadow: var(--shadow-glow); }
+                    .invite-card .icon { font-size: 3rem; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+                    .copy-status { margin-top: 1.5rem; font-size: 0.9rem; color: #ffffff; font-weight: 800; background: var(--secondary); padding: 0.8rem 1.5rem; border-radius: 50px; box-shadow: 0 4px 12px var(--secondary-glow); animation: fadeIn 0.3s ease; }
                 `}</style>
             </div>
         </div>
