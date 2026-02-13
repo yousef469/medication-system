@@ -160,7 +160,7 @@ const UserHospitals = () => {
 
     return (
         <div className="hospitals-view fade-in">
-            <h2 className="text-gradient mb-2">Egyptian Medical Centers</h2>
+            <h2 className="text-gradient mb-2">Medical Centers</h2>
             <div className="hospitals-grid">
                 {hospitals.map(h => (
                     <div key={h.id} className="glass-card hospital-full-card" onClick={() => setSelectedHospitalId(h.id)}>

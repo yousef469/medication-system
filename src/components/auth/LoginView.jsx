@@ -308,7 +308,7 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
               <div className="patient-badge-top">Patient Access</div>
             )}
             <h1>{isSignUp ? (isProfessional ? 'Professional Onboarding' : 'Create Account') : 'Welcome Back'}</h1>
-            <p>{isSignUp ? (isProfessional ? 'Register as part of Egypt\'s verified clinical network.' : 'Join the medical hub for easy appointment booking.') : 'Please sign in to your dashboard.'}</p>
+            <p>{isSignUp ? (isProfessional ? 'Register as part of our verified clinical network.' : 'Join the medical hub for easy appointment booking.') : 'Please sign in to your dashboard.'}</p>
           </div>
         </div>
 

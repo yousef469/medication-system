@@ -65,7 +65,7 @@ const PrescriptionTerminal = () => {
                     <div className="hospital-brand">
                         <div className="hosp-logo">🏥</div>
                         <div className="hosp-info">
-                            <h1>{hospital?.name || "Egyptian Medical Center"}</h1>
+                            <h1>{hospital?.name || "Medical Center"}</h1>
                             <p>{hospital?.address || "Clinical Network Node"}</p>
                         </div>
                     </div>

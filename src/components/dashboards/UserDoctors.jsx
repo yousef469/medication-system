@@ -12,7 +12,7 @@ const UserDoctors = () => {
 
     return (
         <div className="doctors-view fade-in">
-            <h2 className="text-gradient mb-2">Find Egyptian Specialists</h2>
+            <h2 className="text-gradient mb-2">Find Medical Specialists</h2>
 
             <div className="search-box glass-card mb-2">
                 <input

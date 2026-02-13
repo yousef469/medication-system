@@ -52,9 +52,9 @@ const LandingPage = ({ onGetStarted }) => {
             <section className="hero-section fade-in">
                 {/* ... existing hero content ... */}
                 <div className="hero-content">
-                    <h1 className="hero-title text-gradient">The Future of Egyptian Healthcare</h1>
+                    <h1 className="hero-title text-gradient">The Future of Digital Healthcare</h1>
                     <p className="hero-subtitle">
-                        Advanced Clinical Solutions. Global Medical Standards. Unified for Egypt.
+                        Advanced Clinical Solutions. Global Medical Standards. Unified Global Standards.
                     </p>
                     <div className="hero-actions">
                         <button className="btn-primary btn-large" onClick={onGetStarted}>
@@ -154,7 +154,7 @@ const LandingPage = ({ onGetStarted }) => {
                     <div className="glass-card feature-card">
                         <div className="feat-icon">⚡</div>
                         <h3>Instant Triage</h3>
-                        <p>Submit your symptoms or files for immediate clinical routing across Egypt's top hospitals.</p>
+                        <p>Submit your symptoms or files for immediate clinical routing across the network's top hospitals.</p>
                     </div>
                     <div className="glass-card feature-card">
                         <div className="feat-icon">🏛️</div>
@@ -254,10 +254,10 @@ const LandingPage = ({ onGetStarted }) => {
 
             <section className="impact-section glass-card">
                 <div className="impact-info">
-                    <h2>Our Mission in Egypt</h2>
+                    <h2>Our Global Mission</h2>
                     <p>
                         We are bridging the gap between advanced clinical solutions and everyday patient care.
-                        By localizing the world's most sophisticated medical standards for the Egyptian context,
+                        By localizing the world's most sophisticated medical standards for the clinical context,
                         we ensure every citizen has access to elite healthcare.
                     </p>
                 </div>

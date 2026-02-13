@@ -130,7 +130,7 @@ const AuthPortalSwitcher = ({ onSelectPortal }) => {
           <div className="portal-overlay">
             <span className="portal-badge">Patient Services</span>
             <h2>Personal Healthcare Portal</h2>
-            <p>Access your medical history, book appointments, and connect with Egypt's top doctors instantly.</p>
+            <p>Access your medical history, book appointments, and connect with top doctors instantly.</p>
             <div className="portal-btn">Enter Patient Portal →</div>
           </div>
         </div>

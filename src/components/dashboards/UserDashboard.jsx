@@ -160,8 +160,8 @@ const UserDashboard = () => {
     <div className="user-dashboard">
       <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="text-gradient">Egyptian Medical Discovery</h1>
-          <p className="subtitle">Expert clinical care across Egypt - From Cairo to Aswan</p>
+          <h1 className="text-gradient">Global Medical Discovery</h1>
+          <p className="subtitle">Expert clinical care - Available across the globe</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           {/* SYNC CONTROL CENTER (MOBILE DEBUG) */}
@@ -521,7 +521,7 @@ const UserDashboard = () => {
             </div>
           )}
 
-          <h3>Top Care Centers in Egypt</h3>
+          <h3>Top Care Centers</h3>
           <div className="hospitals-scroll">
             {hospitals.map(h => (
               <div

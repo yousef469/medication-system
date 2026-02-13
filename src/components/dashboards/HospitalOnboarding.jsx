@@ -159,7 +159,7 @@ const HospitalOnboarding = ({ onComplete }) => {
                             <label>Country / City</label>
                             <input
                                 type="text"
-                                placeholder="Egypt, Cairo"
+                                placeholder="City, Country"
                                 value={basicInfo.country}
                                 onChange={e => setBasicInfo({ ...basicInfo, country: e.target.value })}
                                 required

@@ -4,7 +4,7 @@ const LanguageContext = createContext();
 
 const translations = {
     ar: {
-        app_name: "مدينتك الطبية",
+        app_name: "مركزك الطبي العالمي",
         triage_hub: "مركز التشخيص",
         medication_hub: "دليل الأدوية",
         hospitals: "المستشفيات",
@@ -39,13 +39,13 @@ const translations = {
         contact: "اتصال",
         request_treatment: "طلب هذا العلاج",
         no_results: "لا توجد نتائج. جرب البحث عن 'قلب'، 'أورام'، أو 'جراحة مخ'.",
-        welcome_hero: "مستقبل الرعاية الصحية في مصر",
-        hero_subtitle: "ذكاء اصطناعي متطور. معايير عالمية. موحد لخدمة مصر.",
+        welcome_hero: "مستقبل الرعاية الصحية الذكية",
+        hero_subtitle: "ذكاء اصطناعي متطور. معايير طبية عالمية.",
         explore_hub: "استكشف الخدمات",
         view_network: "شبكة المستشفيات"
     },
     en: {
-        app_name: "MediHealth Egypt",
+        app_name: "MediHealth Global",
         triage_hub: "Triage Hub",
         medication_hub: "Medication Info",
         hospitals: "Hospitals",
@@ -80,8 +80,8 @@ const translations = {
         contact: "Contact",
         request_treatment: "Request This Treatment",
         no_results: "No matches found. Try searching for 'Heart', 'Cancer', or 'Brain Surgery'.",
-        welcome_hero: "The Future of Egyptian Healthcare",
-        hero_subtitle: "Advanced AI Diagnostics. Global Clinical Standards. Unified for Egypt.",
+        welcome_hero: "The Future of Digital Healthcare",
+        hero_subtitle: "Advanced AI Diagnostics. Global Clinical Standards.",
         explore_hub: "Explore Hub",
         view_network: "View Network"
     }

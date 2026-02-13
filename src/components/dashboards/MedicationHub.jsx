@@ -18,7 +18,7 @@ const MedicationHub = () => {
         <div className="medication-hub fade-in">
             <header className="hub-header">
                 <h1 className="text-gradient">Medication & Treatment Hub</h1>
-                <p className="subtitle">Global search for Egyptian medical facilities, costs, and availability.</p>
+                <p className="subtitle">Global search for Global medical facilities, costs, and availability.</p>
 
                 <div className="search-box glass-card">
                     <span className="search-icon">🔍</span>
