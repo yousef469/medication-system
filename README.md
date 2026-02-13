@@ -1,96 +1,75 @@
 # MedicationSystem (MediHealth Global)
 
-**Built: January 2025**
+**Built: January 2025**  
+**Status: v0.1 - Active Development (UX Refinement in Progress)**
 
-MedicationSystem is a next-generation clinical coordination platform designed to unify the workflows of **Patients, Coordinators, Nurses, Doctors, and Hospital Administrators**. By leveraging **Gemini AI** and high-fidelity **3D Bio-Anatomy**, the system provides a seamless experience from initial symptom reporting to pharmacy dispensing.
-
----
-
-## 🧬 Core Feature: Gemini-Powered 3D Anatomy
-
-The standout feature of this repository is the **3D Bio-Anatomy Lab**. 
-- **AI Analysis**: When a patient uploads a medical report or submits a request, **Gemini AI** (1.5 Flash/Pro) analyzes the documentation in real-time.
-- **Mesh Mapping**: The AI extracts clinical findings and maps them to specific anatomical mesh names (e.g., `LegL: Femur`, `Vertebrae: L3`).
-- **Visual Feedback**: These locations are highlighted on a 3D skeletal/muscular model, allowing doctors and nurses to visualize the pathology immediately within the Patient Dashboard or Doctor Workstation.
+MedicationSystem is a next-generation clinical coordination platform designed to unify the workflows of **Patients, Coordinators, Nurses, Doctors, and Hospital Administrators**. It bridges the gap between patient reporting and clinical action using **Gemini AI** and high-fidelity **3D Bio-Anatomy**.
 
 ---
 
-## 👥 Stakeholder Workflows
-
-- **User (Patient)**: Submit medical requests via text, image, or voice. View personal AI diagnostics and 3D anatomy. Manage secure digital prescriptions.
-- **Coordinator (Secretary)**: Unified Triage Hub to route incoming patient requests to the correct specialists based on AI urgency scores.
-- **Nurse**: Station centered on care visualizers and vital tracking. Execute clinical instructions and manage medication administration.
-- **Doctor**: High-precision workstation with deep clinical synthesis, 3D anatomical reviews, and secure digital prescription generation.
-- **Hospital Admin**: Manage clinical staff, verify professional licenses via AI OCR, and monitor hospital-wide clinical performance.
+## 📱 Android App
+The ecosystem includes a dedicated **Android App** for Patients/Users, allowing them to:
+- Submit requests (Text/Voice/PDF) on the go.
+- Track their medical journey and 3D diagnostics.
+- Access their secure **Pharmacy Wallet** for QR-based medication pickup.
 
 ---
 
-## 🛠 Tech Stack & Integration
+## 🧪 Testing & Setup Guide
 
-- **Frontend**: React + Vite, deployed on **Vercel**.
-- **Backend Logic**: FastAPI (Python) serving as a proxy for Gemini AI and handling real-time voice/image processing.
-- **Database**: **Supabase** (PostgreSQL) with Row Level Security (RLS) and Realtime subscriptions.
-- **AI Engine**: Google Gemini (Multimodal) for chat, OCR, and anatomical mapping.
+To test the full system, follow this end-to-end flow:
 
----
+### 1. Hospital Creation & Staff Onboarding
+1. **Create Hospital**: Log in and register a new Hospital Node.
+2. **Invite Staff**: From the Hospital Admin dashboard, generate invite links for:
+   - **Coordinator** (Secretary)
+   - **Nurse**
+   - **Doctor**
+3. **Connect**: Once these users register via the invite, they are automatically linked to your hospital's private ecosystem.
 
-## 🚀 Setup & Installation
+### 2. The Clinical Journey (Example: ACL Injury)
+1. **User Request**: A user logs into the app/portal, selects your hospital, and submits a request: *"I think I have an ACL injury."* They can also attach a PDF medical report.
+2. **Coordinator Triage**: The Coordinator receives the request first. They review the AI urgency score and assign a **Nurse** and **Doctor** to the case.
+3. **Nurse Intake**: The Nurse opens the case, registers the patient's **Vitals** and **Triage Notes**, then passes the case to the assigned Doctor.
+4. **Doctor Consultation**: 
+   - The Doctor reviews the clinical synthesis.
+   - **3D AI Analysis**: If a PDF or text was provided and a Gemini API Key is in the `.env`, the system performs a deep analysis.
+   - **Anatomical Mapping**: The problem area (e.g., the Knee) is highlighted on the **3D Humanoid**. **Red areas** indicate damaged tissue/bone as identified by the AI.
 
-### 1. Database (Supabase) Setup
-1. Create a new Supabase project.
-2. Execute the SQL migration scripts located in the `sql/` directory in numerical order to set up schemas, tables, and RLS policies.
-3. Configure **Storage Buckets**: Create a public bucket named `medical-records` for patient uploads.
-
-### 2. Backend (AI Logic Server)
-The backend acts as a bridge between the frontend and Gemini AI.
-1. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Configure environment variables in `.env` (see below).
-3. Start the FastAPI server:
-   ```bash
-   python server.py
-   ```
-4. **LocalTunnel (Optional)**: If deploying the frontend to Vercel/APK, you must expose your local backend:
-   ```bash
-   lt --port 8001 --subdomain medical-hub-brain
-   ```
-
-### 3. Frontend (React)
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start development mode:
-   ```bash
-   npm run dev
-   ```
+### 3. Pharmacy QR Flow
+- After the consultation, the Doctor prescribes medication.
+- The user receives a **QR Code** in their digital wallet.
+- **Dispensing**: The pharmacist scans this QR code.
+- **Verification**: Upon scanning, the pharmacist sees the **Hospital Name**, **Doctor Name**, and **Exact Medication** (Patient diagnosis remains private).
 
 ---
 
-## 🔑 Environment Variables
+## 🧬 Gemini-Powered 3D Anatomy
 
-Create a `.env` file in the root directory:
+- **Automated Analysis**: Gemini 1.5 Flash/Pro converts complex medical jargon into 3D mesh coordinates.
+- **Visual Diagnostics**: Highlights specific parts (e.g., `LegL: ACL`, `Vertebrae: L4`) in red to represent pathology.
+- **Workflow Integration**: Accessible by both the patient (for understanding) and the clinical staff (for precision).
 
-```env
-# Supabase Configuration
-VITE_SUPABASE_URL=your_project_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
+---
 
-# Gemini AI Configuration
-GEMINI_API_KEY=your_google_gemini_api_key
+## 📡 Connectivity & Tunnels
 
-# Backend (Internal)
-PORT=8001
+> [!IMPORTANT]
+> For the real-time link between Users/Patients and Hospital Staff to function (especially when using the Android App or Vercel), **the Backend Tunnel must be running**.
+
+Run the tunnel in your terminal:
+```bash
+lt --port 8001 --subdomain medical-hub-brain
 ```
 
 ---
 
-## 📡 Deployment
+## 🛠 Tech Stack
 
-- **Frontend**: Connect your GitHub repository to **Vercel**. Ensure the Environment Variables are mirrored in the Vercel Dashboard.
-- **Backend**: Can be hosted on any provider supporting Python (DigitalOcean, Heroku) or kept local with a tunnel for prototyping.
+- **Frontend**: React + Vite (Vercel).
+- **Backend Logic**: FastAPI (Python) + Gemini AI.
+- **Database**: Supabase (PostgreSQL + RLS).
+- **Communication**: Real-time subscriptions via Supabase.
 
 ---
-*Built for the future of global healthcare.*
+*Note: Some UI components are currently being redesigned for enhanced clinical efficiency. We are still working on the final polish.*
