@@ -20,8 +20,8 @@ export const ClinicalProvider = ({ children }) => {
     const [loading, setLoading] = useState(false);
     const { user, refreshUser } = useAuth();
 
-    // Hardened API Selection: Ensure APK/Vercel ALWAYS uses the tunnel
-    const tunnelUrl = "https://medical-hub-brain.loca.lt";
+    // Dynamic API Selection: Support environment variables for the tunnel
+    const tunnelUrl = import.meta.env.VITE_TUNNEL_URL || "https://medical-hub-brain.loca.lt";
     const API_URL = (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
         ? tunnelUrl
         : "";

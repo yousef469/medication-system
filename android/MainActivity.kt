@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
 
     // Change this to your Computer's Local IP (e.g., 192.168.1.5) if testing on a physical phone!
-    private val BASE_URL = "http://10.0.2.2:5173" 
+    private val BASE_URL = "http://10.0.2.2:5173" // Change to your tunnel URL (e.g., https://medical-hub-brain.loca.lt) for remote testing
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

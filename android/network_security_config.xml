@@ -3,6 +3,8 @@
     <domain-config cleartextTrafficPermitted="true">
         <!-- Local server IP for emulator -->
         <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Localtunnel for remote testing -->
+        <domain includeSubdomains="true">loca.lt</domain>
         <!-- Place your Computer's Local Wi-Fi IP here as well -->
         <domain includeSubdomains="true">192.168.1.5</domain>
     </domain-config>
