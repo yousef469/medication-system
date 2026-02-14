@@ -62,6 +62,12 @@ Run the tunnel in your terminal:
 lt --port 8001 --subdomain medical-hub-brain
 ```
 
+### 🔓 Remote Configuration
+To ensure seamless connectivity across Web and Android:
+1. **Frontend**: Set `VITE_TUNNEL_URL=https://medical-hub-brain.loca.lt` in your `.env` (or your chosen subdomain).
+2. **Android**: The app is pre-configured to allow traffic from `loca.lt` domains. If testing on a physical device, ensure your phone can reach the tunnel URL.
+3. **Local Checks**: If the backend is running locally, the system automatically defaults to `localhost`.
+
 ---
 
 ## 🛠 Tech Stack
