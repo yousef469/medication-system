@@ -2,7 +2,9 @@
 import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './AuthContext';
-import { ClinicalContext } from './ContextRegistry';
+import { getClinicalContext } from './ContextRegistry';
+
+const ClinicalContext = getClinicalContext();
 
 export function useClinical() {
     const context = useContext(ClinicalContext);

@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useContext, useState, useEffect } from 'react';
-import { LanguageContext } from './ContextRegistry';
+import { getLanguageContext } from './ContextRegistry';
 import { translations } from '../data/translations';
+
+const LanguageContext = getLanguageContext();
 
 export function LanguageProvider({ children }) {
     const [language, setLanguage] = useState('ar');

@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useContext, useState, useEffect } from 'react';
-import { ThemeContext } from './ContextRegistry';
+import { getThemeContext } from './ContextRegistry';
+
+const ThemeContext = getThemeContext();
 
 export function useTheme() {
     const context = useContext(ThemeContext);

@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import { AuthContext } from './ContextRegistry';
+import { getAuthContext } from './ContextRegistry';
+
+const AuthContext = getAuthContext();
 
 export function useAuth() {
     const context = useContext(AuthContext);
