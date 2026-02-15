@@ -34,7 +34,7 @@ const MobileAnatomyBridge = lazy(() => import('./components/mobile/MobileAnatomy
 const PharmacyPortal = lazy(() => import('./components/dashboards/PharmacyPortal'));
 const PrescriptionTerminal = lazy(() => import('./components/shared/PrescriptionTerminal'));
 
-const CURRENT_RELEASE = "v4.1.0"; // Hospital Registration & Ecosystem Onboarding
+const CURRENT_RELEASE = "v4.1.2"; // Structural Decoupling Fix
 
 // [ErrorBoundary logic removed - moved to separate file]
 

@@ -14,8 +14,8 @@ export default defineConfig({
       manifest: {
         name: 'Clinical Hub Recovery',
         short_name: 'MedicationSystem',
-        id: '/?nuclear_v=7',
-        description: 'Advanced Healthcare Monitoring and Medication System - v4.1.1',
+        id: '/?nuclear_v=8',
+        description: 'Advanced Healthcare Monitoring and Medication System - v4.1.2',
         theme_color: '#ffffff',
         icons: [
           {
