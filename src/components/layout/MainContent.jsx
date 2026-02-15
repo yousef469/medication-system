@@ -31,7 +31,7 @@ const MobileAnatomyBridge = lazy(() => import('../mobile/MobileAnatomyBridge'));
 const PharmacyPortal = lazy(() => import('../dashboards/PharmacyPortal'));
 const PrescriptionTerminal = lazy(() => import('../shared/PrescriptionTerminal'));
 
-const CURRENT_RELEASE = "v4.1.4"; // Lazy Singleton Context Fix
+const CURRENT_RELEASE = "v4.1.5"; // Circular Chunk Dependency Fix
 
 export default function MainContent() {
     const { user: authUser, isInitialized, isLocked, unlockSession } = useAuth();

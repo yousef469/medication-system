@@ -14,8 +14,8 @@ export default defineConfig({
       manifest: {
         name: 'Clinical Hub Recovery',
         short_name: 'MedicationSystem',
-        id: '/?nuclear_v=10',
-        description: 'Advanced Healthcare Monitoring and Medication System - v4.1.4',
+        id: '/?nuclear_v=11',
+        description: 'Advanced Healthcare Monitoring and Medication System - v4.1.5',
         theme_color: '#ffffff',
         icons: [
           {
@@ -38,21 +38,6 @@ export default defineConfig({
       }
     })
   ],
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'clinical-core': ['./src/context/ContextRegistry.js', './src/supabaseClient.js'],
-          'clinical-contexts': [
-            './src/context/AuthContext.jsx',
-            './src/context/ClinicalContext.jsx',
-            './src/context/LanguageContext.jsx',
-            './src/context/ThemeContext.jsx'
-          ]
-        }
-      }
-    }
-  },
   server: {
     host: '0.0.0.0',
     port: 5174,
