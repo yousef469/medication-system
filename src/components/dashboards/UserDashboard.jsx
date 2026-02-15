@@ -33,6 +33,7 @@ const UserDashboard = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [voiceUrl, setVoiceUrl] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [preferredDoctorId, setPreferredDoctorId] = useState(null);
@@ -134,13 +135,20 @@ const UserDashboard = () => {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
           const audioUrl = URL.createObjectURL(audioBlob);
           setVoiceUrl(audioUrl);
+          setIsTranscribing(true);
 
           try {
             const transcribedText = await transcribeVoice(audioBlob);
-            setRequestContent(prev => prev ? prev + " " + transcribedText : transcribedText);
+            if (transcribedText) {
+              setRequestContent(prev => prev ? prev + " " + transcribedText : transcribedText);
+            } else {
+              setRequestContent(prev => prev + `\n[Voice recorded — no speech detected]`);
+            }
           } catch (err) {
             console.error("Transcription failed:", err);
             setRequestContent(prev => prev + `\n[Voice recorded but transcription failed]`);
+          } finally {
+            setIsTranscribing(false);
           }
 
           stream.getTracks().forEach(track => track.stop());
@@ -168,14 +176,11 @@ const UserDashboard = () => {
       return;
     }
 
-    const inputType = voiceUrl ? 'voice' : selectedFile ? 'file' : 'text';
-
     await submitRequest(
       user.name || "Guest Patient",
       selectedHospitalId,
       requestContent,
       urgency,
-      inputType,
       selectedFile,
       voiceUrl,
       preferredDoctorId
@@ -318,8 +323,22 @@ const UserDashboard = () => {
                   required
                 ></textarea>
                 <div className="form-tools">
-                  <button type="button" className={`tool-btn ${isRecording ? 'recording' : ''}`} onClick={handleVoiceToggle}>
-                    {isRecording ? '⏹ Stop Recording' : '🎤 Voice Note'}
+                  <button
+                    type="button"
+                    className={`tool-btn ${isRecording ? 'recording' : ''}`}
+                    onClick={handleVoiceToggle}
+                    disabled={isTranscribing}
+                    style={{
+                      ...(isRecording ? {
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        borderColor: '#ef4444',
+                        color: '#f87171',
+                        animation: 'pulse 1.5s infinite'
+                      } : {}),
+                      ...(isTranscribing ? { opacity: 0.6, cursor: 'wait' } : {})
+                    }}
+                  >
+                    {isTranscribing ? '⏳ Transcribing...' : isRecording ? '⏹ Stop Recording' : '🎤 Voice Note'}
                   </button>
                   <div
                     className="tool-btn"
