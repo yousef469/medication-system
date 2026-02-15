@@ -12,10 +12,10 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico'],
       manifest: {
-        name: 'Clinical Hub',
+        name: 'Clinical Hub Recovery',
         short_name: 'MedicationSystem',
-        id: '/?nuclear_v=6',
-        description: 'Advanced Healthcare Monitoring and Medication System - v4.0.1',
+        id: '/?nuclear_v=7',
+        description: 'Advanced Healthcare Monitoring and Medication System - v4.1.1',
         theme_color: '#ffffff',
         icons: [
           {
