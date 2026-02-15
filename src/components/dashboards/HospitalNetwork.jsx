@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import DoctorProfile from '../doctors/DoctorProfile';
 import { useClinical } from '../../context/ClinicalContext';

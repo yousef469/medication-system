@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import Humanoid3D from '../visual/Humanoid3D';
 import ThemeToggle from '../shared/ThemeToggle';
 

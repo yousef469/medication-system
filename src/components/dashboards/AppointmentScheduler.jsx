@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 
 const AppointmentScheduler = ({ onBookNew }) => {
     const { user } = useAuth();

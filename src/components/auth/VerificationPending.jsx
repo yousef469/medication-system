@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 
 const VerificationPending = () => {
     const { user, logout } = useAuth();

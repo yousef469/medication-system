@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 
 const UserHospitals = () => {
     const { hospitals, submitRequest } = useClinical();

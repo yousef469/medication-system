@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-// import { useAuth } from '../../context/useAuth'; // Removed unused
+// import { useAuth } from '../../context/AuthContext'; // Removed unused
 
 const HospitalOnboarding = ({ onComplete }) => {
     const { registerHospitalNode, updateHospitalConfig, analyzeLicenseOCR, uploadFileToSupabase, generateInvite } = useClinical();

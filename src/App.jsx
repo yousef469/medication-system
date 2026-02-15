@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { useAuth } from './context/useAuth';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './components/layout/AppLayout';
 import DoctorDashboard from './components/dashboards/DoctorDashboard';
 import DoctorProfile from './components/doctors/DoctorProfile';

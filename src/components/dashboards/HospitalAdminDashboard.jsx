@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import AccordionSidebar from '../shared/AccordionSidebar';
 import HospitalChat from './HospitalChat'; // Import HospitalChat
 import HospitalOnboarding from './HospitalOnboarding';

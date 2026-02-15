@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import ProfessionalProfileModal from '../shared/ProfessionalProfileModal';
 import ThemeToggle from '../shared/ThemeToggle';
 import QRCode from 'react-qr-code';

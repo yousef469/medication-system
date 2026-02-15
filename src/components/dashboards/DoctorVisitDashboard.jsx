@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import DoctorConsultation from './DoctorConsultation';
 
 const DoctorVisitDashboard = () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import { useClinical } from '../../context/ClinicalContext';
 import { useTheme } from '../../context/ThemeContext';
 import ProfessionalProfile from '../shared/ProfessionalProfile';

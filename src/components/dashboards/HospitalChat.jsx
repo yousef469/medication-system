@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../supabaseClient';
 import ProfessionalProfileModal from '../shared/ProfessionalProfileModal';
 

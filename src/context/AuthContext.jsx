@@ -1,10 +1,16 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
-import { AuthContext } from './useAuth';
 
-// Re-export useAuth for convenience, though components should ideally import from useAuth.js directly
-export { useAuth } from './useAuth';
+const AuthContext = createContext();
+
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+}
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState({ role: 'user', name: 'Guest Patient', isAuthenticated: false });

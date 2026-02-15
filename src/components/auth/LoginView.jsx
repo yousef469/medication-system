@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// import { useAuth } from '../../context/useAuth'; // Removed unused
+// import { useAuth } from '../../context/AuthContext'; // Removed unused
 import { supabase } from '../../supabaseClient';
 
 const LoginView = ({ portalMode = 'patient', onBack }) => {

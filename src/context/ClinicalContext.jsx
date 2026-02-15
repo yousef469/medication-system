@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
-import { useAuth } from './useAuth';
+import { useAuth } from './AuthContext';
 
 const ClinicalContext = createContext();
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/useAuth';
+import { useAuth } from '../../context/AuthContext';
 import { useClinical } from '../../context/ClinicalContext';
 import ProfessionalProfile from '../shared/ProfessionalProfile';
 import HumanoidVisualizer from '../shared/HumanoidVisualizer';
