@@ -1,13 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
+import { ThemeContext } from './ContextRegistry';
 
-const ThemeContext = createContext();
-
-export const useTheme = () => {
+export function useTheme() {
     const context = useContext(ThemeContext);
     if (!context) throw new Error('useTheme must be used within a ThemeProvider');
     return context;
-};
+}
 
 export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');

@@ -1,9 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './AuthContext';
-
-const ClinicalContext = createContext();
+import { ClinicalContext } from './ContextRegistry';
 
 export function useClinical() {
     const context = useContext(ClinicalContext);
