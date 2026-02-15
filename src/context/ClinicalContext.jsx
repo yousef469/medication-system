@@ -11,7 +11,7 @@ export function useClinical() {
     return context;
 }
 
-export const ClinicalProvider = ({ children }) => {
+export function ClinicalProvider({ children }) {
     const [requests, setRequests] = useState([]);
     const [doctors, setDoctors] = useState([]);
     // systemLogs removed
@@ -867,4 +867,4 @@ export const ClinicalProvider = ({ children }) => {
             {children}
         </ClinicalContext.Provider>
     );
-};
+}

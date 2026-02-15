@@ -12,7 +12,7 @@ export function useAuth() {
     return context;
 }
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
     const [user, setUser] = useState({ role: 'user', name: 'Guest Patient', isAuthenticated: false });
     const [isInitialized, setIsInitialized] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
@@ -112,4 +112,4 @@ export const AuthProvider = ({ children }) => {
     }), [user, isInitialized, isLocked, refreshUser]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}

@@ -76,7 +76,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-const MainContent = () => {
+function MainContent() {
   // Force HMR Refresh: 2026-01-18T02:07:00Z
   const { user: authUser, isInitialized, isLocked, unlockSession } = useAuth();
   const { isBackendOnline } = useClinical();
@@ -288,7 +288,7 @@ const MainContent = () => {
       } />
     </Routes>
   );
-};
+}
 
 function App() {
   return (
