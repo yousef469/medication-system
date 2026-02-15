@@ -89,7 +89,7 @@ const translations = {
     // Add fr, es, de placeholders if needed, defaulting to EN logic for now
 };
 
-export const LanguageProvider = ({ children }) => {
+export function LanguageProvider({ children }) {
     const [language, setLanguage] = useState('ar');
     const isRTL = language === 'ar';
 
@@ -108,7 +108,7 @@ export const LanguageProvider = ({ children }) => {
             {children}
         </LanguageContext.Provider>
     );
-};
+}
 
 export const useLanguage = () => {
     const context = useContext(LanguageContext);

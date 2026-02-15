@@ -1,80 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import AppLayout from './components/layout/AppLayout';
-import DoctorDashboard from './components/dashboards/DoctorDashboard';
-import DoctorProfile from './components/doctors/DoctorProfile';
-import UserDashboard from './components/dashboards/UserDashboard';
-import SecretaryDashboard from './components/dashboards/SecretaryDashboard';
-import ITSupportDashboard from './components/dashboards/ITSupportDashboard';
-import AdminDashboard from './components/dashboards/AdminDashboard';
-import LoginView from './components/auth/LoginView';
-import AuthPortalSwitcher from './components/auth/AuthPortalSwitcher';
-import UserHospitals from './components/dashboards/UserHospitals';
-import UserDoctors from './components/dashboards/UserDoctors';
-import UserAppointments from './components/dashboards/UserAppointments';
-import AIAssistant from './components/dashboards/AIAssistant';
-import HospitalNetwork from './components/dashboards/HospitalNetwork';
-import HospitalAdminDashboard from './components/dashboards/HospitalAdminDashboard';
-import HospitalChat from './components/dashboards/HospitalChat';
-import NurseDashboard from './components/dashboards/NurseDashboard';
-import CoordinatorDashboard from './components/dashboards/CoordinatorDashboard';
-import LockScreen from './components/auth/LockScreen';
-
-import LandingPage from './components/dashboards/LandingPage';
-import MedicationHub from './components/dashboards/MedicationHub';
-import BioAnatomyLab from './components/dashboards/BioAnatomyLab';
-import VerificationPending from './components/auth/VerificationPending';
-import MobileAnatomyBridge from './components/mobile/MobileAnatomyBridge';
-import PharmacyPortal from './components/dashboards/PharmacyPortal';
-import PrescriptionTerminal from './components/shared/PrescriptionTerminal';
 import { ClinicalProvider, useClinical } from './context/ClinicalContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
+
+// Lazy Loaded Components
+const AppLayout = lazy(() => import('./components/layout/AppLayout'));
+const DoctorDashboard = lazy(() => import('./components/dashboards/DoctorDashboard'));
+const DoctorProfile = lazy(() => import('./components/doctors/DoctorProfile'));
+const UserDashboard = lazy(() => import('./components/dashboards/UserDashboard'));
+const SecretaryDashboard = lazy(() => import('./components/dashboards/SecretaryDashboard'));
+const ITSupportDashboard = lazy(() => import('./components/dashboards/ITSupportDashboard'));
+const AdminDashboard = lazy(() => import('./components/dashboards/AdminDashboard'));
+const LoginView = lazy(() => import('./components/auth/LoginView'));
+const AuthPortalSwitcher = lazy(() => import('./components/auth/AuthPortalSwitcher'));
+const UserHospitals = lazy(() => import('./components/dashboards/UserHospitals'));
+const UserDoctors = lazy(() => import('./components/dashboards/UserDoctors'));
+const UserAppointments = lazy(() => import('./components/dashboards/UserAppointments'));
+const AIAssistant = lazy(() => import('./components/dashboards/AIAssistant'));
+const HospitalNetwork = lazy(() => import('./components/dashboards/HospitalNetwork'));
+const HospitalAdminDashboard = lazy(() => import('./components/dashboards/HospitalAdminDashboard'));
+const HospitalChat = lazy(() => import('./components/dashboards/HospitalChat'));
+const NurseDashboard = lazy(() => import('./components/dashboards/NurseDashboard'));
+const CoordinatorDashboard = lazy(() => import('./components/dashboards/CoordinatorDashboard'));
+const LockScreen = lazy(() => import('./components/auth/LockScreen'));
+const LandingPage = lazy(() => import('./components/dashboards/LandingPage'));
+const MedicationHub = lazy(() => import('./components/dashboards/MedicationHub'));
+const BioAnatomyLab = lazy(() => import('./components/dashboards/BioAnatomyLab'));
+const VerificationPending = lazy(() => import('./components/auth/VerificationPending'));
+const MobileAnatomyBridge = lazy(() => import('./components/mobile/MobileAnatomyBridge'));
+const PharmacyPortal = lazy(() => import('./components/dashboards/PharmacyPortal'));
+const PrescriptionTerminal = lazy(() => import('./components/shared/PrescriptionTerminal'));
 
 const CURRENT_RELEASE = "v4.1.0"; // Hospital Registration & Ecosystem Onboarding
 
-// Error Boundary for Mobile Recovery
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error) { return { hasError: true, error }; }
-  componentDidCatch(error, errorInfo) { console.error("[PWA Recovery] Caught error:", error, errorInfo); }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: '2rem', textAlign: 'center', background: '#020617', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-          <h1 className="text-gradient" style={{ fontSize: '2rem', marginBottom: '1rem' }}>Clinical Hub Recovery</h1>
-          <p style={{ opacity: 0.8, maxWidth: '400px', margin: '0 auto 2rem' }}>
-            The app encountered a synchronization error (likely a stale cache). We need to perform a hard reset.
-          </p>
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', padding: '1rem', borderRadius: '12px', fontSize: '0.8rem', color: '#fca5a5', marginBottom: '2rem' }}>
-            {this.state.error?.message}
-          </div>
-          <button
-            onClick={() => {
-              if (window.confirm("This will clear local session storage and force a full reload. Continue?")) {
-                localStorage.clear();
-                sessionStorage.clear();
-                // Clear service workers
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-                }
-                setTimeout(() => window.location.reload(true), 500);
-              }
-            }}
-            style={{ padding: '1rem 2rem', background: '#7c3aed', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 900, cursor: 'pointer', boxShadow: '0 0 20px rgba(124, 58, 237, 0.4)' }}
-          >
-            NUCLEAR RESET & FIX APP
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+// [ErrorBoundary logic removed - moved to separate file]
 
 function MainContent() {
   // Force HMR Refresh: 2026-01-18T02:07:00Z
@@ -298,7 +260,9 @@ function App() {
           <AuthProvider>
             <ClinicalProvider>
               <ThemeProvider>
-                <MainContent />
+                <Suspense fallback={<div className="loading-screen">Clinical modules loading...</div>}>
+                  <MainContent />
+                </Suspense>
               </ThemeProvider>
             </ClinicalProvider>
           </AuthProvider>

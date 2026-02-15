@@ -9,7 +9,7 @@ export const useTheme = () => {
     return context;
 };
 
-export const ThemeProvider = ({ children }) => {
+export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
     useEffect(() => {
@@ -24,4 +24,4 @@ export const ThemeProvider = ({ children }) => {
             {children}
         </ThemeContext.Provider>
     );
-};
+}
