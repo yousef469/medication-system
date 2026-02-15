@@ -79,35 +79,33 @@ class ErrorBoundary extends React.Component {
 
 const MainContent = () => {
   // Force HMR Refresh: 2026-01-18T02:07:00Z
-  const { user: authUser, login, logout, isInitialized, isLocked, unlockSession } = useAuth();
+  const { user: authUser, isInitialized, isLocked, unlockSession } = useAuth();
   const { isBackendOnline } = useClinical();
 
   const user = authUser || { role: 'user', name: 'Guest', isAuthenticated: false, verification_status: 'APPROVED' };
   const [isStarted, setIsStarted] = useState(false);
   const [selectedSystem, setSelectedSystem] = useState('user');
   const [activeSubView, setActiveSubView] = useState('discovery');
-  const [selectedPortal, setSelectedPortal] = useState(null);
+  const [selectedPortal, setSelectedPortal] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('invite') || params.get('token')) ? 'professional' : null;
+  });
 
   // Mobile Bridge Detect (Embedded Mode for Android)
   const queryParams = new URLSearchParams(window.location.search);
   const isMobileBridge = queryParams.get('mobile') === 'true';
 
-  // Automatically start if authenticated (handles OAuth redirect)
+  // Initial Route Check (Run Once)
   useEffect(() => {
-    // Check for Invite Link (Legacy or Secure Token)
-    // Check for Invite Link (Legacy or Secure Token)
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('invite') || params.get('token')) {
-      console.log("[App] Invitation token/link detected, switching to Professional Portal");
-      setSelectedPortal('professional');
-    }
-
-    // PUBLIC PHARMACY ROUTE
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (window.location.pathname === '/pharmacy') {
       setSelectedSystem('pharmacy');
       setIsStarted(true);
     }
+  }, []);
 
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (user?.isAuthenticated) {
       console.log("[App] Auto-routing for:", user.role);
       setIsStarted(true);
@@ -125,7 +123,7 @@ const MainContent = () => {
         if (activeSubView === 'login') setActiveSubView('discovery');
       }
     }
-  }, [user?.isAuthenticated, user?.role]);
+  }, [user?.isAuthenticated, user?.role, user?.hospital_id, activeSubView]);
 
 
   const handleNavClick = (view) => {

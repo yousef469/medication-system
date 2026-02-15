@@ -29,7 +29,7 @@ const CoordinatorDashboard = ({ initialTab = 'triage' }) => {
             fetchRequests(user.hospital_id);
             fetchDoctors(user.hospital_id);
         }
-    }, [user?.hospital_id]);
+    }, [user?.hospital_id, fetchRequests, fetchDoctors]);
 
     useEffect(() => {
         // Only override if initialTab is valid and different
@@ -295,7 +295,7 @@ const CoordinatorDashboard = ({ initialTab = 'triage' }) => {
                                     doctorId: bookingContext.doctorId,
                                     clinic: bookingContext.clinic
                                 } : {}}
-                                onSave={(patient) => {
+                                onSave={() => {
                                     setBookingContext(null);
                                     setActiveTab('appointments'); // Go back to appointments usually
                                     alert("Record saved successfully!");

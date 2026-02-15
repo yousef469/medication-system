@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import QRCode from 'react-qr-code';
 import PatientAnatomyReview from './PatientAnatomyReview';
 
 const DoctorConsultation = ({ request, onBack }) => {
-    const { saveDoctorAssessment, generatePrescription, loading } = useClinical(); // ADDED generatePrescription
+    const { saveDoctorAssessment, generatePrescription } = useClinical();
     const [activeSection, setActiveSection] = useState('Vital Sign');
     const [showAnatomy, setShowAnatomy] = useState(false);
 
@@ -39,16 +38,9 @@ const DoctorConsultation = ({ request, onBack }) => {
         setNewDrug({ name: '', dosage: '', frequency: '', duration: '', route: '' });
     };
 
-    const removeDrug = (indexToRemove) => {
-        setAssessment({
-            ...assessment,
-            prescriptions: assessment.prescriptions.filter((_, index) => index !== indexToRemove)
-        });
-    };
+    // removeDrug removed (unused)
 
     const sections = [
-        // ... (rest of the component will be updated via multi-replace if needed, but I'll do a focused replace first)
-
         { id: 'nurse_assessment', label: 'NURSE ASSESSMENT', icon: '📋' },
         { id: 'vitals', label: 'VITAL SIGN', icon: '🌡️' },
         { id: 'allergies', label: 'ALLERGIES', icon: '🤧' },
@@ -74,32 +66,26 @@ const DoctorConsultation = ({ request, onBack }) => {
 
     const handleCompleteCase = async () => {
         try {
-            // Updated: Generate Prescription Token first
             setShowRxModal(true);
-
-            // Combine specific prescriptions and the general medication text
             const combinedMeds = [
                 ...assessment.prescriptions,
                 ...(assessment.medications ? [{ name: `NOTE: ${assessment.medications}`, dosage: '-', frequency: '-' }] : [])
             ];
 
             const rxData = {
-                request_id: request.id, // CRITICAL: Link to the appointment
-                doctor_id: "DOC-CURRENT", // Ideally from auth context
+                request_id: request.id,
+                doctor_id: "DOC-CURRENT",
                 hospital_id: "HOSP-001",
                 patient_id: request.patient_id || request.id,
                 patient_name: request.patient_name,
                 medications: combinedMeds,
                 diagnosis_context: assessment.diagnosis,
-                insurance_data: { provider: "MainInsure", id: "123", status: "active", copay: 15.00 } // Mock Data
+                insurance_data: { provider: "MainInsure", id: "123", status: "active", copay: 15.00 }
             };
 
             const result = await generatePrescription(rxData);
             setPrescriptionToken(result.token);
-
-            // Background save with the full assessment
             await saveDoctorAssessment(request.id, { ...assessment, status: 'completed' });
-
         } catch (err) {
             alert("Error generating prescription: " + err.message);
             setShowRxModal(false);
@@ -124,13 +110,12 @@ const DoctorConsultation = ({ request, onBack }) => {
                                 </span>
                             </div>
                             <div className="vital-item">
-                                <span className="vital-label">NURSE SEEN AT:</span>
                                 <span className="vital-val">{new Date(request.created_at).toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
                 );
-            case 'VITAL SIGN':
+            case 'VITAL SIGN': {
                 const vitalFields = [
                     { label: 'Systolic B.P.', key: 'systolicBP' },
                     { label: 'Diastolic B.P.', key: 'diastolicBP' },
@@ -149,12 +134,7 @@ const DoctorConsultation = ({ request, onBack }) => {
                             {vitalFields.map(f => (
                                 <div key={f.key} className="form-group">
                                     <label>{f.label}</label>
-                                    <input
-                                        type="text"
-                                        className="form-input"
-                                        value={assessment.vitals[f.key] || ''}
-                                        onChange={e => setAssessment({ ...assessment, vitals: { ...assessment.vitals, [f.key]: e.target.value } })}
-                                    />
+                                    <span className="vital-val">{request.vitals_data?.[f.key] || 'Not Recorded'}</span>
                                 </div>
                             ))}
                         </div>
@@ -179,6 +159,7 @@ const DoctorConsultation = ({ request, onBack }) => {
                         </div>
                     </div>
                 );
+            }
             case 'ALLERGIES':
                 return (
                     <div className="section-card">
@@ -194,7 +175,6 @@ const DoctorConsultation = ({ request, onBack }) => {
                                     }}>🗑️</button>
                                 </div>
                             ))}
-                            <button className="btn-secondary" onClick={() => setActiveSection('ALLERGIES')}>+ Add Allergy</button>
                         </div>
                     </div>
                 );

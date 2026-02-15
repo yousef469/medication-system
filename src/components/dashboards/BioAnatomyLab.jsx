@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 import { useAuth } from '../../context/useAuth';
 import Humanoid3D from '../visual/Humanoid3D';
@@ -15,11 +15,7 @@ const BioAnatomyLab = ({ patientId = null, patientName = null }) => {
     const [isLoading, setIsLoading] = useState(true);
     const fileInputRef = React.useRef(null);
 
-    useEffect(() => {
-        loadData();
-    }, [user?.id, patientId]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         const targetId = patientId || user?.id;
         if (!targetId) return;
 
@@ -36,7 +32,11 @@ const BioAnatomyLab = ({ patientId = null, patientName = null }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [patientId, user?.id, fetchPatientHistory, fetchDiagnoses]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const handleVaultUpload = async (e) => {
         const file = e.target.files[0];

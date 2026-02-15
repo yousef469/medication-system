@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 
 const PatientRegistration = ({ initialData = {}, onSave, onCancel }) => {
-    const { registerPatient, saveAppointment, uploadFileToSupabase, doctors, patients } = useClinical();
+    const { registerPatient, saveAppointment, uploadFileToSupabase, patients } = useClinical();
     const [isSaving, setIsSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [showPatientList, setShowPatientList] = useState(false);
@@ -59,7 +59,7 @@ const PatientRegistration = ({ initialData = {}, onSave, onCancel }) => {
             if (formData.time && formData.date) {
                 await saveAppointment({
                     patient_id: patient.id,
-                    patient_name: `${formData.firstName} ${formData.lastName}`,
+                    patient_name: `${formData.firstName} ${formData.lastName} `,
                     appointment_date: formData.date,
                     appointment_time: formData.time,
                     doctor_id: formData.doctorId,
@@ -107,7 +107,7 @@ const PatientRegistration = ({ initialData = {}, onSave, onCancel }) => {
         }));
         setSelectedPatientId(p.id);
         setShowPatientList(false);
-        setSearchTerm(`${p.firstName} ${p.lastName}`);
+        setSearchTerm(`${p.firstName} ${p.lastName} `);
     };
 
     const filteredPatients = patients.filter(p =>
@@ -119,27 +119,27 @@ const PatientRegistration = ({ initialData = {}, onSave, onCancel }) => {
     return (
         <div className="registration-container fade-in">
             <style>{`
-                .reg-section { background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--glass-border); padding: 1.5rem; margin-bottom: 1.5rem; }
-                .reg-section-title { font-size: 0.85rem; font-weight: 800; color: var(--primary); margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .reg - section { background: var(--bg - surface); border - radius: 12px; border: 1px solid var(--glass - border); padding: 1.5rem; margin - bottom: 1.5rem; }
+                .reg - section - title { font - size: 0.85rem; font - weight: 800; color: var(--primary); margin - bottom: 1.5rem; border - bottom: 1px solid var(--glass - border); padding - bottom: 0.5rem; display: flex; justify - content: space - between; align - items: center; }
                 
-                .reg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; }
-                .reg-field { display: flex; flex-direction: column; gap: 0.4rem; }
-                .reg-field label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); opacity: 0.8; }
+                .reg - grid { display: grid; grid - template - columns: repeat(auto - fit, minmax(200px, 1fr)); gap: 1.25rem; }
+                .reg - field { display: flex; flex - direction: column; gap: 0.4rem; }
+                .reg - field label { font - size: 0.65rem; font - weight: 700; color: var(--text - muted); opacity: 0.8; }
                 
-                .reg-input { border: 1px solid var(--glass-border); background: var(--bg-app); padding: 0.6rem 0.8rem; border-radius: 6px; font-size: 0.8rem; color: var(--text-primary); outline: none; transition: 0.2s; }
-                .reg-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--glass-highlight); }
+                .reg - input { border: 1px solid var(--glass - border); background: var(--bg - app); padding: 0.6rem 0.8rem; border - radius: 6px; font - size: 0.8rem; color: var(--text - primary); outline: none; transition: 0.2s; }
+                .reg - input:focus { border - color: var(--primary); box - shadow: 0 0 0 2px var(--glass - highlight); }
                 
-                .reg-actions { position: sticky; bottom: 0; background: var(--bg-app); padding: 1.5rem; border-top: 1px solid var(--glass-border); display: flex; gap: 1rem; justify-content: flex-end; z-index: 10; border-radius: 0 0 12px 12px; }
+                .reg - actions { position: sticky; bottom: 0; background: var(--bg - app); padding: 1.5rem; border - top: 1px solid var(--glass - border); display: flex; gap: 1rem; justify - content: flex - end; z - index: 10; border - radius: 0 0 12px 12px; }
 
-                .photo-uploader { width: 100px; height: 100px; border: 2px dashed var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; background: var(--bg-app); transition: 0.3s; }
-                .photo-uploader:hover { border-color: var(--primary); background: var(--glass-highlight); }
-                .photo-preview { width: 100%; height: 100%; object-fit: cover; }
+                .photo - uploader { width: 100px; height: 100px; border: 2px dashed var(--glass - border); border - radius: 50 %; display: flex; align - items: center; justify - content: center; cursor: pointer; overflow: hidden; background: var(--bg - app); transition: 0.3s; }
+                .photo - uploader:hover { border - color: var(--primary); background: var(--glass - highlight); }
+                .photo - preview { width: 100 %; height: 100 %; object - fit: cover; }
 
-                .visit-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-                .visit-modal { background: white; width: 600px; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-                .modal-header { background: var(--primary); color: white; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.9rem; }
-                .patient-search-item:hover { background: #f8fafc !important; }
-            `}</style>
+                .visit - modal - overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); backdrop - filter: blur(4px); display: flex; align - items: center; justify - content: center; z - index: 1000; }
+                .visit - modal { background: white; width: 600px; border - radius: 12px; overflow: hidden; box - shadow: 0 20px 50px rgba(0, 0, 0, 0.2); }
+                .modal - header { background: var(--primary); color: white; padding: 1rem 1.5rem; display: flex; justify - content: space - between; align - items: center; font - weight: 800; font - size: 0.9rem; }
+                .patient - search - item:hover { background: #f8fafc!important; }
+`}</style>
 
             {/* Top Toolbar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>

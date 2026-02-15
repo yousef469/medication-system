@@ -10,7 +10,7 @@ const UserHospitals = () => {
     const [selectedSection, setSelectedSection] = useState('');
     const [wasBooked, setWasBooked] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
-    const fileInputRef = React.useRef(null);
+    // fileInputRef removed
 
     const selectedHospital = hospitals.find(h => h.id === selectedHospitalId);
 
@@ -23,7 +23,7 @@ const UserHospitals = () => {
         await submitRequest(
             user.name || "Guest Patient",
             selectedHospitalId,
-            `Appointment Booking: ${selectedSection}. Note: ${bookingNote}`,
+            `Appointment Booking: ${selectedSection}.Note: ${bookingNote} `,
             'SCHEDULED',
             selectedFile ? 'file' : 'text',
             selectedFile
@@ -221,7 +221,7 @@ const UserHospitals = () => {
                 .location-tag { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; }
                 .description { font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6; color: var(--text-secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
                 .stats { display: flex; gap: 1.5rem; font-size: 0.8rem; font-weight: 700; color: var(--primary); align-items: center; }
-                .ai-badge { position: absolute; top: 1rem; right: 1rem; background: rgba(124, 58, 237, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: 900; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+                .ai-badge { position: absolute; top: 1rem; right: 1rem; background: rgba(124, 58, 237, 0.9); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: 900; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
                 .ai-badge.advanced { background: linear-gradient(135deg, #7c3aed, #ec4899); }
                 .tech-badge { background: rgba(34, 197, 94, 0.1); color: #4ade80; padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; border: 1px solid rgba(34, 197, 94, 0.2); }
                 .mb-2 { margin-bottom: 2rem; }

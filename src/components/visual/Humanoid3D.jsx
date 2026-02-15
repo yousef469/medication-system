@@ -1,4 +1,4 @@
-import React, { useMemo, Suspense, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Float, useGLTF, Environment, useTexture } from '@react-three/drei';
 import { useClinical } from '../../context/ClinicalContext';
@@ -55,7 +55,7 @@ const BodyMarker = ({ position, status }) => {
 
 // REMOVED onMeshFound prop and logic
 // BonePart component supporting White Skeleton vs Red Muscle modes
-const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1], prefix = "", texture, highlightTexture, materialType = 'muscle', excludeNames = [], highlightedParts = [], visualMode = 'WHITE_SKELETON', showVessels = true, onMeshClick }) => {
+const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1], texture, highlightTexture, materialType = 'muscle', excludeNames = [], highlightedParts = [], visualMode = 'WHITE_SKELETON', showVessels = true, onMeshClick }) => {
     // Inject Localtunnel Bypass Headers for GLTF Loader
     const { scene } = useGLTF(url, true, true, (loader) => {
         if (loader.setRequestHeader) {
@@ -178,7 +178,7 @@ const BonePart = ({ url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1,
             }
         });
         return c;
-    }, [scene, texture, highlightTexture, materialType, excludeNames, highlightedParts, prefix, visualMode]);
+    }, [scene, texture, highlightTexture, materialType, excludeNames, highlightedParts, visualMode, showVessels]);
 
     if (!model) return null;
 

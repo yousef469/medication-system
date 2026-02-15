@@ -1,0 +1,27 @@
+
+> medication-system@0.0.0 lint
+> eslint .
+
+
+/Users/yousef/Desktop/projects/main projects/MedicationSystem/src/App.jsx
+   82:27  error    'login' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-unused-vars
+   82:34  error    'logout' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  105:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  103 |     // PUBLIC PHARMACY ROUTE
+  104 |     if (window.location.pathname === '/pharmacy') {
+> 105 |       setSelectedSystem('pharmacy');
+      |       ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  106 |       setIsStarted(true);
+  107 |     }
+  108 |  react-hooks/set-state-in-effect
+  126:6   warning  React Hook useEffect has missing dependencies: 'activeSubView' and 'user.hospital_id'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+
+✖ 4 problems (3 errors, 1 warning)
+

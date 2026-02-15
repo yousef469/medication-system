@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../context/useAuth';
 import AccordionSidebar from '../shared/AccordionSidebar';
@@ -18,14 +18,8 @@ const HospitalAdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('staff'); // Default tab
 
-    useEffect(() => {
-        setTheme('light'); // Enforce light mode for consistency
-        if (user?.id) {
-            fetchHospitalData();
-        }
-    }, [user]);
-
-    const fetchHospitalData = async () => {
+    const fetchHospitalData = useCallback(async () => {
+        if (!user?.id) return;
         try {
             // 1. Get Hospital details managed by this admin
             const { data: hospital, error: hError } = await supabase
@@ -72,7 +66,12 @@ const HospitalAdminDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id]);
+
+    useEffect(() => {
+        setTheme('light'); // Enforce light mode for consistency
+        fetchHospitalData();
+    }, [setTheme, fetchHospitalData]);
 
     if (loading) return <div className="loading-screen">Authenticating Facility Credentials...</div>;
 

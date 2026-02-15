@@ -1,0 +1,37 @@
+
+> medication-system@0.0.0 build
+> vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 732 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                            0.52 kB
+dist/index.html                                      1.14 kB │ gzip:   0.62 kB
+dist/assets/index-D_z0k9Fm.css                       7.30 kB │ gzip:   2.16 kB
+dist/assets/workbox-window.prod.es5-BIl4cyR9.js      5.76 kB │ gzip:   2.37 kB
+dist/assets/index-CqEV7Sla.js                    2,186.24 kB │ gzip: 606.92 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 8.56s
+error during build:
+Error: 
+  Configure "workbox.maximumFileSizeToCacheInBytes" to change the limit: the default value is 2 MiB.
+  Check https://vite-pwa-org.netlify.app/guide/faq.html#missing-assets-from-sw-precache-manifest for more information.
+  Assets exceeding the limit:
+  - assets/index-CqEV7Sla.js is 2.19 MB, and won't be precached.
+
+    at logWorkboxResult (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite-plugin-pwa/dist/chunk-G4TAN34B.js:44:13)
+    at generateServiceWorker (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite-plugin-pwa/dist/index.js:209:3)
+    at async _generateSW (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite-plugin-pwa/dist/index.js:234:5)
+    at async Object.handler (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite-plugin-pwa/dist/index.js:427:13)
+    at async PluginDriver.hookParallel (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/rollup/dist/es/shared/node-entry.js:22452:17)
+    at async Object.close (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/rollup/dist/es/shared/node-entry.js:23471:13)
+    at async buildEnvironment (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite/dist/node/chunks/config.js:33555:15)
+    at async Object.build (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite/dist/node/chunks/config.js:33900:19)
+    at async Object.buildApp (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite/dist/node/chunks/config.js:33897:153)
+    at async CAC.<anonymous> (file:///Users/yousef/Desktop/projects/main%20projects/MedicationSystem/node_modules/vite/dist/node/cli.js:629:3)

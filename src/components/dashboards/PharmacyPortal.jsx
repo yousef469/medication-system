@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
+import QRScanner from '../shared/QRScanner';
 
 const PharmacyPortal = () => {
     const { scanPrescription, dispensePrescription, loading } = useClinical();
@@ -7,6 +8,24 @@ const PharmacyPortal = () => {
     const [scannedData, setScannedData] = useState(null);
     const [error, setError] = useState('');
     const [dispenseStatus, setDispenseStatus] = useState('idle'); // idle, processing, success, fail
+    const [showScanner, setShowScanner] = useState(false);
+
+    const handleScanSuccess = async (decodedText) => {
+        setShowScanner(false);
+        setTokenInput(decodedText);
+        setError('');
+        try {
+            const data = await scanPrescription(decodedText);
+            setScannedData(data);
+        } catch (err) {
+            setError(err.message || "Failed to scan prescription");
+        }
+    };
+
+    const handleScanError = () => {
+        // console.warn(err);
+    };
+
 
     const handleScan = async (e) => {
         e.preventDefault();
@@ -71,8 +90,10 @@ const PharmacyPortal = () => {
                 .btn-dispense:disabled { background: #9ca3af; cursor: not-allowed; box-shadow: none; }
                 
                 .btn-scan { background: #15803d; color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+                .btn-toggle-scanner { background: #0ea5e9; color: white; border: none; padding: 0.75rem 1rem; border-radius: 8px; font-weight: 700; cursor: pointer; margin-bottom: 1rem; width: 100%; }
                 
                 .error-msg { background: #fef2f2; color: #b91c1c; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-weight: 600; }
+
                 .success-msg { background: #ecfccb; color: #3f6212; padding: 2rem; text-align: center; border-radius: 12px; margin-top: 2rem; font-weight: 800; font-size: 1.25rem; }
             `}</style>
 
@@ -82,18 +103,29 @@ const PharmacyPortal = () => {
                 </header>
 
                 <div className="ph-body">
-                    <form onSubmit={handleScan} className="scan-box">
-                        <input
-                            type="text"
-                            className="scan-input"
-                            placeholder="Enter Token or Scan QR..."
-                            value={tokenInput}
-                            onChange={(e) => setTokenInput(e.target.value)}
-                        />
-                        <button type="submit" className="btn-scan" disabled={loading}>
-                            {loading ? 'Scanning...' : 'SCAN PRESCRIPTION'}
-                        </button>
-                    </form>
+                    <button className="btn-toggle-scanner" onClick={() => setShowScanner(!showScanner)}>
+                        {showScanner ? "⌨️ ENTER MANUALLY" : "📷 SCAN QR CODE"}
+                    </button>
+
+                    {showScanner ? (
+                        <div style={{ marginBottom: '2rem' }}>
+                            <QRScanner onScanSuccess={handleScanSuccess} onScanError={handleScanError} />
+                        </div>
+                    ) : (
+                        <form onSubmit={handleScan} className="scan-box">
+                            <input
+                                type="text"
+                                className="scan-input"
+                                placeholder="Enter Token..."
+                                value={tokenInput}
+                                onChange={(e) => setTokenInput(e.target.value)}
+                            />
+                            <button type="submit" className="btn-scan" disabled={loading}>
+                                {loading ? 'Checking...' : 'SCAN PRESCRIPTION'}
+                            </button>
+                        </form>
+                    )}
+
 
                     {error && <div className="error-msg">⚠️ {error}</div>}
 

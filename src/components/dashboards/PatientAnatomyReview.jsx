@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Humanoid3D from '../visual/Humanoid3D';
 import { useClinical } from '../../context/ClinicalContext';
 
@@ -30,14 +30,9 @@ const PatientAnatomyReview = ({ request, diagnosis, onBack }) => {
         if (highlightedParts.length === 0) {
             setHighlightedParts(detected);
         }
-    }, [diagnosis]);
+    }, [diagnosis, highlightedParts.length]);
 
-    // Auto-Run Analysis on Mount
-    useEffect(() => {
-        runAiAnalysis();
-    }, []);
-
-    const runAiAnalysis = async () => {
+    const runAiAnalysis = useCallback(async () => {
         if (isAnalyzing || aiAnalysis) return;
         setIsAnalyzing(true);
 
@@ -71,7 +66,6 @@ const PatientAnatomyReview = ({ request, diagnosis, onBack }) => {
                 if (result.markers && result.markers.length > 0) {
                     const aiParts = result.markers.map(m => m.part);
                     setHighlightedParts(prev => [...new Set([...prev, ...aiParts])]);
-                    // You could also store the status (RED/ORANGE) for more advanced visualization if Humanoid3D supports it
                 }
             }
         } catch (err) {
@@ -80,7 +74,12 @@ const PatientAnatomyReview = ({ request, diagnosis, onBack }) => {
         } finally {
             setIsAnalyzing(false);
         }
-    };
+    }, [isAnalyzing, aiAnalysis, fetchPatientHistory, request, diagnosis, analyzeClinicalRequest]);
+
+    // Auto-Run Analysis on Mount
+    useEffect(() => {
+        runAiAnalysis();
+    }, [runAiAnalysis]);
 
     return (
         <div className="anatomy-review-container fade-in">

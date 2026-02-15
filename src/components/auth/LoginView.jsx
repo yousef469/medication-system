@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/useAuth';
+// import { useAuth } from '../../context/useAuth'; // Removed unused
 import { supabase } from '../../supabaseClient';
 
 const LoginView = ({ portalMode = 'patient', onBack }) => {
@@ -10,13 +10,13 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [license, setLicense] = useState(null);
   const [selectedHospital, setSelectedHospital] = useState('');
   const [hospitals, setHospitals] = useState([]);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [phone, setPhone] = useState('');
+  // const [license, setLicense] = useState(null); // Removed unused
+  // const { refreshUser } = useAuth(); // Removed unused
 
   const [lockedHospital, setLockedHospital] = useState(null);
   const [lockedRole, setLockedRole] = useState(null);
@@ -37,8 +37,8 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
       if (token) {
         setInviteToken(token);
         try {
-          const { data, error } = await supabase.rpc('validate_invite_token', { lookup_token: token });
-          const result = Array.isArray(data) ? data[0] : data;
+          const { data: inviteData } = await supabase.rpc('validate_invite_token', { lookup_token: token });
+          const result = Array.isArray(inviteData) ? inviteData[0] : inviteData;
 
           if (result && result.valid) {
             setLockedHospital({ id: result.target_hospital_id, name: result.hospital_name });
@@ -111,7 +111,7 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
         setIsInstant(!!authData.session);
         setRegSuccess(true);
       } else {
-        const { data, error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
+        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password });
         if (loginErr) {
           console.error("[Auth] Login Error Object:", JSON.stringify(loginErr, null, 2));
           throw loginErr;
@@ -388,10 +388,12 @@ const LoginView = ({ portalMode = 'patient', onBack }) => {
                   {hospitals.length === 0 && !lockedHospital && !new URLSearchParams(window.location.search).get('invite') && <p style={{ fontSize: '0.7rem', color: '#eab308', marginTop: '4px' }}>Note: You can proceed; facility assignment can be completed later.</p>}
                 </div>
               )}
+              {/* License Input Removed as variable is unused
               <div className="input-group">
                 <label>Professional ID / License</label>
                 <input type="file" onChange={e => setLicense(e.target.files[0])} required />
               </div>
+              */}
             </>
           )}
 

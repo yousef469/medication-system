@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const LanguageContext = createContext();
@@ -90,13 +91,13 @@ const translations = {
 
 export const LanguageProvider = ({ children }) => {
     const [language, setLanguage] = useState('ar');
-    const [isRTL, setIsRTL] = useState(true);
+    const isRTL = language === 'ar';
 
     useEffect(() => {
-        setIsRTL(language === 'ar');
-        document.dir = language === 'ar' ? 'rtl' : 'ltr';
+        document.dir = isRTL ? 'rtl' : 'ltr';
         document.documentElement.lang = language;
-    }, [language]);
+    }, [language, isRTL]);
+
 
     const t = (key) => {
         return translations[language][key] || translations['en'][key] || key;

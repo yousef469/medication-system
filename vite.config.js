@@ -7,6 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000 // 5MB limit
+      },
       includeAssets: ['favicon.ico'],
       manifest: {
         name: 'Clinical Hub',
@@ -44,14 +47,14 @@ export default defineConfig({
         target: 'http://127.0.0.1:8001',
         changeOrigin: true,
         secure: false,
-        configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
             console.log('[Vite Proxy] Error:', err);
           });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
+          proxy.on('proxyReq', (_proxyReq, req) => {
             console.log('[Vite Proxy] Sending Request to Target:', req.method, req.url);
           });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
+          proxy.on('proxyRes', (proxyRes, req) => {
             console.log('[Vite Proxy] Received Response from Target:', proxyRes.statusCode, req.url);
           });
         }

@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 // Global Error Handler for Mobile Debugging
-window.onerror = (msg, url, line, col, error) => {
+window.onerror = (msg, url, line, col) => {
   console.error("Global Error Caught:", { msg, url, line, col });
   // If it's a chunk loading error (common on PWA updates), force reload
   if (msg.toLowerCase().includes("loading chunk") || msg.toLowerCase().includes("unexpected token '<'")) {

@@ -4,7 +4,7 @@ import { useAuth } from '../../context/useAuth';
 
 const AppointmentScheduler = ({ onBookNew }) => {
     const { user } = useAuth();
-    const { doctors, appointments, fetchDoctors, fetchAppointments, saveAppointment } = useClinical();
+    const { fetchAppointments, fetchDoctors, appointments, doctors } = useClinical();
     const [selectedClinic, setSelectedClinic] = useState('Outpatient');
     const [selectedDoctor, setSelectedDoctor] = useState('');
     const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
@@ -17,7 +17,7 @@ const AppointmentScheduler = ({ onBookNew }) => {
             fetchDoctors(user.hospital_id);
             fetchAppointments(user.hospital_id);
         }
-    }, [user?.hospital_id]);
+    }, [user?.hospital_id, fetchDoctors, fetchAppointments]);
 
     const clinics = ['Outpatient', 'Emergency', 'Cardiology', 'Pediatrics', 'Radiology', 'Neurology'];
 

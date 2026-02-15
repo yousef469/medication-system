@@ -9,7 +9,6 @@ const HospitalChat = () => {
     const [newMessage, setNewMessage] = useState('');
     const [activeChannel, setActiveChannel] = useState('general');
     const [members, setMembers] = useState([]);
-    const [selectedMember, setSelectedMember] = useState(null);
     const [selectedProfileId, setSelectedProfileId] = useState(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
 

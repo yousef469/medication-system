@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
-import { useAuth } from '../../context/useAuth';
+// import { useAuth } from '../../context/useAuth'; // Removed unused
 
 const HospitalOnboarding = ({ onComplete }) => {
     const { registerHospitalNode, updateHospitalConfig, analyzeLicenseOCR, uploadFileToSupabase, generateInvite } = useClinical();
-    const { user } = useAuth();
+    // const { user } = useAuth(); // Removed unused user
     const [phase, setPhase] = useState(1);
     const [isProcessing, setIsProcessing] = useState(false);
     const [hospitalId, setHospitalId] = useState(null);

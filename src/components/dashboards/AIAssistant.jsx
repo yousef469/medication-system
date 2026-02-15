@@ -66,7 +66,7 @@ const AIAssistant = () => {
                 suggestion: response.suggestion
             };
             setMessages(prev => [...prev, assistantMsg]);
-        } catch (err) {
+        } catch {
             setMessages(prev => [...prev, { role: 'assistant', text: "Connection error. Please check your internet or backend server." }]);
         } finally {
             setIsThinking(false);

@@ -11,14 +11,14 @@ import HospitalChat from './HospitalChat';
 const NurseDashboard = () => {
     const { user, logout } = useAuth();
     const { setTheme } = useTheme();
-    const { doctors, fetchDoctors } = useClinical();
+    const { fetchDoctors } = useClinical();
     const [activeTab, setActiveTab] = useState('clinical'); // Default
 
     // Force Light Mode for Professional Dashboards
     useEffect(() => {
         setTheme('light');
         if (user?.hospital_id) fetchDoctors(user.hospital_id);
-    }, []);
+    }, [user?.hospital_id, setTheme, fetchDoctors]);
 
     const topNavItems = [
         { id: 'team_hub', label: 'Team Hub', icon: '🫂', onClick: () => setActiveTab('chat'), active: activeTab === 'chat' },
@@ -130,43 +130,43 @@ const NurseDashboard = () => {
 
                     {/* Re-add styles for launchpad grid locally or assume global/imported */}
                     <style>{`
-                        .launchpad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.5rem; }
+    .launchpad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.5rem; }
                         .modular-icon-card {
-                            background: var(--bg-surface);
-                            border-radius: 15px;
-                            padding: 1.5rem;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            text-align: center;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                            border: 1px solid var(--glass-border);
-                            position: relative;
-                        }
+    background: var(--bg-surface);
+    border-radius: 15px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--glass-border);
+    position: relative;
+}
                         .modular-icon-card:hover {
-                            transform: translateY(-5px);
-                            box-shadow: var(--shadow-md);
-                            border-color: var(--primary-light);
-                        }
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-light);
+}
                         .icon-circle {
-                            width: 60px;
-                            height: 60px;
-                            border-radius: 50%;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 1.8rem;
-                            margin-bottom: 1rem;
-                            flex-shrink: 0;
-                        }
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
                         .modular-label {
-                            font-weight: 700;
-                            color: var(--text-primary);
-                            font-size: 0.9rem;
-                            line-height: 1.3;
-                        }
-                     `}</style>
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+`}</style>
 
                     {renderMainContent()}
                 </main>

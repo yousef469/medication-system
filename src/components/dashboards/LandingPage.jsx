@@ -3,23 +3,13 @@ import { useClinical } from '../../context/ClinicalContext';
 
 const LandingPage = ({ onGetStarted }) => {
     const { hospitals } = useClinical();
-    const [deferredPrompt, setDeferredPrompt] = useState(null);
-    const [isInstallable, setIsInstallable] = useState(false);
-    const [isStandalone, setIsStandalone] = useState(false);
-    const [isPatientPortal, setIsPatientPortal] = useState(false);
+    const [deferredPrompt, setDeferredPrompt] = useState(window.deferredPrompt || null);
+    const [isPatientPortal] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('portal') === 'patient';
+    });
 
     useEffect(() => {
-        // Detect Portal Mode
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('portal') === 'patient') {
-            setIsPatientPortal(true);
-        }
-
-        // Check for globally stashed prompt first
-        if (window.deferredPrompt) {
-            setDeferredPrompt(window.deferredPrompt);
-        }
-
         const handler = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);

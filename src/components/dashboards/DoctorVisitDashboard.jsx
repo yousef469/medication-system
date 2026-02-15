@@ -4,7 +4,7 @@ import { useAuth } from '../../context/useAuth';
 import DoctorConsultation from './DoctorConsultation';
 
 const DoctorVisitDashboard = () => {
-    const { requests, acknowledgeVisit, loading } = useClinical();
+    const { requests, acknowledgeVisit } = useClinical();
     const { user } = useAuth();
     const [activeStatus, setActiveStatus] = useState('NURSE_SEEN');
     const [selectedRequest, setSelectedRequest] = useState(null);

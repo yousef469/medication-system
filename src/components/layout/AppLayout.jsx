@@ -4,7 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import EmergencyOverlay from '../common/EmergencyOverlay';
 
 const AppLayout = ({ children, onNavClick, currentView }) => {
-  const { user, logout, lockSession } = useAuth();
+  const { user, logout } = useAuth();
   const { t, language, setLanguage, isRTL } = useLanguage();
   const [isSOSOpen, setIsSOSOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);

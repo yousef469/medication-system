@@ -10,14 +10,14 @@ import HospitalChat from './HospitalChat';
 
 const DoctorDashboard = () => {
     const { user, logout } = useAuth();
-    const { fetchRequests, refreshGlobalData } = useClinical();
+    const { refreshGlobalData } = useClinical();
     const { setTheme } = useTheme();
     const [activeTab, setActiveTab] = useState('clinical'); // Default
 
     useEffect(() => {
         setTheme('light');
         refreshGlobalData();
-    }, []);
+    }, [setTheme, refreshGlobalData]);
 
     const topNavItems = [
         { id: 'team_hub', label: 'Team Hub', icon: '🫂', onClick: () => setActiveTab('chat'), active: activeTab === 'chat' },

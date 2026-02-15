@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useClinical } from '../../context/ClinicalContext';
 import { useAuth } from '../../context/useAuth';
 import ProfessionalProfileModal from '../shared/ProfessionalProfileModal';
@@ -8,11 +8,12 @@ import Humanoid3D from '../visual/Humanoid3D';
 
 const UserDashboard = () => {
   const {
-    hospitals,
-    doctors,
-    fetchDoctors,
     submitRequest,
+    hospitals,
+    fetchDoctors,
+    doctors,
     fetchPatientHistory,
+    transcribeVoice,
     fetchDiagnoses,
     uploadDiagnosis,
     deleteDiagnosis,
@@ -35,14 +36,13 @@ const UserDashboard = () => {
   const [submitted, setSubmitted] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [preferredDoctorId, setPreferredDoctorId] = useState(null);
-  const fileInputRef = useRef(null);
   const vaultInputRef = useRef(null);
   const isGuest = !user?.isAuthenticated;
 
   const [activePrescriptions, setActivePrescriptions] = useState([]);
   const [syncStatus, setSyncStatus] = useState('IDLE'); // IDLE, SYNCING, SUCCESS, ERROR
 
-  const syncPrescriptions = async () => {
+  const syncPrescriptions = useCallback(async () => {
     if (!user?.id) return;
     setSyncStatus('SYNCING');
     try {
@@ -60,7 +60,7 @@ const UserDashboard = () => {
       console.error("[UserDashboard] Sync Failed:", err);
       setSyncStatus('ERROR');
     }
-  };
+  }, [user?.id, fetchPatientPrescriptions]);
 
   React.useEffect(() => {
     if (user?.id) {
@@ -70,30 +70,23 @@ const UserDashboard = () => {
       window.addEventListener('focus', handleFocus);
       return () => window.removeEventListener('focus', handleFocus);
     }
-  }, [user?.id]);
+  }, [user?.id, syncPrescriptions]);
 
   // Auto-select first hospital
   React.useEffect(() => {
     if (hospitals.length > 0 && !selectedHospitalId) {
       setSelectedHospitalId(hospitals[0].id);
     }
-  }, [hospitals]);
+  }, [hospitals, selectedHospitalId]);
 
   // Fetch doctors for the selected hospital
   React.useEffect(() => {
     if (selectedHospitalId) {
       fetchDoctors(selectedHospitalId);
     }
-  }, [selectedHospitalId]);
+  }, [selectedHospitalId, fetchDoctors]);
 
-  // Fetch Patient History
-  React.useEffect(() => {
-    if (user?.id) {
-      loadHistory();
-    }
-  }, [user?.id]);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     if (!user?.id) return;
     setIsLoadingHistory(true);
     const [history, vault] = await Promise.all([
@@ -103,7 +96,14 @@ const UserDashboard = () => {
     setMedicalHistory(history || []);
     setDiagnosesVault(vault || []);
     setIsLoadingHistory(false);
-  };
+  }, [user?.id, fetchPatientHistory, fetchDiagnoses]);
+
+  // Fetch Patient History
+  React.useEffect(() => {
+    if (user?.id) {
+      loadHistory();
+    }
+  }, [user?.id, loadHistory]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -113,21 +113,53 @@ const UserDashboard = () => {
     }
   };
 
-  const handleVoiceToggle = () => {
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
+  const handleVoiceToggle = async () => {
     if (!isRecording) {
-      setIsRecording(true);
-      setTimeout(() => {
-        setIsRecording(false);
-        const voiceText = "Critical inquiry for clinical triage.";
-        setRequestContent(prev => prev ? prev + " " + voiceText : voiceText);
-        setVoiceUrl("blob:v-123");
-      }, 2000);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          setVoiceUrl(audioUrl);
+
+          try {
+            const transcribedText = await transcribeVoice(audioBlob);
+            setRequestContent(prev => prev ? prev + " " + transcribedText : transcribedText);
+          } catch (err) {
+            console.error("Transcription failed:", err);
+            setRequestContent(prev => prev + `\n[Voice recorded but transcription failed]`);
+          }
+
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error("Microphone access denied:", err);
+        alert("Microphone access is required for voice submission.");
+      }
     } else {
-      setIsRecording(false);
-      setVoiceUrl('v-placeholder-url');
-      setRequestContent(prev => prev + `\n[Voice Note Recorded]`);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
     }
   };
+
 
   const handleRequest = async (e) => {
     e.preventDefault();

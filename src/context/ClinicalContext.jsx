@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from './useAuth';
 
@@ -13,7 +14,7 @@ export function useClinical() {
 export const ClinicalProvider = ({ children }) => {
     const [requests, setRequests] = useState([]);
     const [doctors, setDoctors] = useState([]);
-    const [systemLogs, setSystemLogs] = useState([]);
+    // systemLogs removed
     const [hospitals, setHospitals] = useState([]);
     const [appointments, setAppointments] = useState([]);
     const [patients, setPatients] = useState([]);
@@ -33,24 +34,24 @@ export const ClinicalProvider = ({ children }) => {
     });
 
     // Localtunnel bypass headers for production (Dual-case for maximum compatibility)
-    const fetchHeaders = {
+    const fetchHeaders = useMemo(() => ({
         "bypass-tunnel-reminder": "true",
         "Bypass-Tunnel-Reminder": "true"
-    };
+    }), []);
 
     const [isBackendOnline, setIsBackendOnline] = useState(true); // Optimistic default to unblock UI
     const [lastHealthCheck, setLastHealthCheck] = useState(null);
 
-    const checkBackendHealth = async () => {
+    const checkBackendHealth = useCallback(async () => {
         try {
             const res = await fetch(`${API_URL}/api/health`, { headers: fetchHeaders });
             setIsBackendOnline(res.ok);
             setLastHealthCheck(new Date().toLocaleTimeString());
-        } catch (err) {
+        } catch {
             setIsBackendOnline(false);
             setLastHealthCheck(new Date().toLocaleTimeString());
         }
-    };
+    }, [API_URL, fetchHeaders]);
 
     useEffect(() => {
         checkBackendHealth();
@@ -67,28 +68,28 @@ export const ClinicalProvider = ({ children }) => {
 
         const requestsChannel = supabase
             .channel('public:appointment_requests')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointment_requests' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointment_requests' }, () => {
                 refreshGlobalData();
             })
             .subscribe();
 
         const profilesChannel = supabase
             .channel('public:profiles')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
                 fetchDoctors();
             })
             .subscribe();
 
         const appointmentsChannel = supabase
             .channel('public:appointments')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
                 fetchAppointments();
             })
             .subscribe();
 
         const patientsChannel = supabase
             .channel('public:patients')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, payload => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, () => {
                 fetchPatients();
             })
             .subscribe();
@@ -100,22 +101,22 @@ export const ClinicalProvider = ({ children }) => {
             supabase.removeChannel(patientsChannel);
             clearInterval(healthInterval);
         };
-    }, []);
+    }, [checkBackendHealth, fetchHospitals, refreshGlobalData, fetchDoctors, fetchAppointments, fetchPatients]);
 
-    const refreshGlobalData = async () => {
+    const refreshGlobalData = useCallback(async () => {
         await Promise.all([fetchRequests(), fetchDoctors(), fetchAppointments(), fetchPatients()]);
-    };
+    }, [fetchRequests, fetchDoctors, fetchAppointments, fetchPatients]);
 
-    const fetchHospitals = async () => {
+    const fetchHospitals = useCallback(async () => {
         const { data, error } = await supabase.from('hospitals').select('*').in('status', ['APPROVED', 'PENDING', 'PENDING_VERIFICATION']);
         if (error) console.error('Error fetching hospitals:', error);
         else {
             setHospitals(data || []);
             localStorage.setItem('medi_offline_hospitals', JSON.stringify(data || []));
         }
-    };
+    }, []);
 
-    const registerHospitalNode = async (hospitalData) => {
+    const registerHospitalNode = useCallback(async (hospitalData) => {
         const { data, error } = await supabase.rpc('register_hospital_v2', {
             p_name: hospitalData.name,
             p_email_domain: hospitalData.official_email?.split('@')[1] || '',
@@ -133,18 +134,18 @@ export const ClinicalProvider = ({ children }) => {
         await refreshUser();
 
         return data;
-    };
+    }, [refreshUser]);
 
-    const updateHospitalConfig = async (hospitalId, config) => {
+    const updateHospitalConfig = useCallback(async (hospitalId, config) => {
         const { error } = await supabase
             .from('hospitals')
             .update(config)
             .eq('id', hospitalId);
 
         if (error) throw error;
-    };
+    }, []);
 
-    const analyzeLicenseOCR = async (file) => {
+    const analyzeLicenseOCR = useCallback(async (file) => {
         const formData = new FormData();
         formData.append('file', file);
         const res = await fetch(`${API_URL}/api/analyze_license`, {
@@ -154,9 +155,9 @@ export const ClinicalProvider = ({ children }) => {
         });
         if (!res.ok) throw new Error("OCR Analysis Failed");
         return await res.json();
-    };
+    }, [API_URL, fetchHeaders]);
 
-    const fetchRequests = async (hospitalId = null) => {
+    const fetchRequests = useCallback(async (hospitalId = null) => {
         let query = supabase.from('appointment_requests').select('*');
         if (hospitalId) {
             query = query.eq('hospital_id', hospitalId);
@@ -167,9 +168,9 @@ export const ClinicalProvider = ({ children }) => {
             setRequests(data);
             localStorage.setItem('medi_offline_requests', JSON.stringify(data));
         }
-    };
+    }, []);
 
-    const fetchPatientHistory = async (patientId) => {
+    const fetchPatientHistory = useCallback(async (patientId) => {
         const { data, error } = await supabase
             .from('appointment_requests')
             .select('*')
@@ -178,9 +179,9 @@ export const ClinicalProvider = ({ children }) => {
 
         if (error) console.error('Error fetching patient history:', error);
         return data || [];
-    };
+    }, []);
 
-    const fetchHospitalArchives = async (hospitalId) => {
+    const fetchHospitalArchives = useCallback(async (hospitalId) => {
         const { data, error } = await supabase
             .from('appointment_requests')
             .select('*')
@@ -190,9 +191,9 @@ export const ClinicalProvider = ({ children }) => {
 
         if (error) console.error('Error fetching hospital archives:', error);
         return data || [];
-    };
+    }, []);
 
-    const fetchDiagnoses = async (patientId) => {
+    const fetchDiagnoses = useCallback(async (patientId) => {
         const { data, error } = await supabase
             .from('patient_diagnoses')
             .select('*')
@@ -201,9 +202,9 @@ export const ClinicalProvider = ({ children }) => {
 
         if (error) console.error('Error fetching personal diagnoses:', error);
         return data || [];
-    };
+    }, []);
 
-    const uploadDiagnosis = async (file, title) => {
+    const uploadDiagnosis = useCallback(async (file, title) => {
         try {
             let aiResult = {
                 title: title || file.name,
@@ -227,7 +228,7 @@ export const ClinicalProvider = ({ children }) => {
                     const json = await aiRes.json();
                     if (!json.error) aiResult = json;
                 }
-            } catch (aiErr) {
+            } catch {
                 console.warn("[ClinicalContext] AI unreachable, proceeding with manual upload.");
             }
 
@@ -257,9 +258,9 @@ export const ClinicalProvider = ({ children }) => {
             console.error("Upload Diagnosis Error:", err);
             throw err;
         }
-    };
+    }, [user?.id, uploadFileToSupabase, API_URL, fetchHeaders]);
 
-    const fetchDoctors = async (hospitalId = null) => {
+    const fetchDoctors = useCallback(async (hospitalId = null) => {
         let query = supabase.from('profiles').select('*').in('role', ['doctor', 'nurse', 'secretary']);
         if (hospitalId) {
             query = query.eq('hospital_id', hospitalId);
@@ -270,27 +271,27 @@ export const ClinicalProvider = ({ children }) => {
             setDoctors(data);
             localStorage.setItem('medi_offline_doctors', JSON.stringify(data));
         }
-    };
+    }, []);
 
-    const fetchAppointments = async (hospitalId = null) => {
+    const fetchAppointments = useCallback(async (hospitalId = null) => {
         let query = supabase.from('appointments').select('*');
         if (hospitalId || user?.hospital_id) {
             query = query.eq('hospital_id', hospitalId || user?.hospital_id);
         }
         const { data } = await query.order('appointment_date', { ascending: true });
         if (data) setAppointments(data);
-    };
+    }, [user]);
 
-    const fetchPatients = async (hospitalId = null) => {
+    const fetchPatients = useCallback(async (hospitalId = null) => {
         let query = supabase.from('patients').select('*');
         if (hospitalId || user?.hospital_id) {
             query = query.eq('hospital_id', hospitalId || user?.hospital_id);
         }
         const { data } = await query.order('created_at', { ascending: false });
         if (data) setPatients(data);
-    };
+    }, [user]);
 
-    const registerPatient = async (patientData) => {
+    const registerPatient = useCallback(async (patientData) => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -311,9 +312,9 @@ export const ClinicalProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, fetchPatients]);
 
-    const saveAppointment = async (appointmentData) => {
+    const saveAppointment = useCallback(async (appointmentData) => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -334,21 +335,12 @@ export const ClinicalProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, fetchAppointments]);
 
-    const analyzeRequest = (content) => {
-        let suggestedSection = "General Medicine";
-        const lower = content?.toLowerCase() || '';
 
-        if (lower.includes("brain") || lower.includes("head") || lower.includes("مخ") || lower.includes("رأس")) suggestedSection = "Neurology";
-        if (lower.includes("heart") || lower.includes("chest") || lower.includes("قلب") || lower.includes("صدر")) suggestedSection = "Cardiology";
-        if (lower.includes("cancer") || lower.includes("tumor") || lower.includes("سرطان") || lower.includes("ورم")) suggestedSection = "Oncology";
-
-        return suggestedSection;
-    };
 
     // Hybrid AI Logic: Local Backend (FastAPI) -> Fallback to JS Rules
-    const aiConsultation = async (query, inputType = 'text', fileData = null) => {
+    const aiConsultation = useCallback(async (query, inputType = 'text', fileData = null) => {
         try {
             // Always use the server as a Gemini proxy
             let response;
@@ -379,7 +371,7 @@ export const ClinicalProvider = ({ children }) => {
                     .eq('status', 'COMPLETED')
                     .limit(5);
 
-                const res = await fetch(`${API_URL}/api/chat`, {
+                const res = await fetch(`${API_URL} /api/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -406,13 +398,13 @@ export const ClinicalProvider = ({ children }) => {
             console.error("AI Error:", err);
             return {
                 type: 'ERROR',
-                answer: "I am unable to connect to the medical brain. Please ensure the server is running.",
-                suggestion: 'General'
+                answer: "I'm having trouble connecting to the medical brain. Please check your connection or try again.",
+                suggestion: 'Retry'
             };
         }
-    };
+    }, [user?.id, API_URL, fetchHeaders]);
 
-    const transcribeVoice = async (audioBlob) => {
+    const transcribeVoice = useCallback(async (audioBlob) => {
         try {
             const formData = new FormData();
             formData.append('file', audioBlob, 'recording.webm');
@@ -430,9 +422,9 @@ export const ClinicalProvider = ({ children }) => {
             console.error("Transcription Error:", err);
             throw err;
         }
-    };
+    }, [API_URL, fetchHeaders]);
 
-    const analyzeClinicalRequest = async (requestText, history, file = null, fileUrl = null) => {
+    const analyzeClinicalRequest = useCallback(async (requestText, history, file = null, fileUrl = null) => {
         try {
             const formData = new FormData();
             formData.append('request_text', requestText);
@@ -461,9 +453,9 @@ export const ClinicalProvider = ({ children }) => {
                 markers: []
             };
         }
-    };
+    }, [API_URL, fetchHeaders]);
 
-    const uploadFileToSupabase = async (file) => {
+    const uploadFileToSupabase = useCallback(async (file) => {
         if (!file || !(file instanceof File)) return null;
 
         try {
@@ -471,7 +463,7 @@ export const ClinicalProvider = ({ children }) => {
             const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
             const filePath = `${user?.id || 'anonymous'}/${fileName}`;
 
-            const { data, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('medical-records')
                 .upload(filePath, file);
 
@@ -491,9 +483,9 @@ export const ClinicalProvider = ({ children }) => {
             console.error('[Storage] Unexpected error:', err);
             return null;
         }
-    };
+    }, [user?.id]);
 
-    const submitRequest = async (patientName, hospitalId, content, urgency = 'SCHEDULED', type = 'text', file = null, voiceUrl = null, preferredDoctorId = null, manualHighlights = []) => {
+    const submitRequest = useCallback(async (patientName, hospitalId, content, urgency = 'SCHEDULED', file = null, voiceUrl = null, preferredDoctorId = null, manualHighlights = []) => {
         setLoading(true);
         try {
             // 0. Upload file to Supabase if present
@@ -542,9 +534,9 @@ export const ClinicalProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, uploadFileToSupabase, analyzeClinicalRequest]);
 
-    const routeToDoctor = async (requestId, doctorId) => {
+    const routeToDoctor = useCallback(async (requestId, doctorId) => {
         const { error } = await supabase
             .from('appointment_requests')
             .update({
@@ -559,9 +551,9 @@ export const ClinicalProvider = ({ children }) => {
         } else {
             logEvent(`SECRETARY: Routed request ${requestId.slice(0, 8)} to doctor`, 'INFO');
         }
-    };
+    }, [user?.id, logEvent]);
 
-    const assignNurse = async (requestId, nurseId) => {
+    const assignNurse = useCallback(async (requestId, nurseId) => {
         console.log("DEBUG assignNurse:", { requestId, nurseId });
         const { error } = await supabase
             .from('appointment_requests')
@@ -569,17 +561,17 @@ export const ClinicalProvider = ({ children }) => {
             .eq('id', requestId);
         if (error) console.error('Error assigning nurse:', JSON.stringify(error, null, 2));
         else logEvent(`SECRETARY: Assigned nurse to request ${requestId.slice(0, 8)}`, 'INFO');
-    };
+    }, [logEvent]);
 
-    const updateVitals = async (requestId, vitals) => {
+    const updateVitals = useCallback(async (requestId, vitals) => {
         const { error } = await supabase
             .from('appointment_requests')
             .update({ vitals_data: vitals })
             .eq('id', requestId);
         if (error) console.error('Error updating vitals:', error);
-    };
+    }, []);
 
-    const prescribeMedication = async (requestId, meds, diagnosis, instructions) => {
+    const prescribeMedication = useCallback(async (requestId, meds, diagnosis, instructions) => {
         const { error } = await supabase
             .from('appointment_requests')
             .update({
@@ -590,17 +582,17 @@ export const ClinicalProvider = ({ children }) => {
             })
             .eq('id', requestId);
         if (error) console.error('Error prescribing:', error);
-    };
+    }, []);
 
-    const updateAllergies = async (requestId, allergies) => {
+    const updateAllergies = useCallback(async (requestId, allergies) => {
         const { error } = await supabase
             .from('appointment_requests')
             .update({ allergies_data: allergies })
             .eq('id', requestId);
         if (error) console.error('Error updating allergies:', error);
-    };
+    }, []);
 
-    const savePatientIntake = async (requestId, intakeData) => {
+    const savePatientIntake = useCallback(async (requestId, intakeData) => {
         setLoading(true);
         try {
             const { error } = await supabase
@@ -621,26 +613,26 @@ export const ClinicalProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id, refreshGlobalData]);
 
-    const confirmAdministration = async (requestId, meds) => {
+    const confirmAdministration = useCallback(async (requestId, meds) => {
         const { error } = await supabase
             .from('appointment_requests')
             .update({ medication_schedule: meds })
             .eq('id', requestId);
         if (error) console.error('Error confirming med:', error);
-    };
+    }, []);
 
-    const requestNurseHelp = async (requestId, note) => {
+    const requestNurseHelp = useCallback(async (requestId, note) => {
         const { error } = await supabase
             .from('appointment_requests')
             .update({ nurse_requested: true, nurse_request_note: note })
             .eq('id', requestId);
         if (error) console.error('Error requesting nurse help:', error);
         else logEvent(`DOCTOR: Requested nurse assistance for case ${requestId.slice(0, 8)}`, 'WARNING');
-    };
+    }, [logEvent]);
 
-    const generateInvite = async (hospitalId, role) => {
+    const generateInvite = useCallback(async (hospitalId, role) => {
         const { data, error } = await supabase
             .from('hospital_invites')
             .insert([{ hospital_id: hospitalId, role: role }])
@@ -652,9 +644,9 @@ export const ClinicalProvider = ({ children }) => {
             throw error;
         }
         return data;
-    };
+    }, []);
 
-    const completeCase = async (requestId, doctorId, nurseId) => {
+    const completeCase = useCallback(async (requestId, doctorId, nurseId) => {
         // 1. Mark Request as Completed
         const { error } = await supabase
             .from('appointment_requests')
@@ -670,19 +662,15 @@ export const ClinicalProvider = ({ children }) => {
         if (doctorId) {
             await supabase.from('doctors_meta').update({ status: 'Available' }).eq('id', doctorId);
         }
-        // If nurses have meta status, update it too (assuming they reuse doctors_meta or profiles extension)
-        // Currently nurses are in 'doctors_meta' technically? or just 'profiles'.
-        // Let's check where 'status' is stored. doctors_meta has 'status'. Nurses might not have an entry there yet unless we created it.
-        // For safety, we'll try updating doctors_meta if the nurse exists there.
         if (nurseId) {
             await supabase.from('doctors_meta').update({ status: 'Available' }).eq('id', nurseId);
         }
 
         logEvent(`CLINICAL: Completed case ${requestId.slice(0, 8)}`, 'INFO');
         await refreshGlobalData();
-    };
+    }, [logEvent, refreshGlobalData]);
 
-    const acknowledgeVisit = async (requestId) => {
+    const acknowledgeVisit = useCallback(async (requestId) => {
         setLoading(true);
         try {
             const { error } = await supabase
@@ -701,9 +689,9 @@ export const ClinicalProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.id, refreshGlobalData]);
 
-    const saveDoctorAssessment = async (requestId, assessmentData) => {
+    const saveDoctorAssessment = useCallback(async (requestId, assessmentData) => {
         setLoading(true);
         try {
             const { error } = await supabase
@@ -722,15 +710,14 @@ export const ClinicalProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [refreshGlobalData]);
 
-    const logEvent = async (message, level = 'INFO') => {
+    const logEvent = useCallback(async (message, level = 'INFO') => {
         await supabase.from('system_logs').insert([{ message, level, analyzed_by_ai: true }]);
-    };
+    }, []);
 
 
-    // --- SECURE PRESCRIPTION SYSTEM ---
-    const generatePrescription = async (prescriptionData) => {
+    const generatePrescription = useCallback(async (prescriptionData) => {
         try {
             const response = await fetch(`${API_URL}/api/generate_prescription`, {
                 method: 'POST',
@@ -746,27 +733,23 @@ export const ClinicalProvider = ({ children }) => {
             console.error("Prescription Error:", error);
             throw error;
         }
-    };
+    }, [API_URL, fetchHeaders]);
 
-    const scanPrescription = async (token) => {
-        try {
-            const response = await fetch(`${API_URL}/api/pharmacy/scan/${encodeURIComponent(token)}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...fetchHeaders
-                }
-            });
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.detail || 'Scan Failed');
+    const scanPrescription = useCallback(async (token) => {
+        const response = await fetch(`${API_URL}/api/pharmacy/scan/${encodeURIComponent(token)}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...fetchHeaders
             }
-            return await response.json();
-        } catch (error) {
-            throw error;
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || 'Scan Failed');
         }
-    };
+        return await response.json();
+    }, [API_URL, fetchHeaders]);
 
-    const fetchPatientPrescriptions = async (patientId) => {
+    const fetchPatientPrescriptions = useCallback(async (patientId) => {
         try {
             const response = await fetch(`${API_URL}/api/patient/${patientId}/prescriptions`, {
                 headers: { ...fetchHeaders }
@@ -777,25 +760,21 @@ export const ClinicalProvider = ({ children }) => {
             console.error("Fetch Prescriptions Error:", error);
             return []; // Always return empty array to prevent filtering crashes
         }
-    };
+    }, [API_URL, fetchHeaders]);
 
-    const dispensePrescription = async (dispenseData) => {
-        try {
-            const response = await fetch(`${API_URL}/api/pharmacy/dispense`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...fetchHeaders
-                },
-                body: JSON.stringify(dispenseData)
-            });
-            if (!response.ok) throw new Error('Dispense Failed');
-            return await response.json();
-        } catch (error) {
-            throw error;
-        }
-    };
-    const deleteDiagnosis = async (diagnosisId) => {
+    const dispensePrescription = useCallback(async (dispenseData) => {
+        const response = await fetch(`${API_URL}/api/pharmacy/dispense`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...fetchHeaders
+            },
+            body: JSON.stringify(dispenseData)
+        });
+        if (!response.ok) throw new Error('Dispense Failed');
+        return await response.json();
+    }, [API_URL, fetchHeaders]);
+    const deleteDiagnosis = useCallback(async (diagnosisId) => {
         try {
             // 1. Get file path from URL
             const { data: diagnosis } = await supabase
@@ -822,58 +801,69 @@ export const ClinicalProvider = ({ children }) => {
         } catch (err) {
             console.error('Error deleting diagnosis:', err);
         }
-    };
+    }, []);
+
+    const value = useMemo(() => ({
+        requests,
+        doctors,
+        hospitals,
+        submitRequest,
+        routeToDoctor,
+        logEvent,
+        aiConsultation,
+        fetchRequests,
+        fetchDoctors,
+        fetchPatientHistory,
+        fetchHospitalArchives,
+        fetchDiagnoses,
+        uploadDiagnosis,
+        deleteDiagnosis,
+        assignNurse,
+        updateVitals,
+        prescribeMedication,
+        confirmAdministration,
+        requestNurseHelp,
+        completeCase,
+        generateInvite,
+        registerPatient,
+        saveAppointment,
+        updateAllergies,
+        savePatientIntake,
+        acknowledgeVisit,
+        saveDoctorAssessment,
+        appointments,
+        patients,
+        fetchAppointments,
+        fetchPatients,
+        refreshGlobalData,
+        isBackendOnline,
+        lastHealthCheck,
+        checkBackendHealth,
+        loading,
+        analyzeClinicalRequest,
+        generatePrescription,
+        scanPrescription,
+        fetchPatientPrescriptions,
+        dispensePrescription,
+        registerHospitalNode,
+        updateHospitalConfig,
+        analyzeLicenseOCR,
+        uploadFileToSupabase,
+        transcribeVoice
+    }), [
+        requests, doctors, hospitals, loading, appointments, patients, isBackendOnline, lastHealthCheck,
+        submitRequest, routeToDoctor, logEvent, aiConsultation, fetchRequests, fetchDoctors,
+        fetchPatientHistory, fetchHospitalArchives, fetchDiagnoses, uploadDiagnosis, deleteDiagnosis,
+        assignNurse, updateVitals, prescribeMedication, confirmAdministration, requestNurseHelp,
+        completeCase, generateInvite, registerPatient, saveAppointment, updateAllergies,
+        savePatientIntake, acknowledgeVisit, saveDoctorAssessment, fetchAppointments, fetchPatients,
+        refreshGlobalData, checkBackendHealth, analyzeClinicalRequest, generatePrescription,
+        scanPrescription, fetchPatientPrescriptions, dispensePrescription, registerHospitalNode,
+        updateHospitalConfig, analyzeLicenseOCR, uploadFileToSupabase, transcribeVoice
+    ]);
 
     return (
-        <ClinicalContext.Provider value={{
-            requests,
-            doctors,
-            hospitals,
-            systemLogs,
-            submitRequest,
-            routeToDoctor,
-            logEvent,
-            aiConsultation,
-            fetchRequests,
-            fetchDoctors,
-            fetchPatientHistory,
-            fetchHospitalArchives,
-            fetchDiagnoses,
-            uploadDiagnosis,
-            deleteDiagnosis,
-            assignNurse,
-            updateVitals,
-            prescribeMedication,
-            confirmAdministration,
-            requestNurseHelp,
-            completeCase,
-            generateInvite,
-            registerPatient,
-            saveAppointment,
-            updateAllergies,
-            savePatientIntake,
-            acknowledgeVisit,
-            saveDoctorAssessment,
-            appointments,
-            patients,
-            fetchAppointments,
-            fetchPatients,
-            refreshGlobalData,
-            isBackendOnline,
-            lastHealthCheck,
-            checkBackendHealth,
-            loading,
-            analyzeClinicalRequest,
-            generatePrescription,
-            scanPrescription,
-            fetchPatientPrescriptions,
-            dispensePrescription,
-            registerHospitalNode,
-            updateHospitalConfig,
-            analyzeLicenseOCR,
-            uploadFileToSupabase,
-            transcribeVoice
-        }}>
+        <ClinicalContext.Provider value={value}>
             {children}
         </ClinicalContext.Provider>
     );

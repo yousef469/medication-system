@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../supabaseClient';
 import ProfessionalProfile from './ProfessionalProfile';
 
@@ -16,9 +16,9 @@ const ProfessionalProfileModal = ({ userId, initialProfile = null, onClose }) =>
         if (!initialProfile && userId) {
             fetchProfile();
         }
-    }, [userId, initialProfile]);
+    }, [userId, initialProfile, fetchProfile]);
 
-    const fetchProfile = async () => {
+    const fetchProfile = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -34,7 +34,7 @@ const ProfessionalProfileModal = ({ userId, initialProfile = null, onClose }) =>
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId]);
 
     return (
         <div className="discovery-overlay" onClick={onClose}>

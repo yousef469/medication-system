@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/useAuth';
 import { useClinical } from '../../context/ClinicalContext';
 import ProfessionalProfile from '../shared/ProfessionalProfile';
@@ -23,23 +23,34 @@ const DoctorWorkstation = () => {
 
     // Initial Fetch for Doctor
     useEffect(() => {
-        if (user?.hospital_id) {
-            fetchRequests(user.hospital_id);
-        }
-    }, [user?.hospital_id]);
+        fetchRequests(user?.hospital_id);
+    }, [fetchRequests, user?.hospital_id]);
 
     // Only show active cases
     const myCases = requests.filter(r => r.assigned_doctor_id === user?.id && r.status !== 'COMPLETED');
 
+    const handleViewHistory = useCallback(async (patientId) => {
+        if (!patientId) {
+            setPatientHistory([]);
+            return;
+        }
+        setShowHistory(true);
+        setIsLoadingHistory(true);
+        const history = await fetchPatientHistory(patientId);
+        setPatientHistory(history);
+        setIsLoadingHistory(false);
+    }, [fetchPatientHistory]);
+
     // Auto-fetch history when case is selected
     useEffect(() => {
         if (selectedCase?.patient_id) {
-            handleViewHistory();
+            handleViewHistory(selectedCase.patient_id);
         } else {
             setPatientHistory([]);
         }
         setShowFullLab(false); // Reset lab when changing patients
-    }, [selectedCase?.id]);
+    }, [selectedCase?.patient_id, handleViewHistory]);
+
 
     const handlePrescribe = async () => {
         if (!selectedCase) return;
@@ -72,15 +83,6 @@ const DoctorWorkstation = () => {
         alert('Assistance request broadcast to Coordinator.');
         setShowAssistanceUI(false);
         setRequestNote('');
-    };
-
-    const handleViewHistory = async () => {
-        if (!selectedCase) return;
-        setShowHistory(true);
-        setIsLoadingHistory(true);
-        const history = await fetchPatientHistory(selectedCase.patient_id);
-        setPatientHistory(history);
-        setIsLoadingHistory(false);
     };
 
     const handleCompleteCase = async () => {
