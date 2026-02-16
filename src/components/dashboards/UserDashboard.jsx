@@ -18,7 +18,10 @@ const UserDashboard = () => {
     uploadDiagnosis,
     deleteDiagnosis,
     isBackendOnline,
-    fetchPatientPrescriptions
+    fetchPatientPrescriptions,
+    currentHighlights,
+    clearHighlights,
+    aiConsultation
   } = useClinical();
   const { user } = useAuth();
   const [requestContent, setRequestContent] = useState('');
@@ -39,6 +42,25 @@ const UserDashboard = () => {
   const [preferredDoctorId, setPreferredDoctorId] = useState(null);
   const vaultInputRef = useRef(null);
   const isGuest = !user?.isAuthenticated;
+
+  // 🧬 MIT UPGRADE: LIVE SYMPTOM ANALYSIS
+  useEffect(() => {
+    if (!requestContent.trim() || requestContent.length < 10) {
+      if (!requestContent.trim()) clearHighlights();
+      return;
+    }
+
+    const debounceTimer = setTimeout(async () => {
+      console.log("[UserDashboard] Live Analyzing Symptoms...");
+      try {
+        await aiConsultation(requestContent, 'text');
+      } catch (err) {
+        console.warn("Live analysis failed", err);
+      }
+    }, 1500); // 1.5s debounce to save API credits
+
+    return () => clearTimeout(debounceTimer);
+  }, [requestContent, aiConsultation, clearHighlights]);
 
   const [activePrescriptions, setActivePrescriptions] = useState([]);
   const [syncStatus, setSyncStatus] = useState('IDLE'); // IDLE, SYNCING, SUCCESS, ERROR
@@ -140,7 +162,10 @@ const UserDashboard = () => {
           try {
             const transcribedText = await transcribeVoice(audioBlob);
             if (transcribedText) {
-              setRequestContent(prev => prev ? prev + " " + transcribedText : transcribedText);
+              const newContent = requestContent ? requestContent + " " + transcribedText : transcribedText;
+              setRequestContent(newContent);
+              // Trigger Live Analysis for the 3D View
+              await aiConsultation(newContent, 'text');
             } else {
               setRequestContent(prev => prev + `\n[Voice recorded — no speech detected]`);
             }
@@ -510,6 +535,40 @@ const UserDashboard = () => {
 
         {/* RIGHT COLUMN: Highlights & Vault */}
         <section className="highlights">
+          {/* 🧬 MIT UPGRADE: LIVE 3D ANATOMY VIEW */}
+          <div className="live-anatomy-portal glass-card fade-in" style={{ marginBottom: '2rem', minHeight: '400px', display: 'flex', flexDirection: 'column', border: '1px solid var(--primary)' }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '0.9rem' }}>Live Diagnostic View</h3>
+                <p style={{ fontSize: '0.65rem', opacity: 0.5, margin: 0 }}>AI-Driven Anatomical Mapping</p>
+              </div>
+              {currentHighlights.length > 0 && (
+                <button
+                  onClick={clearHighlights}
+                  style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', fontSize: '0.6rem', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}
+                >RESET</button>
+              )}
+            </div>
+            <div style={{ flex: 1, position: 'relative', background: '#020617' }}>
+              <Humanoid3D
+                markers={currentHighlights}
+                role="PATIENT"
+              />
+            </div>
+            {currentHighlights.length > 0 && (
+              <div style={{ padding: '0.8rem', background: 'rgba(124, 68, 237, 0.1)', fontSize: '0.7rem' }}>
+                <div style={{ fontWeight: 800, color: '#a78bfa', marginBottom: '0.4rem' }}>AI DETECTED REGIONS:</div>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                  {currentHighlights.map((h, i) => (
+                    <span key={i} style={{ background: h.status === 'RED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)', color: h.status === 'RED' ? '#f87171' : '#fbbf24', padding: '2px 6px', borderRadius: '4px', border: `1px solid ${h.status === 'RED' ? '#ef4444' : '#f59e0b'}` }}>
+                      {h.part}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {!isGuest && (
             <div className="medical-vault-section" style={{ marginBottom: '3rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.8rem' }}>

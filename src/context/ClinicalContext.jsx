@@ -19,6 +19,7 @@ export function ClinicalProvider({ children }) {
     const [appointments, setAppointments] = useState([]);
     const [patients, setPatients] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [currentHighlights, setCurrentHighlights] = useState([]);
     const { user, refreshUser } = useAuth();
 
     // Dynamic API Selection
@@ -373,8 +374,13 @@ export function ClinicalProvider({ children }) {
                 response = {
                     type: 'GEMINI_CLOUD',
                     answer: json.response,
-                    suggestion: json.action === 'search_hospital' ? 'Hospitals' : 'General'
+                    suggestion: json.action === 'search_hospital' ? 'Hospitals' : 'General',
+                    markers: json.markers || []
                 };
+
+                if (response.markers?.length > 0) {
+                    setCurrentHighlights(response.markers);
+                }
             }
             return response;
         } catch (err) {
@@ -619,6 +625,10 @@ export function ClinicalProvider({ children }) {
                 clinical_snapshot: aiResult
             }]).select();
 
+            if (aiResult.markers?.length > 0) {
+                setCurrentHighlights(aiResult.markers);
+            }
+
             if (error) console.error('Error submitting request:', error);
             return data?.[0];
         } catch (err) {
@@ -628,6 +638,8 @@ export function ClinicalProvider({ children }) {
             setLoading(false);
         }
     }, [user, uploadFileToSupabase, analyzeClinicalRequest]);
+
+    const clearHighlights = useCallback(() => setCurrentHighlights([]), []);
 
     // ===================================================================
     // THIRD-LEVEL CALLBACKS (depend on second-level callbacks)
@@ -824,7 +836,9 @@ export function ClinicalProvider({ children }) {
         updateHospitalConfig,
         analyzeLicenseOCR,
         uploadFileToSupabase,
-        transcribeVoice
+        transcribeVoice,
+        currentHighlights,
+        clearHighlights
     }), [
         requests, doctors, hospitals, loading, appointments, patients, isBackendOnline, lastHealthCheck,
         submitRequest, routeToDoctor, logEvent, aiConsultation, fetchRequests, fetchDoctors,
@@ -834,7 +848,8 @@ export function ClinicalProvider({ children }) {
         savePatientIntake, acknowledgeVisit, saveDoctorAssessment, fetchAppointments, fetchPatients,
         refreshGlobalData, checkBackendHealth, analyzeClinicalRequest, generatePrescription,
         scanPrescription, fetchPatientPrescriptions, dispensePrescription, registerHospitalNode,
-        updateHospitalConfig, analyzeLicenseOCR, uploadFileToSupabase, transcribeVoice
+        updateHospitalConfig, analyzeLicenseOCR, uploadFileToSupabase, transcribeVoice,
+        currentHighlights, clearHighlights
     ]);
 
     return (

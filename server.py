@@ -35,17 +35,19 @@ http_client = httpx.AsyncClient(
     limits=httpx.Limits(max_connections=100, max_keepalive_connections=20)
 )
 
-# Allow CORS for React Frontend (Vercel + Local)
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
     "https://medication-system.vercel.app",
-    "https://medication-system-five.vercel.app", # Potential secondary Vercel names
+    "https://medication-system-five.vercel.app",
+    "https://medication-system-git-main-yousef469s-projects.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all for debugging tunnel issues
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*", "bypass-tunnel-reminder"],
